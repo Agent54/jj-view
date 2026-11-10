@@ -13,6 +13,7 @@ import {
     focusJJLog,
     getLogWebview,
     pickQuickPickItem,
+    rightClickAndSelect,
     test,
     triggerRefresh,
     waitForLogCommitRow,
@@ -138,7 +139,7 @@ test.describe('JJ Log Pane E2E', () => {
         ]);
     });
 
-    test('Hover Actions: New Child, Squash, Abandon', async ({ vscode }) => {
+    test('Hover Actions: New Child, Squash, and Abandon from context menu', async ({ vscode }) => {
         const repo = new TestRepo();
         repo.init();
         const dummyId = repo.getChangeId('@');
@@ -210,8 +211,8 @@ test.describe('JJ Log Pane E2E', () => {
         ]);
         await waitForWebviewCommitRemoved(page, childId);
 
-        // 4. Abandon the branch commit
-        await clickLogAction(page, { changeId: branchId }, 'Abandon');
+        // 4. Abandon the branch commit from its context menu
+        await rightClickAndSelect(page, await waitForLogCommitRow(page, { changeId: branchId }), 'Abandon');
 
         // After abandon branch: branch is gone. wc (child of branch) becomes child of initial.
         // Tree: [wc, initial(@)]

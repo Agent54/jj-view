@@ -119,6 +119,7 @@ describe('Generalized Context Menu System', () => {
             expect(allCommands).toContain('jj-view.abandon');
             expect(allCommands).toContain('jj-view.absorb');
             expect(allCommands).toContain('jj-view.setBookmark');
+            expect(allCommands).toContain('jj-view.createTag');
         });
 
         it('returns bookmark actions when webviewSection is jj.bookmark', () => {
@@ -133,6 +134,22 @@ describe('Generalized Context Menu System', () => {
 
             const allCommands = groups.flatMap((g) => g.items.map((i) => i.command));
             expect(allCommands).toContain('jj-view.deleteBookmark');
+            expect(allCommands).not.toContain('jj-view.deleteTag');
+        });
+
+        it('returns tag actions instead of commit or bookmark actions on a tag badge', () => {
+            const scopedContext = rootContext.createScoped({
+                webviewSection: 'jj.tag',
+                tagName: 'v1.0.0',
+                commitId: 'abc123',
+                'jj.canAbandon': true,
+            });
+            const groups = menuRegistry.getContextActions('webview/context', scopedContext);
+            const allCommands = groups.flatMap((g) => g.items.map((i) => i.command));
+            expect(allCommands).toContain('jj-view.deleteTag');
+            expect(allCommands).not.toContain('jj-view.deleteBookmark');
+            expect(allCommands).not.toContain('jj-view.createTag');
+            expect(allCommands).not.toContain('jj-view.abandon');
         });
 
         it('returns workspace actions when webviewSection is workspace', () => {

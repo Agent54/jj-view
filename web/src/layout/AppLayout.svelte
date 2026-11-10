@@ -7,22 +7,25 @@ import type { Snippet } from 'svelte';
 import type { PersistedLayout } from './layout-state';
 import SplitPane from './SplitPane.svelte';
 
-/** Parameters handed to the `log` snippet so the pane can drive auto-sizing and collapse. */
-export interface LogPaneLayout {
+export interface CollapsiblePaneLayout {
     collapsed: boolean;
     /** Absent when the pane cannot be collapsed (narrow layout). */
     onToggleCollapsed?: () => void;
+}
+
+/** Parameters handed to the `log` snippet so the pane can drive auto-sizing and collapse. */
+export interface LogPaneLayout extends CollapsiblePaneLayout {
     /** Reports the pane's natural height (header + all rows) for automatic sizing. */
     onPreferredHeightChange?: (height: number) => void;
 }
 
-/** In the narrow layout the log owns the whole pane; it is neither sized nor collapsible. */
-const NARROW_LOG_LAYOUT: LogPaneLayout = { collapsed: false };
+/** Narrow-layout panes fill their tab and are not collapsible. */
+const NARROW_PANE_LAYOUT: CollapsiblePaneLayout = { collapsed: false };
 
 interface Props {
     repoPath?: string;
     onRefresh?: () => void;
-    scm?: Snippet;
+    scm?: Snippet<[CollapsiblePaneLayout]>;
     log?: Snippet<[LogPaneLayout]>;
     main?: Snippet;
     statusBar?: Snippet;
@@ -63,6 +66,8 @@ let sidebarWidth = $state(layout?.sidebarWidth ?? DEFAULT_SIDEBAR_WIDTH);
 let userLogHeight = $state<number | undefined>(layout?.logHeight);
 // svelte-ignore state_referenced_locally
 let logCollapsed = $state(layout?.logCollapsed ?? false);
+// svelte-ignore state_referenced_locally
+let scmCollapsed = $state(layout?.scmCollapsed ?? false);
 /** Natural height of the log pane (header + all rows), reported by the pane. */
 let preferredLogHeight = $state(0);
 
@@ -82,11 +87,17 @@ function emitLayoutChange(): void {
         sidebarWidth,
         logHeight: userLogHeight,
         logCollapsed,
+        scmCollapsed,
     });
 }
 
 function toggleLogCollapsed(): void {
     logCollapsed = !logCollapsed;
+    emitLayoutChange();
+}
+
+function toggleScmCollapsed(): void {
+    scmCollapsed = !scmCollapsed;
     emitLayoutChange();
 }
 
@@ -98,6 +109,11 @@ const logPaneLayout = $derived<LogPaneLayout>({
     collapsed: logCollapsed,
     onToggleCollapsed: toggleLogCollapsed,
     onPreferredHeightChange: setPreferredLogHeight,
+});
+
+const scmPaneLayout = $derived<CollapsiblePaneLayout>({
+    collapsed: scmCollapsed,
+    onToggleCollapsed: toggleScmCollapsed,
 });
 
 $effect(() => {
@@ -178,9 +194,9 @@ $effect(() => {
                 </div>
                 <div class="narrow-pane-content" data-testid="narrow-pane-content">
                     {#if activeNarrowView === 'scm'}
-                        {@render scm?.()}
+                        {@render scm?.(NARROW_PANE_LAYOUT)}
                     {:else if activeNarrowView === 'log'}
-                        {@render log?.(NARROW_LOG_LAYOUT)}
+                        {@render log?.(NARROW_PANE_LAYOUT)}
                     {:else if activeNarrowView === 'diff'}
                         {@render main?.()}
                     {/if}
@@ -205,12 +221,14 @@ $effect(() => {
                         collapseThreshold={LOG_COLLAPSE_THRESHOLD}
                         collapsedSize={LOG_HEADER_HEIGHT}
                         collapsed={logCollapsed}
+                        otherCollapsed={scmCollapsed}
+                        otherCollapsedSize={LOG_HEADER_HEIGHT}
                         onResize={(size) => (userLogHeight = size)}
                         onCollapsedChange={(value) => (logCollapsed = value)}
                         onResizeEnd={emitLayoutChange}
                     >
                         {#snippet left()}
-                            {@render scm?.()}
+                            {@render scm?.(scmPaneLayout)}
                         {/snippet}
                         {#snippet right()}
                             {@render log?.(logPaneLayout)}

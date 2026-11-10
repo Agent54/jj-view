@@ -21,6 +21,8 @@ export interface PersistedLayout {
     logHeight?: number;
     /** Whether the log pane is collapsed to its header. */
     logCollapsed?: boolean;
+    /** Whether Source Control is collapsed to its header. */
+    scmCollapsed?: boolean;
 }
 
 function isFiniteNumber(value: unknown): value is number {
@@ -42,6 +44,9 @@ export function parsePersistedLayout(value: unknown): PersistedLayout {
     }
     if (typeof record.logCollapsed === 'boolean') {
         layout.logCollapsed = record.logCollapsed;
+    }
+    if (typeof record.scmCollapsed === 'boolean') {
+        layout.scmCollapsed = record.scmCollapsed;
     }
     return layout;
 }

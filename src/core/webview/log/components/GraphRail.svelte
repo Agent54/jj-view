@@ -338,7 +338,7 @@ const svgHeight = $derived(height + BOTTOM_PADDING);
         top: 0;
         left: 0;
         pointer-events: none;
-        z-index: 0;
+        z-index: 2;
     }
 
     .node-working-copy-text {

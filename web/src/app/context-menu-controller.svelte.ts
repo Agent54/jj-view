@@ -9,14 +9,16 @@ import type { EditorChatContextSelection } from '../diff/chat-context-selection'
 import type { ContextKeyService } from '../menu/context-key-service';
 import { extractVsCodeContext } from '../menu/context-menu-utils';
 import type { MenuRegistry } from '../menu/menu-registry';
-import type { ResolvedMenuItemGroup } from '../menu/menu-types';
+import type { ContextMenuPointerGesture, ResolvedMenuItemGroup } from '../menu/menu-types';
 
 export interface ContextMenuState {
+    id: number;
     visible: boolean;
     x: number;
     y: number;
     groups: readonly ResolvedMenuItemGroup[];
     payload?: unknown;
+    openingPointer?: ContextMenuPointerGesture;
 }
 
 export function reviveResourceState(raw: Record<string, unknown>): JjResourceState {
@@ -91,6 +93,7 @@ export interface ContextMenuControllerDeps {
 
 export class ContextMenuController {
     state = $state<ContextMenuState>({
+        id: 0,
         visible: false,
         x: 0,
         y: 0,
@@ -98,12 +101,15 @@ export class ContextMenuController {
         payload: undefined,
     });
     contextMenuSelectionSnapshot = $state<EditorChatContextSelection | null>(null);
+    private nextMenuId = 0;
+    private suppressPointerContextMenu = false;
 
     constructor(readonly deps: ContextMenuControllerDeps) {}
 
     closeContextMenu(): void {
         this.contextMenuSelectionSnapshot = null;
         this.state = {
+            id: this.state.id,
             visible: false,
             x: 0,
             y: 0,
@@ -113,13 +119,45 @@ export class ContextMenuController {
     }
 
     handleWindowContextMenu(e: MouseEvent): void {
+        // Browsers dispatch contextmenu on either press or release. The pointer
+        // gesture already opened the menu, and may have selected an item by now.
+        if (this.suppressPointerContextMenu && (e.button === 2 || e.ctrlKey)) {
+            e.preventDefault();
+            e.stopPropagation();
+            return;
+        }
+        this.openContextMenu(e);
+    }
+
+    handleWindowPointerDown(e: PointerEvent): void {
+        this.suppressPointerContextMenu = false;
+        const isMacControlClick = e.button === 0 && e.ctrlKey && /Mac/.test(navigator.platform);
+        if (e.button !== 2 && !isMacControlClick) {
+            return;
+        }
+        const target = e.target as Element | null;
+        if (target?.closest?.('[data-testid="context-menu"]')) {
+            return;
+        }
+        if (this.openContextMenu(e)) {
+            this.suppressPointerContextMenu = true;
+            this.state.openingPointer = {
+                pointerId: e.pointerId,
+                button: e.button,
+                x: e.clientX,
+                y: e.clientY,
+            };
+        }
+    }
+
+    private openContextMenu(e: MouseEvent): boolean {
         const target = e.target as Element | null;
         const context = extractVsCodeContext(target);
         if (!context) {
             if (this.state.visible) {
                 this.closeContextMenu();
             }
-            return;
+            return false;
         }
 
         if (context.preventDefaultContextMenuItems) {
@@ -139,17 +177,19 @@ export class ContextMenuController {
             if (this.state.visible) {
                 this.closeContextMenu();
             }
-            return;
+            return false;
         }
 
         e.preventDefault();
         e.stopPropagation();
         this.state = {
+            id: ++this.nextMenuId,
             visible: true,
             x: e.clientX,
             y: e.clientY,
             groups,
             payload: context,
         };
+        return true;
     }
 }

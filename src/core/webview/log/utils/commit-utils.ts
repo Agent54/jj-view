@@ -11,7 +11,6 @@ export interface CommitActionStates {
     newChild: boolean;
     edit: boolean;
     squash: boolean;
-    abandon: boolean;
 }
 
 /**
@@ -29,7 +28,6 @@ export function computeCommitActions(
         newChild: !hiddenActions.has('newChild'),
         edit: isMutableCommit(commit) && !commit.is_current_working_copy && !hiddenActions.has('edit'),
         squash: !hiddenActions.has('squash') && canSquashCommit(commit),
-        abandon: isMutableCommit(commit) && !hiddenActions.has('abandon'),
     };
 
     const vscodeContext = {
@@ -39,7 +37,6 @@ export function computeCommitActions(
         'jj.newChildVisible': visibleActions.newChild,
         'jj.editVisible': visibleActions.edit,
         'jj.squashVisible': visibleActions.squash,
-        'jj.abandonVisible': visibleActions.abandon,
         viewItem: isSelected ? 'jj-commit-selected' : 'jj-commit',
         commitId: commit.commit_id,
         changeId: commit.change_id,

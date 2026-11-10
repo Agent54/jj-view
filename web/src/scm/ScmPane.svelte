@@ -29,6 +29,8 @@ interface Props {
     onFocusRepository?: (workspaceRoot: string) => void;
     isSidecarAvailable?: boolean;
     onDraftWithAgent?: (workspaceRoot?: string) => Promise<string | undefined>;
+    collapsed?: boolean;
+    onToggleCollapsed?: () => void;
 }
 
 let {
@@ -46,6 +48,8 @@ let {
     onFocusRepository,
     isSidecarAvailable = false,
     onDraftWithAgent,
+    collapsed = false,
+    onToggleCollapsed,
 }: Props = $props();
 
 const isMultiRepo = $derived((repositories?.length ?? 0) > 1);
@@ -197,8 +201,10 @@ function getRepoTitleActions(entry: ScmRepositoryEntry): ResolvedMenuItem[] {
 }
 </script>
 
-<div class="scm-pane" data-testid="scm-pane">
+<div class="scm-pane" class:collapsed data-testid="scm-pane" data-collapsed={collapsed}>
     <ScmHeader
+        {collapsed}
+        {onToggleCollapsed}
         {menuRegistry}
         context={rootContext}
         showActions={!isMultiRepo}
@@ -537,6 +543,15 @@ function getRepoTitleActions(entry: ScmRepositoryEntry): ResolvedMenuItem[] {
 </div>
 
 <style>
+.scm-pane.collapsed {
+    overflow: hidden;
+}
+
+/* Keep the contents mounted so collapsing the pane preserves unsaved drafts. */
+.scm-pane.collapsed > :global(:not(.scm-header)) {
+    display: none;
+}
+
 .scm-pane {
     display: flex;
     flex-direction: column;

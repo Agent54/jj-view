@@ -58,6 +58,8 @@ import {
     squashSelectionIntoParentCommand,
 } from '../../../src/core/commands/squash-selection';
 import { syncCommand } from '../../../src/core/commands/sync';
+import { createTagCommand } from '../../../src/core/commands/tag';
+import { deleteTagCommand } from '../../../src/core/commands/tag-delete';
 import { undoCommand } from '../../../src/core/commands/undo';
 import { uploadCommand } from '../../../src/core/commands/upload';
 import { uploadStackCommand } from '../../../src/core/commands/upload-stack';
@@ -126,6 +128,8 @@ import {
     createSquashHunkIntoParentPayload,
     createSquashSelectionIntoParentPayload,
 } from './payloads/squash-selection.payload';
+import { createTagPayload } from './payloads/tag.payload';
+import { createDeleteTagPayload } from './payloads/tag-delete.payload';
 import { createUploadPayload, createUploadStackPayload } from './payloads/upload.payload';
 import { createViewFileAtRevisionPayload } from './payloads/view-file-at-revision.payload';
 import {
@@ -331,6 +335,7 @@ export function registerWebCommands(options: RegisterWebCommandsOptions): void {
 
     // 7. Bookmarks & Remote Upload
     registerWithPayload('jj-view.setBookmark', createSetBookmarkPayload, setBookmarkCommand);
+    registerWithPayload('jj-view.createTag', createTagPayload, createTagCommand);
     registerWithPayload('jj-view.advanceBookmark', createAdvanceBookmarkPayload, advanceBookmarkCommand);
     registerWithPayload(
         'jj-view.advanceBookmarkAndUpload',
@@ -338,6 +343,7 @@ export function registerWebCommands(options: RegisterWebCommandsOptions): void {
         advanceBookmarkAndUploadCommand,
     );
     registerWithPayload('jj-view.deleteBookmark', createDeleteBookmarkPayload, deleteBookmarkCommand);
+    registerWithPayload('jj-view.deleteTag', createDeleteTagPayload, deleteTagCommand);
     registerWithPayload('jj-view.upload', createUploadPayload, uploadCommand);
     registerWithPayload('jj-view.uploadStack', createUploadStackPayload, uploadStackCommand);
     registerDirect('jj-view.sync', syncCommand);

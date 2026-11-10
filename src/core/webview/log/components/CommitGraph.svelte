@@ -144,7 +144,6 @@ const graphAreaWidth = $derived(computeGraphAreaWidth(layout.width, LANE_WIDTH, 
                     role="presentation"
                     class="commit-row-container"
                     style:height={`${height}px`}
-                    style:padding-left={`${paddingLeft}px`}
                 >
                     <CommitNode
                         commit={row}
@@ -166,6 +165,7 @@ const graphAreaWidth = $derived(computeGraphAreaWidth(layout.width, LANE_WIDTH, 
                         {hiddenActions}
                         {dragManager}
                         descendantCount={descendantCounts.get(row.change_id) ?? 0}
+                        graphPaddingLeft={paddingLeft}
                     />
                 </div>
             {/if}
@@ -177,6 +177,8 @@ const graphAreaWidth = $derived(computeGraphAreaWidth(layout.width, LANE_WIDTH, 
     .commit-graph {
         position: relative;
         padding-bottom: 20px;
+        user-select: none;
+        -webkit-user-select: none;
     }
 
     .commit-list {

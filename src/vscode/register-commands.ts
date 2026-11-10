@@ -54,6 +54,8 @@ import {
 } from '../core/commands/squash-revision';
 import { squashHunkIntoParentCommand, squashSelectionIntoParentCommand } from '../core/commands/squash-selection';
 import { syncCommand } from '../core/commands/sync';
+import { createTagCommand } from '../core/commands/tag';
+import { deleteTagCommand } from '../core/commands/tag-delete';
 import { undoCommand } from '../core/commands/undo';
 import { uploadCommand } from '../core/commands/upload';
 import { uploadStackCommand } from '../core/commands/upload-stack';
@@ -116,6 +118,8 @@ import {
     createSquashHunkIntoParentPayload,
     createSquashSelectionIntoParentPayload,
 } from './payloads/squash-selection.payload';
+import { createTagPayload } from './payloads/tag.payload';
+import { createDeleteTagPayload } from './payloads/tag-delete.payload';
 import { createUploadPayload, createUploadStackPayload } from './payloads/upload.payload';
 import { createViewFileAtRevisionPayload } from './payloads/view-file-at-revision.payload';
 import { createWorkspaceDeletePayload } from './payloads/workspace-delete.payload';
@@ -284,6 +288,7 @@ export function registerCommands(options: RegisterCommandsOptions): void {
         registerCommandWithPayload('jj-view.uploadStack', createUploadStackPayload, uploadStackCommand),
         registerCommand('jj-view.sync', syncCommand),
         registerCommandWithPayload('jj-view.setBookmark', createSetBookmarkPayload, setBookmarkCommand),
+        registerCommandWithPayload('jj-view.createTag', createTagPayload, createTagCommand),
         registerCommandWithPayload('jj-view.advanceBookmark', createAdvanceBookmarkPayload, advanceBookmarkCommand),
         registerCommandWithPayload(
             'jj-view.advanceBookmarkAndUpload',
@@ -291,6 +296,7 @@ export function registerCommands(options: RegisterCommandsOptions): void {
             advanceBookmarkAndUploadCommand,
         ),
         registerCommandWithPayload('jj-view.deleteBookmark', createDeleteBookmarkPayload, deleteBookmarkCommand),
+        registerCommandWithPayload('jj-view.deleteTag', createDeleteTagPayload, deleteTagCommand),
         registerCommandWithPayload('jj-view.showDetails', createShowDetailsPayload, showDetailsCommand),
         registerCommandWithPayload('jj-view.openMergeEditor', createOpenMergeEditorPayload, openMergeEditorCommand),
         registerCommandWithPayload('jj-view.absorb', createAbsorbPayload, absorbCommand),

@@ -569,6 +569,28 @@ export class JjService {
         return this._parseJsonLines(output, JjBookmarkSchema, 'getBookmarks');
     }
 
+    async createTag(name: string, toRevision: string): Promise<string> {
+        return this.run('tag', ['set', '-r', toRevision, '--', name], {
+            isMutation: true,
+            label: 'createTag',
+        });
+    }
+
+    async getTagNames(): Promise<string[]> {
+        const output = await this.run('tag', ['list', '-T', 'name ++ "\\n"'], {
+            useCachedSnapshot: true,
+            label: 'getTagNames',
+        });
+        return output.split('\n').filter((name) => name.length > 0);
+    }
+
+    async deleteTag(name: string): Promise<string> {
+        return this.run('tag', ['delete', '--', name], {
+            isMutation: true,
+            label: 'deleteTag',
+        });
+    }
+
     async moveBookmark(name: string, toRevision: string): Promise<string> {
         return this.run('bookmark', ['set', name, '-r', toRevision, '--allow-backwards'], {
             isMutation: true,

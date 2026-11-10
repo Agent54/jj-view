@@ -996,7 +996,11 @@ onMount(() => {
 });
 </script>
 
-<svelte:window onkeydown={handleWindowKeydown} oncontextmenu={(e) => contextMenuController.handleWindowContextMenu(e)} />
+<svelte:window
+    onkeydown={handleWindowKeydown}
+    onpointerdown={(e) => contextMenuController.handleWindowPointerDown(e)}
+    oncontextmenu={(e) => contextMenuController.handleWindowContextMenu(e)}
+/>
 
 <AppLayout
     repoPath={workspaceRoot}
@@ -1005,8 +1009,10 @@ onMount(() => {
     layout={initialLayout}
     onLayoutChange={persistLayout}
 >
-    {#snippet scm()}
+    {#snippet scm(scmLayout)}
         <ScmPane
+            collapsed={scmLayout.collapsed}
+            onToggleCollapsed={scmLayout.onToggleCollapsed}
             snapshot={currentSnapshot}
             {workspaceRoot}
             repositories={scmRepositories}
@@ -1174,11 +1180,12 @@ onMount(() => {
 <NotificationContainer service={activeNotifications} />
 
 {#if contextMenuController.state.visible}
-    {#key `${contextMenuController.state.x}:${contextMenuController.state.y}`}
+    {#key contextMenuController.state.id}
         <ContextMenu
             x={contextMenuController.state.x}
             y={contextMenuController.state.y}
             groups={contextMenuController.state.groups}
+            openingPointer={contextMenuController.state.openingPointer}
             onSelect={(cmd) => {
                 void handleAction(cmd, contextMenuController.state.payload);
             }}

@@ -23,6 +23,9 @@ interface Props {
     /** Size of the sized pane while collapsed (e.g. just its header). */
     collapsedSize?: number;
     collapsed?: boolean;
+    /** Collapse the opposite pane without discarding the remembered split size. */
+    otherCollapsed?: boolean;
+    otherCollapsedSize?: number;
     /** Called continuously while dragging / on keyboard steps. */
     onResize: (size: number) => void;
     onCollapsedChange?: (collapsed: boolean) => void;
@@ -41,6 +44,8 @@ let {
     collapseThreshold,
     collapsedSize = 0,
     collapsed = false,
+    otherCollapsed = false,
+    otherCollapsedSize = 0,
     onResize,
     onCollapsedChange,
     onResizeEnd,
@@ -55,6 +60,12 @@ const sizedStyle = $derived(
     direction === 'horizontal'
         ? `width: ${renderedSize}px; flex-shrink: 0;`
         : `height: ${renderedSize}px; flex-shrink: 0;`,
+);
+const sizedIsFluid = $derived(otherCollapsed && !collapsed);
+const otherStyle = $derived(
+    direction === 'horizontal'
+        ? `width: ${otherCollapsedSize}px; flex-shrink: 0;`
+        : `height: ${otherCollapsedSize}px; flex-shrink: 0;`,
 );
 
 function clamp(value: number): number {
@@ -151,9 +162,9 @@ function handleKeyDown(e: KeyboardEvent): void {
 <div class={`split-container ${direction}`} class:resizing={isDragging} data-testid="split-pane">
     <div
         class="split-pane first-pane"
-        class:sized={sizedPane === 'first'}
-        class:fluid={sizedPane !== 'first'}
-        style={sizedPane === 'first' ? sizedStyle : undefined}
+        class:sized={sizedPane === 'first' ? !sizedIsFluid : otherCollapsed}
+        class:fluid={sizedPane === 'first' ? sizedIsFluid : !otherCollapsed}
+        style={sizedPane === 'first' ? (sizedIsFluid ? undefined : sizedStyle) : (otherCollapsed ? otherStyle : undefined)}
     >
         {@render left?.()}
     </div>
@@ -163,6 +174,7 @@ function handleKeyDown(e: KeyboardEvent): void {
     <div
         class="split-handle"
         data-testid="split-handle"
+        hidden={otherCollapsed}
         role="separator"
         tabindex="0"
         aria-label="Resize panels"
@@ -176,9 +188,9 @@ function handleKeyDown(e: KeyboardEvent): void {
 
     <div
         class="split-pane second-pane"
-        class:sized={sizedPane === 'second'}
-        class:fluid={sizedPane !== 'second'}
-        style={sizedPane === 'second' ? sizedStyle : undefined}
+        class:sized={sizedPane === 'second' ? !sizedIsFluid : otherCollapsed}
+        class:fluid={sizedPane === 'second' ? sizedIsFluid : !otherCollapsed}
+        style={sizedPane === 'second' ? (sizedIsFluid ? undefined : sizedStyle) : (otherCollapsed ? otherStyle : undefined)}
     >
         {@render right?.()}
     </div>

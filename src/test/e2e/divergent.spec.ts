@@ -6,9 +6,9 @@
 import { expect, type Page } from '@playwright/test';
 import { TestRepo } from '../test-repo';
 import {
-    clickLogAction,
     focusJJLog,
     getDetailsWebview,
+    rightClickAndSelect,
     test,
     triggerRefresh,
     waitForLogCommitRow,
@@ -100,7 +100,7 @@ test.describe('Divergent Commits E2E', () => {
         // 4. Abandon the "zombie" commit (A v1) to resolve divergence
         await focusJJLog(page);
 
-        await clickLogAction(page, 'commit A v1', 'Abandon');
+        await rightClickAndSelect(page, await waitForLogCommitRow(page, 'commit A v1'), 'Abandon');
 
         // 5. Verify divergence is resolved
         await expect(async () => {

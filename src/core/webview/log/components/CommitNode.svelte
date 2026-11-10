@@ -7,6 +7,7 @@ import type { ActionPayload, CommitAction } from '../../../host/ipc/log-view-sch
 import type { JjLogEntry } from '../../../jj-types';
 import { BookmarkPill, IconButton, TagPill, WorkspacePill } from '../../common/components';
 import type { DragManager } from '../drag-manager.svelte';
+import { COMMIT_ROW_PADDING_LEFT } from '../layout-constants';
 import { formatCommitTooltip } from '../utils/commit-tooltip';
 import { computeCommitActions } from '../utils/commit-utils';
 import DraggableBookmark from './DraggableBookmark.svelte';
@@ -23,6 +24,7 @@ interface Props {
     hiddenActions?: Set<CommitAction>;
     dragManager: DragManager;
     descendantCount?: number;
+    graphPaddingLeft?: number;
 }
 
 let {
@@ -37,6 +39,7 @@ let {
     hiddenActions = new Set(),
     dragManager,
     descendantCount = 0,
+    graphPaddingLeft = 0,
 }: Props = $props();
 
 let isHovered = $state(false);
@@ -192,6 +195,8 @@ const hasActiveBookmarkAlready = $derived(
     data-highlighted={isHighlighted}
     data-hovered={isHovered}
     data-vscode-context={JSON.stringify(vscodeContext)}
+    title={commitTooltip}
+    style:padding-left={`${graphPaddingLeft + COMMIT_ROW_PADDING_LEFT}px`}
     style:background-color={backgroundColor}
     style:outline={outline}
     style:opacity={textOpacity}
@@ -258,7 +263,7 @@ const hasActiveBookmarkAlready = $derived(
         </span>
 
         <!-- Overlay Actions -->
-        {#if isHovered && !dragManager.isDragging && !(selectionCount > 1)}
+        {#if isHovered && !dragManager.isDragging && !(selectionCount > 1) && (visibleActions.newChild || visibleActions.edit || visibleActions.squash)}
             <div
                 class="hover-actions"
                 data-vscode-context={JSON.stringify({
@@ -266,18 +271,13 @@ const hasActiveBookmarkAlready = $derived(
                     'jj.newChildVisible': visibleActions.newChild,
                     'jj.editVisible': visibleActions.edit,
                     'jj.squashVisible': visibleActions.squash,
-                    'jj.abandonVisible': visibleActions.abandon,
                     preventDefaultContextMenuItems: true,
                 })}
-                style:background={isSelected
-                    ? 'linear-gradient(var(--vscode-list-inactiveSelectionBackground), var(--vscode-list-inactiveSelectionBackground)), var(--vscode-sideBar-background)'
-                    : isConflict
-                      ? 'linear-gradient(color-mix(in srgb, transparent, var(--vscode-charts-red) 20%), color-mix(in srgb, transparent, var(--vscode-charts-red) 20%)), var(--vscode-sideBar-background)'
-                      : 'linear-gradient(var(--vscode-list-hoverBackground), var(--vscode-list-hoverBackground)), var(--vscode-sideBar-background)'}
             >
                 {#if visibleActions.newChild}
                     <IconButton
                         title="New Child"
+                        tooltip="Create a new working-copy revision after this commit."
                         icon="codicon-plus"
                         onClick={(e) => {
                             e.stopPropagation();
@@ -294,6 +294,7 @@ const hasActiveBookmarkAlready = $derived(
                 {#if visibleActions.edit}
                     <IconButton
                         title="Edit Commit"
+                        tooltip="Make this commit the working copy so you can edit its files."
                         icon="codicon-edit"
                         onClick={(e) => {
                             e.stopPropagation();
@@ -310,6 +311,7 @@ const hasActiveBookmarkAlready = $derived(
                 {#if visibleActions.squash}
                     <IconButton
                         title="Squash"
+                        tooltip="Move this commit's changes into its parent and remove this commit."
                         icon="codicon-arrow-down"
                         onClick={(e) => {
                             e.stopPropagation();
@@ -323,21 +325,6 @@ const hasActiveBookmarkAlready = $derived(
                     />
                 {/if}
 
-                {#if visibleActions.abandon}
-                    <IconButton
-                        title="Abandon"
-                        icon="codicon-trash"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onAction('abandon', { changeId: commit.change_id });
-                        }}
-                        contextData={{
-                            webviewSection: 'commitAction',
-                            'jj.actionId': 'abandon',
-                            actionTitle: 'Abandon',
-                        }}
-                    />
-                {/if}
             </div>
         {/if}
     </span>
@@ -522,12 +509,12 @@ const hasActiveBookmarkAlready = $derived(
         flex-direction: row;
         justify-content: flex-start;
         padding-bottom: 0;
-        cursor: default;
+        cursor: pointer;
+        box-sizing: border-box;
         width: 100%;
         outline-offset: -2px;
         touch-action: none;
         min-width: 0;
-        padding-left: 6px;
         padding-top: 0;
     }
 
@@ -584,12 +571,14 @@ const hasActiveBookmarkAlready = $derived(
         transform: translateY(-50%);
         display: flex;
         align-items: center;
-        padding-right: 20px;
-        mask-image: linear-gradient(to right, black 60%, transparent 100%);
-        -webkit-mask-image: linear-gradient(to right, black 60%, transparent 100%);
+        gap: 2px;
+        padding: 2px;
+        background: var(--vscode-editorGroupHeader-tabsBackground);
+        border: 1px solid var(--vscode-editorGroupHeader-tabsBorder);
+        border-radius: 4px;
         z-index: 1;
-        height: 100%;
-        padding-left: 0;
+        width: max-content;
+        cursor: default;
     }
 
     .right-column {
