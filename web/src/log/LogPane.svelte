@@ -299,7 +299,7 @@ function handleHeaderClick(e: MouseEvent): void {
 
 :global(.log-content .commit-id) {
     font-family: var(--vscode-editor-font-family, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace) !important;
-    font-size: 12px !important;
+    font-size: var(--vscode-editor-font-size, 12px) !important;
 }
 
 :global(.log-content .commit-desc) {

@@ -57,7 +57,9 @@ Type checks, lint, and the production build passed.
 
 Select **Color Theme → pierre-dark-cobalt** for the screenshot palette: solid
 blue local bookmarks, purple remote bookmarks, amber tags, and rounded green
-commit action buttons. All other surfaces and syntax colors inherit Pierre Dark.
+commit action buttons. Black canvas/sidebar surfaces, subtle raised panels, and
+system-first typography follow [T3 Code v0.1.8](https://github.com/pingdotgg/t3code/releases/tag/v0.1.8),
+with 14px interface rows and 13px code text. Syntax colors still inherit Pierre Dark.
 The original themes retain their palettes. Badges now use compact rectangular
 corners, and action groups remain aligned with the description, leaving IDs visible.
 

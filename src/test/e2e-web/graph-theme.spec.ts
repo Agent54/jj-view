@@ -52,6 +52,16 @@ test('Cobalt badges and actions, Silver lanes, and dotted history retain theme a
         await window.__JJ_VIEW_ENV__?.config.update?.('logTheme', 'silver');
     });
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'pierre-dark-cobalt');
+    await expect(page.getByTestId('log-pane')).toHaveCSS('background-color', 'rgb(0, 0, 0)');
+    await expect(page.getByTestId('log-header')).toHaveCSS('background-color', 'rgb(0, 0, 0)');
+    await expect(page.getByTestId('scm-input-textarea')).toHaveCSS('background-color', 'rgb(17, 17, 17)');
+    await expect(page.getByTestId('scm-input-textarea')).toHaveCSS('font-size', '13px');
+    await expect(page.locator('html')).toHaveCSS('font-size', '16px');
+    await expect(page.locator('body')).toHaveCSS('-webkit-font-smoothing', 'antialiased');
+    await expect(page.locator('.commit-desc').first()).toHaveCSS('font-size', '14px');
+    await expect(page.locator('.commit-id').first()).toHaveCSS('font-size', '13px');
+    await expect(page.locator('.commit-desc').first()).toHaveCSS('font-family', /Inter Variable/);
+    await expect(page.locator('.commit-id').first()).toHaveCSS('font-family', /^"SF Mono"/);
     await page.getByTestId('scm-collapse-toggle').click();
 
     const graph = page.locator('.commit-graph');
@@ -107,6 +117,10 @@ test('Cobalt badges and actions, Silver lanes, and dotted history retain theme a
         await window.__JJ_VIEW_ENV__?.config.update?.('logTheme', 'default');
     });
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'pierre-light');
+    await expect(page.getByTestId('log-pane')).not.toHaveCSS('background-color', 'rgb(0, 0, 0)');
+    await expect(page.locator('.commit-desc').first()).toHaveCSS('font-size', '13px');
+    await expect(page.locator('.commit-id').first()).toHaveCSS('font-size', '12px');
+    await expect(page.locator('.commit-desc').first()).not.toHaveCSS('font-family', /Inter Variable/);
     await expect(local).not.toHaveCSS('background-color', 'rgb(31, 112, 235)');
     await expect(graph.locator('.graph-svg > path').first()).not.toHaveCSS('stroke', 'rgb(230, 237, 244)');
     const lightLineColor = await graph

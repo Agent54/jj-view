@@ -1,0 +1,22 @@
+/**
+ * Copyright 2026 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/* T3 Code v0.1.8 typography: system-first UI, concrete monospace families,
+   16px rem base, 14px interface rows, 13px code, and antialiased rendering.
+   https://github.com/pingdotgg/t3code/blob/v0.1.8/apps/web/src/appearanceFonts.ts
+   These tokens are scoped to Cobalt so switching themes restores their typography. */
+:root[data-theme="pierre-dark-cobalt"],
+:root[data-theme="pierre-dark-cobalt"] body {
+    --vscode-font-family: -apple-system, BlinkMacSystemFont, "Inter Variable", "Segoe UI", system-ui, sans-serif;
+    --vscode-font-size: 14px;
+    --vscode-editor-font-family: "SF Mono", "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
+    --vscode-editor-font-size: 13px;
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.5;
+}
+
+:root[data-theme="pierre-dark-cobalt"] {
+    font-size: 16px;
+}
