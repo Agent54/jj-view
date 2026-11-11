@@ -77,3 +77,16 @@ rendering, switching back to a light theme, and existing graph/tag interactions.
 ![Cobalt hover controls](test-artifacts/pierre-dark-cobalt.gif)
 
 ![Light theme after switching away from Cobalt](test-artifacts/graph-theme-light-fallback.png)
+
+## Empty commits
+
+Empty changes use outlined graph markers, including the green working-copy dot.
+Descriptions remain blank when absent, without `(empty)` or `(no description)`
+labels in the graph, drag preview, tooltip, or parent SCM heading.
+
+Validation: focused browser coverage verifies named and unnamed empty commits,
+dark/light colors, and the transition to a filled working-copy dot after editing
+a file. The tooltip test, type checks, lint, and production build pass.
+
+![Empty commits in Cobalt](test-artifacts/empty-commits-pierre-dark-cobalt.png)
+![Empty commits in light mode](test-artifacts/empty-commits-pierre-light.png)

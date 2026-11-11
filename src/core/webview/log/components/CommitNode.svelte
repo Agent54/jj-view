@@ -158,13 +158,7 @@ const outline = $derived.by(() => {
 const textOpacity = $derived(isDraggingThis ? 0.5 : 1);
 const fontStyle = $derived(isImmutable ? 'italic' : 'normal');
 
-const descriptionFull = $derived.by(() => {
-    let desc = commit.description.trim() || '(no description)';
-    if (isEmpty) {
-        desc = `(empty) ${desc}`;
-    }
-    return desc;
-});
+const descriptionFull = $derived(commit.description.trim());
 const descriptionFirstLine = $derived(descriptionFull.split('\n')[0]);
 const commitTooltip = $derived(formatCommitTooltip(commit));
 

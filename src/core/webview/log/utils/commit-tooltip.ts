@@ -148,12 +148,11 @@ export function formatCommitTooltip(commit: JjLogEntry): string {
         lines.push(`ᴡᴏʀᴋsᴘᴀᴄᴇs: ${commit.working_copies.join(', ')}`);
     }
 
-    // Divider
-    lines.push(DIVIDER);
-
-    // Description
-    const desc = commit.description.trim() || '(no description)';
-    lines.push(desc);
+    const desc = commit.description.trim();
+    if (desc) {
+        // Divider and description
+        lines.push(DIVIDER, desc);
+    }
 
     return lines.join('\n');
 }

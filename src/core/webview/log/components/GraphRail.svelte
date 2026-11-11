@@ -269,7 +269,12 @@ const svgHeight = $derived(height + BOTTOM_PADDING);
                     {cy}
                     r="6"
                     class="node-working-copy"
-                    stroke={node.conflict ? 'var(--vscode-charts-red)' : 'none'}
+                    class:empty={node.isEmpty}
+                    stroke={node.conflict
+                        ? 'var(--vscode-charts-red)'
+                        : node.isEmpty
+                          ? 'var(--vscode-jjView-workingCopy-foreground, var(--vscode-charts-green))'
+                          : 'none'}
                     stroke-width="2"
                 />
             {:else if node.isHidden}
@@ -354,5 +359,9 @@ const svgHeight = $derived(height + BOTTOM_PADDING);
     .node-working-copy {
         fill: var(--vscode-jjView-workingCopy-foreground, var(--vscode-charts-green));
         filter: drop-shadow(0 0 3px color-mix(in srgb, var(--vscode-jjView-workingCopy-foreground, var(--vscode-charts-green)) 45%, transparent));
+    }
+
+    .node-working-copy.empty {
+        fill: var(--vscode-sideBar-background);
     }
 </style>

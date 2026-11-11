@@ -307,9 +307,9 @@ export class ScmModel implements Disposable {
             !parentEntry.parents[0].is_immutable;
 
         const shortId = formatDisplayChangeId(parentEntry.change_id, parentEntry.change_id_shortest, minChangeIdLength);
-        const desc = parentEntry.description?.trim() || '(no description)';
+        const desc = parentEntry.description?.trim() || '';
         const subject = desc.split('\n', 1)[0].trim();
-        const label = `${prefix}: ${shortId} - ${subject}`;
+        const label = `${prefix}: ${shortId}${subject ? ` - ${subject}` : ''}`;
 
         const groupFlags: string[] = [
             ScmContextValue.GroupAllowShowMultiFileDiff,
