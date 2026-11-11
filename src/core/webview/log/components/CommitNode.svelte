@@ -13,6 +13,7 @@ import { computeCommitActions } from '../utils/commit-utils';
 import DraggableBookmark from './DraggableBookmark.svelte';
 
 interface Props {
+    onGenerateDescription?: (commit: JjLogEntry) => Promise<void>;
     commit: JjLogEntry;
     onClick: (modifiers: { multiSelect: boolean }) => void;
     onAction: (action: string, payload: ActionPayload) => void;
@@ -28,6 +29,7 @@ interface Props {
 }
 
 let {
+    onGenerateDescription,
     commit,
     onClick,
     onAction,
@@ -43,8 +45,23 @@ let {
 }: Props = $props();
 
 let isHovered = $state(false);
+let isGeneratingDescription = $state(false);
+
+async function handleGenerateDescription(e: MouseEvent): Promise<void> {
+    e.stopPropagation();
+    if (!onGenerateDescription || !canGenerateDescription || isGeneratingDescription) {
+        return;
+    }
+    isGeneratingDescription = true;
+    try {
+        await onGenerateDescription(commit);
+    } finally {
+        isGeneratingDescription = false;
+    }
+}
 
 const isImmutable = $derived(commit.is_immutable || false);
+const canGenerateDescription = $derived(Boolean(onGenerateDescription) && !isImmutable);
 const isCurrentWorkingCopy = $derived(commit.is_current_working_copy);
 const isConflict = $derived(commit.conflict);
 const isEmpty = $derived(commit.is_empty);
@@ -257,7 +274,7 @@ const hasActiveBookmarkAlready = $derived(
         </span>
 
         <!-- Overlay Actions -->
-        {#if isHovered && !dragManager.isDragging && !(selectionCount > 1) && (visibleActions.newChild || visibleActions.edit || visibleActions.squash)}
+        {#if isHovered && !dragManager.isDragging && (canGenerateDescription || (selectionCount <= 1 && (visibleActions.newChild || visibleActions.edit || visibleActions.squash)))}
             <div
                 class="hover-actions"
                 data-vscode-context={JSON.stringify({
@@ -268,7 +285,17 @@ const hasActiveBookmarkAlready = $derived(
                     preventDefaultContextMenuItems: true,
                 })}
             >
-                {#if visibleActions.newChild}
+                {#if canGenerateDescription}
+                    <IconButton
+                        title="Generate description with AI"
+                        tooltip="Generate a description for this commit without switching the working copy."
+                        icon={isGeneratingDescription ? 'codicon-loading codicon-modifier-spin' : 'codicon-sparkle'}
+                        disabled={isGeneratingDescription}
+                        onClick={handleGenerateDescription}
+                    />
+                {/if}
+
+                {#if selectionCount <= 1 && visibleActions.newChild}
                     <IconButton
                         title="New Child"
                         tooltip="Create a new working-copy revision after this commit."
@@ -285,7 +312,7 @@ const hasActiveBookmarkAlready = $derived(
                     />
                 {/if}
 
-                {#if visibleActions.edit}
+                {#if selectionCount <= 1 && visibleActions.edit}
                     <IconButton
                         title="Edit Commit"
                         tooltip="Make this commit the working copy so you can edit its files."
@@ -302,7 +329,7 @@ const hasActiveBookmarkAlready = $derived(
                     />
                 {/if}
 
-                {#if visibleActions.squash}
+                {#if selectionCount <= 1 && visibleActions.squash}
                     <IconButton
                         title="Squash"
                         tooltip="Move this commit's changes into its parent and remove this commit."

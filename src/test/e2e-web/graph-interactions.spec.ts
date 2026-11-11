@@ -26,7 +26,7 @@ test('hover controls have a clear boundary, explanatory tooltips, and no abandon
     await expect(actions).toHaveCSS('border-top-style', 'solid');
     await expect(actions).toHaveCSS('border-top-width', '1px');
     await expect(actions).toHaveCSS('mask-image', 'none');
-    await expect(actions.getByRole('button')).toHaveCount(3);
+    await expect(actions.getByRole('button')).toHaveCount(4);
     await expect(actions.getByRole('button', { name: 'Abandon' })).toHaveCount(0);
     await expect(row).toHaveCSS('cursor', 'pointer');
     await expect(page.locator('.commit-graph')).toHaveCSS('user-select', 'none');
@@ -49,6 +49,7 @@ test('hover controls have a clear boundary, explanatory tooltips, and no abandon
     }
 
     for (const [name, description] of [
+        ['Generate description with AI', 'Generate a description for this commit without switching the working copy.'],
         ['New Child', 'Create a new working-copy revision after this commit.'],
         ['Edit Commit', 'Make this commit the working copy so you can edit its files.'],
         ['Squash', "Move this commit's changes into its parent and remove this commit."],

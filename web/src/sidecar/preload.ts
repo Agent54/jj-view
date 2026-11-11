@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { parseAgentMessageResponse } from './agent-response';
 import type {
     AgentMessageResponse,
     ConversationMetadata,
@@ -174,19 +175,25 @@ function createAgentBridge(
 ): SidecarAgentBridge {
     return {
         async sendMessage(message: string, convId?: string): Promise<AgentMessageResponse> {
+            const targetConversation = convId || conversationId;
+            if (!targetConversation) {
+                throw new Error(
+                    'AI descriptions require an Antigravity conversation. Run jj-view install-antigravity-plugin, then open JJ View from that conversation’s Plugins menu.',
+                );
+            }
             const resolvedProjectId = await projectIdPromise;
             const res = await secureFetch('/_sidecar/send-message', {
                 method: 'POST',
                 body: JSON.stringify({
-                    conversationId: convId || conversationId,
+                    conversationId: targetConversation,
                     message,
                     projectId: resolvedProjectId,
                 }),
             });
-            if (!res.ok) {
-                throw new Error(await res.text());
+            if (!res.ok && !res.headers.get('Content-Type')?.includes('application/json')) {
+                throw new Error(`Antigravity request failed (${res.status}): ${await res.text()}`);
             }
-            return (await res.json()) as AgentMessageResponse;
+            return parseAgentMessageResponse(await res.json());
         },
 
         async startConversation(message: string, title?: string): Promise<NewConversationResult> {

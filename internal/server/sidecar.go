@@ -107,7 +107,7 @@ func (s *Server) runAgentAPI(ctx context.Context, projectID string, args []strin
 		}
 	}
 	if agentAPIPath == "" {
-		return nil, errors.New("agentapi binary not found in PATH or standard location")
+		return nil, errors.New("Antigravity agentapi was not found on PATH or at ~/.gemini/antigravity/bin/agentapi. Open JJ View inside an Antigravity conversation with its agent integration available")
 	}
 
 	cmd := exec.CommandContext(ctx, agentAPIPath, args...)

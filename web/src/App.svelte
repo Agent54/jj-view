@@ -14,7 +14,7 @@ import type { JjEditFsService } from '../../src/core/jj-edit-fs-service';
 import { JjProcessTracker } from '../../src/core/jj-process-tracker';
 import type { JjRepository } from '../../src/core/jj-repository';
 import type { JjRepositoryManager } from '../../src/core/jj-repository-manager';
-import type { JjStatusEntry } from '../../src/core/jj-types';
+import type { JjLogEntry, JjStatusEntry } from '../../src/core/jj-types';
 import type { JjViewFsService } from '../../src/core/jj-view-fs-service';
 import type { ScmModel, ScmSnapshot } from '../../src/core/scm-model';
 import { createJjResourceState, type JjResourceState } from '../../src/core/scm-resource-state';
@@ -53,6 +53,7 @@ import { QuickInputService } from './quick-input/quick-input-service';
 import ScmPane from './scm/ScmPane.svelte';
 import type { ScmRepositoryEntry } from './scm/scm-repo-types';
 import SettingsModal from './settings/SettingsModal.svelte';
+import { generateCommitDescription } from './sidecar/commit-description';
 import StatusBar from './status/StatusBar.svelte';
 import { StatusBarService } from './status/status-bar-service';
 import TabBar from './tabs/TabBar.svelte';
@@ -473,6 +474,36 @@ $effect(() => {
         sub.dispose();
     };
 });
+
+async function handleGenerateDescription(targetRoot?: string, commit?: JjLogEntry): Promise<string | undefined> {
+    const env = webHostEnv;
+    const repo = targetRoot
+        ? (repoManager?.repositories.find((candidate) => candidate.rootUri.fsPath === targetRoot) ??
+          (focusedRepo?.rootUri.fsPath === targetRoot ? focusedRepo : undefined))
+        : focusedRepo;
+    if (!env || !repo) {
+        return undefined;
+    }
+    try {
+        const result = await generateCommitDescription(repo.jj, env.sidecar, commit?.commit_id ?? '@');
+        if (!result.description) {
+            void env.ui.showInformation(
+                'Description requested in Antigravity. The log will update when the agent applies it.',
+            );
+        } else if (commit) {
+            await repo.jj.describe(result.description, result.changeId);
+            await repo.refresh();
+        }
+        return result.description;
+    } catch (err) {
+        void env.ui.showErrorMessage(`AI description failed: ${toError(err).message}`);
+        return undefined;
+    }
+}
+
+async function handleGenerateCommitDescription(commit: JjLogEntry): Promise<void> {
+    await handleGenerateDescription(undefined, commit);
+}
 
 async function handleAddSelectionToChat(explicitSelection?: EditorChatContextSelection): Promise<void> {
     if (!webHostEnv?.sidecar.isAvailable) {
@@ -1021,23 +1052,7 @@ onMount(() => {
             {rootContext}
             openDiffOnClick={true}
             isSidecarAvailable={Boolean(webHostEnv?.sidecar.isAvailable)}
-            onDraftWithAgent={webHostEnv?.sidecar.isAvailable
-                ? async () => {
-                      try {
-                          const res = await webHostEnv.sidecar.sendMessage(
-                              'Please draft a concise and conventional commit message for the current working copy changes.',
-                          );
-                          if (res?.error) {
-                              webHostEnv.ui.showErrorMessage(`Agent drafting failed: ${res.error}`);
-                              return undefined;
-                          }
-                          return res?.response?.trim();
-                      } catch (err) {
-                          webHostEnv.ui.showErrorMessage(`Agent drafting error: ${toError(err).message}`);
-                          return undefined;
-                      }
-                  }
-                : undefined}
+            onDraftWithAgent={webHostEnv?.sidecar.isAvailable ? handleGenerateDescription : undefined}
             onOpenResource={handleOpenResource}
             onCommit={handleCommit}
             onSetDescription={handleSetDescription}
@@ -1059,6 +1074,7 @@ onMount(() => {
                 {rootContext}
                 onAction={handleAction}
                 collapsed={logLayout.collapsed}
+                onGenerateDescription={handleGenerateCommitDescription}
                 onToggleCollapsed={logLayout.onToggleCollapsed}
                 onPreferredHeightChange={logLayout.onPreferredHeightChange}
             />

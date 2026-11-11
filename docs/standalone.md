@@ -43,6 +43,35 @@ This installs JJ View as an Antigravity plugin with its own Source Control icon,
 
 When the hub launches the daemon it configures it through environment variables (`ANTIGRAVITY_SIDECAR_WEB_PORT`, `ANTIGRAVITY_SIDECAR_UI_TOKEN`, `ANTIGRAVITY_CSRF_TOKEN`) rather than flags; you do not need to set these yourself. In that mode the browser is never opened automatically and the hub, not the daemon, controls which origins may connect.
 
+### AI commit descriptions
+
+The sparkle buttons use the existing Antigravity agent integration. JJ View does
+not configure a separate AI provider, model, or API key. A normal standalone
+browser session has no agent conversation attached.
+
+To enable it, run `jj-view install-antigravity-plugin` (from this checkout:
+`./dist/bin/jj-view install-antigravity-plugin` after `pnpm build:all`). Open JJ View
+from **+ → Plugins → jj view** inside an Antigravity conversation. Antigravity's
+`agentapi` must be available to the daemon on its `PATH` or at
+`~/.gemini/antigravity/bin/agentapi`; registering the plugin does not install that
+runtime. The conversation supplies the AI setup already in use.
+
+Hover any mutable commit and click **Generate description with AI**, or use the
+sparkle in the Source Control input for the working copy. Each request includes
+the repository, exact change and commit IDs, existing description, and that
+revision's diff. The agent is asked to verify the target is unchanged and mutable,
+then run `jj describe -r <changeId>` without switching the working copy. Immutable
+commits have no sparkle action.
+
+`agentapi` sends an asynchronous conversation request, so **Description requested**
+does not mean generation is finished. The log updates when the agent applies the
+description; check the conversation if it does not. Injected bridges that return
+description text directly remain supported: the SCM input receives a draft and
+the graph action applies it to the chosen revision. Stale returned text is rejected.
+Missing setup, rejected requests, and empty responses are shown as errors instead
+of silently leaving the button unchanged. Development mode proxies these requests
+through Vite to the existing daemon.
+
 ## Code forges
 
 GitHub, GitLab and Gerrit integrations work the same as in the extension, and all forge requests are made by the daemon rather than the browser page.

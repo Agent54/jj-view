@@ -20,6 +20,8 @@ import { DragManager } from './drag-manager.svelte';
 import { findMatchingCommit } from './utils/commit-utils';
 import { calculateNextSelection, hasImmutableSelection } from './utils/selection-utils';
 
+let { onGenerateDescription }: { onGenerateDescription?: (commit: JjLogEntry) => Promise<void> } = $props();
+
 let commits = $state<JjLogEntry[]>([]);
 let minChangeIdLength = $state(1);
 let theme = $state('default');
@@ -327,6 +329,7 @@ function handleGraphAction(action: string, payload: ActionPayload) {
         >
             <CommitGraph
                 {commits}
+                {onGenerateDescription}
                 onAction={handleGraphAction}
                 {selectedCommitIds}
                 {highlightedCommitId}

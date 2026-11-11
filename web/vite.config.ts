@@ -122,6 +122,10 @@ export default defineConfig({
             allow: [rootDir],
         },
         proxy: {
+            '/_sidecar': {
+                target: `http://127.0.0.1:${backendPort}`,
+                changeOrigin: true,
+            },
             '/api': {
                 target: `http://127.0.0.1:${backendPort}`,
                 changeOrigin: true,

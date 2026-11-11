@@ -1749,6 +1749,10 @@ export class JjService {
         return this.run('show', ['-r', revision, '--stat', '--color', 'always'], { useCachedSnapshot: true });
     }
 
+    async getRevisionDiff(revision: string): Promise<string> {
+        return this.run('diff', ['--git', '-r', revision], { useCachedSnapshot: true });
+    }
+
     async getDiff(revision: string, file: string): Promise<string> {
         const relativePath = this.toRelative(file);
         return this.run('diff', ['--git', '-r', revision, relativePath], { useCachedSnapshot: true });

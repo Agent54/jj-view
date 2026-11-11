@@ -3,7 +3,7 @@
   SPDX-License-Identifier: Apache-2.0
 -->
 <script lang="ts">
-import { onMount } from 'svelte';
+import { onDestroy, onMount } from 'svelte';
 
 interface Props {
     value?: string;
@@ -39,6 +39,10 @@ let previousValue = $state(value);
 let previousChangeId = $state(changeId);
 let textareaEl: HTMLTextAreaElement | null = $state(null);
 let isDrafting = $state(false);
+let disposed = false;
+onDestroy(() => {
+    disposed = true;
+});
 
 $effect(() => {
     if (changeId !== previousChangeId) {
@@ -106,9 +110,11 @@ async function handleDraftWithAgent(): Promise<void> {
         return;
     }
     isDrafting = true;
+    const requestedChangeId = changeId;
+    const originalDescription = description;
     try {
         const text = await onDraftWithAgent();
-        if (text) {
+        if (text && !disposed && changeId === requestedChangeId && description === originalDescription) {
             description = text;
             onValueChange?.(text);
             setTimeout(() => handleInput(), 0);

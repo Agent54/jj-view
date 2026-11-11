@@ -23,6 +23,7 @@ import CommitNode from './CommitNode.svelte';
 import GraphRail from './GraphRail.svelte';
 
 interface Props {
+    onGenerateDescription?: (commit: JjLogEntry) => Promise<void>;
     commits: JjLogEntry[];
     onAction: (action: string, payload: ActionPayload) => void;
     selectedCommitIds?: Set<string>;
@@ -35,6 +36,7 @@ interface Props {
 }
 
 let {
+    onGenerateDescription,
     commits,
     onAction,
     selectedCommitIds = new Set(),
@@ -148,6 +150,7 @@ const graphAreaWidth = $derived(computeGraphAreaWidth(layout.width, LANE_WIDTH, 
                 >
                     <CommitNode
                         commit={row}
+                        {onGenerateDescription}
                         onClick={(modifiers) =>
                             onAction('select', {
                                 changeId: row.change_id,
