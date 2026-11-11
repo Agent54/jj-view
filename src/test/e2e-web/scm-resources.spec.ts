@@ -72,6 +72,7 @@ test.describe('Standalone Web SCM Resources', () => {
             const detailIcon = detailRow.getByTestId(`file-icon-${filename}`);
             await expect(detailIcon).toBeVisible();
             expect(await detailIcon.innerHTML()).toBe(await sourceIcon.innerHTML());
+            await expect(detailRow).toHaveCSS('height', await sourceRow.evaluate((el) => getComputedStyle(el).height));
             await expect(detailRow.locator('.file-meta-group').getByRole('img', { name: label })).toHaveClass(
                 new RegExp(`codicon-${glyph}`),
             );
@@ -292,6 +293,9 @@ test.describe('Standalone Web SCM Resources', () => {
         testRepo.writeFile('package.json', '{\n  "name": "app"\n}\n');
         testRepo.writeFile('src/styles/app.css', 'body { color: red; }\n');
         testRepo.writeFile('.github/workflows/ci.yml', 'name: CI\n');
+        testRepo.writeFile('src/main.go', 'package main\n');
+        testRepo.writeFile('src/Component.tsx', 'export const Component = () => null;\n');
+        testRepo.writeFile('config.toml', 'enabled = true\n');
 
         await page.goto(server.serverUrl);
         await waitForScmReady(page);
@@ -305,6 +309,9 @@ test.describe('Standalone Web SCM Resources', () => {
             .filter({ hasText: 'App.svelte' });
         await expect(svelteItem).toBeVisible();
         await expect(svelteItem.locator('[data-testid="file-icon-App.svelte"] svg')).toBeVisible();
+        const svelteArtwork = await svelteItem.locator('svg path').boundingBox();
+        expect(svelteArtwork?.height).toBeGreaterThanOrEqual(12);
+        expect(svelteArtwork?.height).toBeLessThanOrEqual(16);
 
         const testItem = workingCopyGroup
             .locator('[data-testid="scm-resource-item"]')
@@ -319,6 +326,8 @@ test.describe('Standalone Web SCM Resources', () => {
         });
 
         // Capture screenshot of full view
+        await page.locator('.commit-row.working-copy .commit-id').click();
+        await expect(page.getByTestId('commit-details-view').getByTestId('file-icon-App.svelte')).toBeVisible();
         await page.screenshot({
             path: path.join(ARTIFACT_DIR, 'jj-view-full-view.png'),
         });

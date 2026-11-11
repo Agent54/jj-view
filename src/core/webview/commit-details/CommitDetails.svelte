@@ -1160,15 +1160,16 @@ function getFileColor(status: string, conflicted?: boolean): string {
     .files-items {
         display: flex;
         flex-direction: column;
-        gap: 2px;
+        gap: 0;
     }
 
     .file-row {
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 6px;
         width: 100%;
-        padding: 5px 8px;
+        height: 22px;
+        padding: 0 8px;
         border-radius: 4px;
         border: none;
         background: transparent;
@@ -1194,7 +1195,7 @@ function getFileColor(status: string, conflicted?: boolean): string {
     }
 
     .file-icon {
-        font-size: 15px;
+        font-size: 16px;
         width: 16px;
         height: 16px;
         display: inline-flex;

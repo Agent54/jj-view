@@ -18,11 +18,15 @@ const icon = $derived(getFileIcon(filename));
     {#if icon.type === 'svg'}
         {@html icon.svg}
     {:else if icon.type === 'badge'}
-        <span class="file-icon-badge" style="color: {icon.color};">
+        <span
+            class="file-icon-badge"
+            style:color={icon.color}
+            style:transform={icon.text && icon.text.length > 2 ? `scaleX(${2 / icon.text.length})` : undefined}
+        >
             {icon.text}
         </span>
     {:else if icon.type === 'codicon'}
-        <i class={`codicon ${icon.codicon}`} style="color: {icon.color}; font-size: 14px;"></i>
+        <i class={`codicon ${icon.codicon}`} style="color: {icon.color}; font-size: 16px;"></i>
     {/if}
 </span>
 
@@ -42,7 +46,8 @@ const icon = $derived(getFileIcon(filename));
 }
 
 .file-icon-badge {
-    font-size: 10px;
+    font-size: 12px;
+    flex-shrink: 0;
     font-weight: 700;
     line-height: 1;
     letter-spacing: -0.4px;
@@ -51,5 +56,11 @@ const icon = $derived(getFileIcon(filename));
     align-items: center;
     justify-content: center;
     text-align: center;
+}
+
+.file-icon-wrapper :global(svg) {
+    display: block;
+    width: 16px;
+    height: 16px;
 }
 </style>
