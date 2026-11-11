@@ -3,7 +3,7 @@
   SPDX-License-Identifier: Apache-2.0
 -->
 <script lang="ts">
-import type { GraphEdge, GraphNode, GraphPoint, GraphRow } from '../graph-model';
+import type { GraphEdge, GraphNode, GraphPoint, GraphRow, GraphTermination } from '../graph-model';
 import { isElisionRow } from '../graph-model';
 import {
     LANE_CENTER_X,
@@ -18,7 +18,7 @@ import {
 interface Props {
     nodes: GraphNode[];
     edges: GraphEdge[];
-    terminations?: { x: number; y: number }[];
+    terminations?: GraphTermination[];
     width: number;
     height: number;
     rowOffsets: number[];
@@ -211,14 +211,13 @@ const svgHeight = $derived(height + BOTTOM_PADDING);
         <g class="history-termination" transform={`translate(${mx}, ${my})`}>
             <!-- Clear the solid edge before drawing the dotted continuation and tilde. -->
             <rect x="-5" y="-18" width="10" height="24" fill="var(--vscode-sideBar-background)" />
-            {#each [0, 1, 2] as dot (dot)}
+            {#each [term.color, `color-mix(in srgb, ${term.color}, var(--vscode-descriptionForeground))`, 'var(--vscode-descriptionForeground)'] as color, dot (dot)}
                 <circle
                     class="history-dot"
                     cx="0"
                     cy={-16 + dot * 4}
                     r="1"
-                    fill="var(--vscode-descriptionForeground)"
-                    opacity={1 - dot * 0.2}
+                    fill={color}
                 />
             {/each}
             <path

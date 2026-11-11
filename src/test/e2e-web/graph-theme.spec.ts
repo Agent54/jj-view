@@ -73,6 +73,10 @@ test('Cobalt badges and actions, Silver lanes, and dotted history retain theme a
     const termination = graph.locator('.history-termination').first();
     await expect(termination).toBeVisible();
     await expect(termination.locator('.history-dot')).toHaveCount(3);
+    await expect(termination.locator('.history-dot').first()).toHaveCSS('fill', 'rgb(230, 237, 244)');
+    const tildeColor = await termination.locator('path').evaluate((el) => getComputedStyle(el).stroke);
+    await expect(termination.locator('.history-dot').last()).toHaveCSS('fill', tildeColor);
+    await expect(termination.locator('.history-dot').last()).toHaveCSS('opacity', '1');
 
     const releaseRow = graph.locator('.commit-row', { hasText: 'Release candidate' });
     await recordGifFlow(
@@ -105,5 +109,12 @@ test('Cobalt badges and actions, Silver lanes, and dotted history retain theme a
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'pierre-light');
     await expect(local).not.toHaveCSS('background-color', 'rgb(31, 112, 235)');
     await expect(graph.locator('.graph-svg > path').first()).not.toHaveCSS('stroke', 'rgb(230, 237, 244)');
+    const lightLineColor = await graph
+        .locator('.graph-svg > path')
+        .first()
+        .evaluate((el) => getComputedStyle(el).stroke);
+    const lightTildeColor = await termination.locator('path').evaluate((el) => getComputedStyle(el).stroke);
+    await expect(termination.locator('.history-dot').first()).toHaveCSS('fill', lightLineColor);
+    await expect(termination.locator('.history-dot').last()).toHaveCSS('fill', lightTildeColor);
     await page.screenshot({ path: path.join(ARTIFACT_DIR, 'graph-theme-light-fallback.png') });
 });

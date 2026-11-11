@@ -63,7 +63,8 @@ corners, and action groups remain aligned with the description, leaving IDs visi
 
 Select **Log Theme → silver** for pale graph lanes with green node outlines.
 The working copy is a green dot with a subtle glow; a conflict retains its red
-outline. History gaps taper into three small dots before the tilde. Both theme
+outline. History gaps taper into three small dots, blending from the incoming
+line color to the tilde's grey. Both theme
 selectors remain independent, and Silver also supplies contrasting light-mode lanes.
 
 Validation: 27 graph/theme unit tests and six browser tests passed, together with

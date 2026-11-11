@@ -65,7 +65,7 @@ export function computeGraphLayout(commits: JjLogEntry[], themeName: string = 'd
 
     const nodes: GraphNode[] = [];
     const edges: GraphEdge[] = [];
-    const terminations: { x: number; y: number }[] = [];
+    const terminations: { x: number; y: number; edge?: GraphEdge }[] = [];
     let activeEdges: ActiveEdge[] = [];
     let maxColumns = 0;
 
@@ -114,7 +114,11 @@ export function computeGraphLayout(commits: JjLogEntry[], themeName: string = 'd
 
         if (isElisionRow(row)) {
             // It's a synthetic elision row! Record its termination marker
-            terminations.push({ x: nodeLane, y: nodeY });
+            terminations.push({
+                x: nodeLane,
+                y: nodeY,
+                edge: activeEdges.find((ae) => ae.targetChangeId === changeId)?.edge,
+            });
         }
 
         const nodeColor = getColor(nodeLane, themeName);
@@ -230,7 +234,7 @@ export function computeGraphLayout(commits: JjLogEntry[], themeName: string = 'd
 
         // 6. Handle elision trailing markers (anonymous roots)
         if (parents.length === 0 && directParents.size > 0) {
-            edges.push({
+            const edge: GraphEdge = {
                 id: `${changeId}->unresolved-elision`,
                 type: 'parent',
                 color: nodeColor,
@@ -239,8 +243,9 @@ export function computeGraphLayout(commits: JjLogEntry[], themeName: string = 'd
                     { type: 'node', x: nodeLane, y: nodeY },
                     { type: 'node', x: nodeLane, y: nodeY + 1 },
                 ],
-            });
-            terminations.push({ x: nodeLane, y: nodeY + 1 });
+            };
+            edges.push(edge);
+            terminations.push({ x: nodeLane, y: nodeY + 1, edge });
         }
     });
 
@@ -265,7 +270,8 @@ export function computeGraphLayout(commits: JjLogEntry[], themeName: string = 'd
     return {
         nodes,
         edges: cleanedEdges,
-        terminations,
+        // Use the final edge color: later lane joins can change it during layout.
+        terminations: terminations.map(({ x, y, edge }) => ({ x, y, color: edge?.color ?? getColor(x, themeName) })),
         width,
         height: displayRows.length, // Total layout rows
         rows: displayRows,
