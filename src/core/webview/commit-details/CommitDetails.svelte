@@ -584,8 +584,11 @@ function getFileColor(status: string, conflicted?: boolean): string {
         <div class="section-header files-header" bind:clientHeight={filesHeaderHeight}>
             <div class="section-title-group">
                 <h3 class="section-title">
-                    Changed Files {isLoadingFiles && files.length === 0 ? '' : `(${files.length})`}
+                    Changed Files
                 </h3>
+                {#if !isLoadingFiles || files.length > 0}
+                    <span class="count-badge" use:tooltip={`${files.length} files`}>{files.length}</span>
+                {/if}
                 {#if totalAdditions > 0 || totalDeletions > 0}
                     <div class="diff-summary-badges">
                         {#if totalAdditions > 0}
@@ -1104,6 +1107,24 @@ function getFileColor(status: string, conflicted?: boolean): string {
         align-items: center;
         gap: 4px;
         font-family: var(--vscode-editor-font-family), monospace;
+    }
+
+    .count-badge {
+        background-color: var(--vscode-badge-background);
+        color: var(--vscode-badge-foreground);
+        border-radius: 11px;
+        padding: 0 6px;
+        font-size: 11px;
+        font-weight: 600;
+        min-width: 18px;
+        height: 18px;
+        line-height: 18px;
+        text-align: center;
+        user-select: none;
+        box-sizing: border-box;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
     }
 
     .stat-pill {

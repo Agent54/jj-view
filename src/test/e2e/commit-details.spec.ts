@@ -111,7 +111,8 @@ test.describe('Commit Details E2E', () => {
             await expect(details.locator('text=g.txt')).toBeVisible();
 
             // Verify the "Changed Files" count label
-            await expect(details.locator('text=Changed Files (2)')).toBeVisible();
+            await expect(details.getByRole('heading', { name: 'Changed Files', exact: true })).toBeVisible();
+            await expect(details.locator('.files-header .count-badge')).toHaveText('2');
         });
 
         test('Marks the conflicted file in the file list with conflict sides and warning icon', async () => {

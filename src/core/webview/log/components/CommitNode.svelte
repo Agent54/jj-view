@@ -633,10 +633,11 @@ const hasActiveBookmarkAlready = $derived(
         display: inline-flex;
         align-items: center;
         flex-shrink: 0;
-        gap: 4px;
+        gap: 6px;
         margin-left: 12px;
         color: var(--vscode-descriptionForeground);
         font-weight: normal;
+        opacity: 0.8;
     }
 
     .commit-time {
