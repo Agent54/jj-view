@@ -32,9 +32,9 @@ let { fileName, dirName, deleted = false, conflicted = false }: Props = $props()
     }
 
     .file-name {
-        font-weight: normal;
+        font-weight: 500;
         color: var(--vscode-foreground, #d4d4d4);
-        font-size: var(--vscode-font-size, 13px);
+        font-size: 13px;
         flex-shrink: 0;
         line-height: 22px;
     }

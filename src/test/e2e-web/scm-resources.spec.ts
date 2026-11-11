@@ -181,9 +181,9 @@ test.describe('Standalone Web SCM Resources', () => {
         await expect(fileName).toHaveText('button.ts');
         await expect(dirName).toHaveText('src/components');
 
-        // Check font styling: normal weight (400), not bold/semi-bold
+        // Match Commit Details' medium filename weight.
         const fileNameWeight = await fileName.evaluate((el) => window.getComputedStyle(el).fontWeight);
-        expect(fileNameWeight).toBe('400');
+        expect(fileNameWeight).toBe('500');
 
         // Check baseline alignment container style
         const containerAlign = await nestedItem
