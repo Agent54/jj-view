@@ -31,6 +31,23 @@ test('hover controls have a clear boundary, explanatory tooltips, and no abandon
     await expect(row).toHaveCSS('cursor', 'pointer');
     await expect(page.locator('.commit-graph')).toHaveCSS('user-select', 'none');
 
+    for (const alignment of ['aligned', 'compact']) {
+        await page.evaluate(async (value) => {
+            await window.__JJ_VIEW_ENV__?.config.update?.('graphLabelAlignment', value);
+        }, alignment);
+        await row.hover();
+        await expect(async () => {
+            const actionsBox = await actions.boundingBox();
+            const descriptionBox = await row.locator('.commit-desc').boundingBox();
+            const idBox = await row.locator('.commit-id').boundingBox();
+            if (!actionsBox || !descriptionBox || !idBox) {
+                throw new Error('Expected visible commit actions, description, and change ID');
+            }
+            expect(Math.abs(actionsBox.x - descriptionBox.x)).toBeLessThan(1);
+            expect(actionsBox.x).toBeGreaterThan(idBox.x + idBox.width);
+        }).toPass();
+    }
+
     for (const [name, description] of [
         ['New Child', 'Create a new working-copy revision after this commit.'],
         ['Edit Commit', 'Make this commit the working copy so you can edit its files.'],

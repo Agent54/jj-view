@@ -17,7 +17,15 @@ interface Props {
     onToggleCollapsed?: () => void;
 }
 
-let { title = 'SOURCE CONTROL', menuRegistry, context, showActions = true, onAction, collapsed = false, onToggleCollapsed }: Props = $props();
+let {
+    title = 'SOURCE CONTROL',
+    menuRegistry,
+    context,
+    showActions = true,
+    onAction,
+    collapsed = false,
+    onToggleCollapsed,
+}: Props = $props();
 
 let version = $state(0);
 

@@ -146,6 +146,10 @@ const PIERRE_THEME_LOADERS: Record<string, PierreThemeLoader> = {
 const DEFAULT_PIERRE_THEME = 'pierre-dark-soft';
 
 const SHIKI_THEME_LOADERS: Record<string, ThemeLoader> = {
+    'pierre-dark-cobalt': async () => {
+        const { default: theme } = await import('./themes/pierre-dark-cobalt');
+        return { default: toThemeRegistration(theme) };
+    },
     'github-dark': () => import('@shikijs/themes/github-dark'),
     'github-dark-dimmed': () => import('@shikijs/themes/github-dark-dimmed'),
     'catppuccin-mocha': () => import('@shikijs/themes/catppuccin-mocha'),

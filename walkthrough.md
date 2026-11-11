@@ -52,3 +52,27 @@ Type checks, lint, and the production build passed.
 ![Outlined controls in the dark theme](test-artifacts/commit-actions-pierre-dark-soft.png)
 
 ![Outlined controls in the light theme](test-artifacts/commit-actions-pierre-light.png)
+
+## Cobalt badges and Silver graph
+
+Select **Color Theme → pierre-dark-cobalt** for the screenshot palette: solid
+blue local bookmarks, purple remote bookmarks, amber tags, and rounded green
+commit action buttons. All other surfaces and syntax colors inherit Pierre Dark.
+The original themes retain their palettes. Badges now use compact rectangular
+corners, and action groups remain aligned with the description, leaving IDs visible.
+
+Select **Log Theme → silver** for pale graph lanes with green node outlines.
+The working copy is a green dot with a subtle glow; a conflict retains its red
+outline. History gaps taper into three small dots before the tilde. Both theme
+selectors remain independent, and Silver also supplies contrasting light-mode lanes.
+
+Validation: 27 graph/theme unit tests and six browser tests passed, together with
+type checks, lint, and the production build. Browser coverage includes local,
+remote, and tag badges, internal and trailing history gaps, custom-theme diff
+rendering, switching back to a light theme, and existing graph/tag interactions.
+
+![Cobalt badges and graph controls](test-artifacts/pierre-dark-cobalt.png)
+
+![Cobalt hover controls](test-artifacts/pierre-dark-cobalt.gif)
+
+![Light theme after switching away from Cobalt](test-artifacts/graph-theme-light-fallback.png)

@@ -129,6 +129,7 @@ const graphAreaWidth = $derived(computeGraphAreaWidth(layout.width, LANE_WIDTH, 
                 <div
                     role="presentation"
                     class="elision-row"
+                    style:height={`${ROW_HEIGHT_ELISION}px`}
                     style:padding-left={`${paddingLeft}px`}
                 >
                     {#if !isLastRow}
@@ -187,7 +188,6 @@ const graphAreaWidth = $derived(computeGraphAreaWidth(layout.width, LANE_WIDTH, 
     }
 
     .elision-row {
-        height: 10px;
         display: flex;
         align-items: center;
     }

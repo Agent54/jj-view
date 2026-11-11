@@ -8,9 +8,10 @@ import { PACKAGE_SETTINGS, type SettingDefinition } from './package-settings.gen
 export type { SettingDefinition };
 
 export const AVAILABLE_THEMES = [
-    // Pierre Themes (10)
+    // Pierre Themes (including the Cobalt variant)
     'pierre-dark-soft',
     'pierre-dark',
+    'pierre-dark-cobalt',
     'pierre-dark-vibrant',
     'pierre-dark-protanopia-deuteranopia',
     'pierre-dark-tritanopia',
@@ -65,6 +66,7 @@ export const THEME_DESCRIPTIONS: readonly string[] = [
     // Pierre Themes
     'Pierre Dark Soft (Recommended - softer contrast canvas)',
     'Pierre Dark (Standard dark theme)',
+    'Pierre Dark Cobalt (Blue bookmarks, purple remotes, amber tags, green actions)',
     'Pierre Dark Vibrant (Vibrant accents)',
     'Pierre Dark Protanopia/Deuteranopia (Red-green accessible)',
     'Pierre Dark Tritanopia (Blue-yellow accessible)',

@@ -98,4 +98,20 @@ describe('generateThemes', () => {
         expect(css).toContain(`.vscode-light .theme-test-opaque {`);
         expect(css).toContain(`--jj-lane-0: rgb(from var(--vscode-charts-yellow) r g b / 1);`);
     });
+
+    it('supports separate node colors without changing lane colors or other themes', () => {
+        const { css } = generateThemes({
+            silver: {
+                strategy: 'clamp',
+                colors: ['#e6edf4'],
+                nodeColor: '--opaque(var(--vscode-charts-green))',
+                nodeFill: '#e6edf4',
+            },
+            regular: { strategy: 'cycle', colors: ['#123456'] },
+        });
+        expect(css).toContain('--jj-lane-0: #e6edf4;');
+        expect(css).toContain('--jj-node-color: rgb(from var(--vscode-charts-green) r g b / 1);');
+        expect(css).toContain('--jj-node-fill: #e6edf4;');
+        expect(css.split('.theme-regular')[1]).not.toContain('--jj-node-');
+    });
 });

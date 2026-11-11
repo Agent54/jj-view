@@ -208,8 +208,19 @@ const svgHeight = $derived(height + BOTTOM_PADDING);
             term.y >= rows.length
                 ? (rowOffsets[rows.length - 1] || 0) + lastRowOffset
                 : getLayoutRowPixelY({ type: 'node', x: term.x, y: term.y })}
-        <g transform={`translate(${mx}, ${my})`}>
-            <rect x="-5" y="-6" width="10" height="12" fill="var(--vscode-sideBar-background)" />
+        <g class="history-termination" transform={`translate(${mx}, ${my})`}>
+            <!-- Clear the solid edge before drawing the dotted continuation and tilde. -->
+            <rect x="-5" y="-18" width="10" height="24" fill="var(--vscode-sideBar-background)" />
+            {#each [0, 1, 2] as dot (dot)}
+                <circle
+                    class="history-dot"
+                    cx="0"
+                    cy={-16 + dot * 4}
+                    r="1"
+                    fill="var(--vscode-descriptionForeground)"
+                    opacity={1 - dot * 0.2}
+                />
+            {/each}
             <path
                 d="M -4,1 C -4,-2 -1,-2 0,0 C 1,2 4,2 4,-1"
                 stroke="var(--vscode-descriptionForeground)"
@@ -226,6 +237,8 @@ const svgHeight = $derived(height + BOTTOM_PADDING);
         {@const cy = getLayoutRowPixelY({ type: 'node', x: node.x, y: node.y })}
         {@const isSelected = selectedNodes.has(node.changeId)}
         {@const isHighlighted = highlightedNodeId !== undefined && node.changeId === highlightedNodeId}
+        {@const nodeColor = `var(--jj-node-color, ${node.color})`}
+        {@const nodeFill = `var(--jj-node-fill, ${node.color})`}
         <g data-commit-id={node.commitId}>
             {#if isSelected}
                 <circle
@@ -252,16 +265,14 @@ const svgHeight = $derived(height + BOTTOM_PADDING);
 
             {#if node.isCurrentWorkingCopy}
                 <circle {cx} {cy} r="8" fill="var(--vscode-sideBar-background)" />
-                <text
-                    x={cx}
-                    y={cy}
-                    dy="0.3em"
-                    text-anchor="middle"
-                    fill={node.conflict ? 'var(--vscode-charts-red)' : 'var(--vscode-editor-foreground)'}
-                    class="node-working-copy-text"
-                >
-                    @
-                </text>
+                <circle
+                    {cx}
+                    {cy}
+                    r="6"
+                    class="node-working-copy"
+                    stroke={node.conflict ? 'var(--vscode-charts-red)' : 'none'}
+                    stroke-width="2"
+                />
             {:else if node.isHidden}
                 <g transform={`translate(${cx}, ${cy})`}>
                     <circle cx="0" cy="0" r="8" fill="var(--vscode-sideBar-background)" />
@@ -303,7 +314,7 @@ const svgHeight = $derived(height + BOTTOM_PADDING);
                     <polygon
                         points={`${cx},${cy - 6} ${cx + 6},${cy} ${cx},${cy + 6} ${cx - 6},${cy}`}
                         fill="var(--vscode-sideBar-background)"
-                        stroke={node.color}
+                        stroke={nodeColor}
                         stroke-width="2"
                         stroke-linejoin="round"
                     />
@@ -313,20 +324,20 @@ const svgHeight = $derived(height + BOTTOM_PADDING);
                         {cy}
                         r="5"
                         fill="var(--vscode-sideBar-background)"
-                        stroke={node.color}
+                        stroke={nodeColor}
                         stroke-width="2"
                     />
                 {/if}
             {:else if node.isImmutable}
                 <polygon
                     points={`${cx},${cy - 6} ${cx + 6},${cy} ${cx},${cy + 6} ${cx - 6},${cy}`}
-                    fill={node.color}
-                    stroke={node.color}
+                    fill={nodeFill}
+                    stroke={nodeColor}
                     stroke-width="2"
                     stroke-linejoin="round"
                 />
             {:else}
-                <circle {cx} {cy} r="5" fill={node.color} stroke={node.color} stroke-width="2" />
+                <circle {cx} {cy} r="5" fill={nodeFill} stroke={nodeColor} stroke-width="2" />
             {/if}
         </g>
     {/each}
@@ -341,11 +352,8 @@ const svgHeight = $derived(height + BOTTOM_PADDING);
         z-index: 2;
     }
 
-    .node-working-copy-text {
-        font-family: var(--vscode-editor-font-family);
-        font-weight: bold;
-        font-size: 14px;
-        pointer-events: none;
-        user-select: none;
+    .node-working-copy {
+        fill: var(--vscode-jjView-workingCopy-foreground, var(--vscode-charts-green));
+        filter: drop-shadow(0 0 3px color-mix(in srgb, var(--vscode-jjView-workingCopy-foreground, var(--vscode-charts-green)) 45%, transparent));
     }
 </style>

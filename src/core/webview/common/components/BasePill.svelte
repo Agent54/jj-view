@@ -25,7 +25,7 @@ let { children, title, className = '', style = '' }: Props = $props();
 
 <style>
     .bookmark-pill {
-        border-radius: 11px;
+        border-radius: 4px;
         padding: 0 6px;
         font-size: inherit;
         line-height: normal;
@@ -58,7 +58,6 @@ let { children, title, className = '', style = '' }: Props = $props();
         white-space: nowrap;
         line-height: normal;
         display: inline-block;
-        transform: translateY(-1px);
     }
 </style>
 

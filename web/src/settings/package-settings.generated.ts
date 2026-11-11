@@ -174,6 +174,7 @@ export const PACKAGE_SETTINGS: readonly SettingDefinition[] = [
             'neon',
             'pastel',
             'monochrome',
+            'silver',
             'nord',
             'dracula',
             'forest',

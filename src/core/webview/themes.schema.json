@@ -43,6 +43,14 @@
                     "type": "array",
                     "items": { "$ref": "#/definitions/color-item" },
                     "description": "Optional list of colors used specifically when the VS Code theme is set to light mode."
+                },
+                "nodeColor": {
+                    "$ref": "#/definitions/color-item",
+                    "description": "Optional node outline color, independent of the lane colors."
+                },
+                "nodeFill": {
+                    "$ref": "#/definitions/color-item",
+                    "description": "Optional fill color for non-empty nodes. Empty nodes retain the pane background."
                 }
             }
         }

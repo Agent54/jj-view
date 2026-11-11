@@ -501,6 +501,7 @@ const hasActiveBookmarkAlready = $derived(
 
 <style>
     .commit-row {
+        --commit-column-gap: 8px;
         position: relative;
         min-height: 28px;
         height: auto;
@@ -548,7 +549,7 @@ const hasActiveBookmarkAlready = $derived(
     }
 
     .id-actions-area {
-        margin-right: 8px;
+        margin-right: var(--commit-column-gap);
         flex-shrink: 0;
         width: auto;
         position: relative;
@@ -566,7 +567,8 @@ const hasActiveBookmarkAlready = $derived(
 
     .hover-actions {
         position: absolute;
-        left: 0;
+        /* Start at the description column so the change ID stays visible. */
+        left: calc(100% + var(--commit-column-gap));
         top: 50%;
         transform: translateY(-50%);
         display: flex;
@@ -575,10 +577,22 @@ const hasActiveBookmarkAlready = $derived(
         padding: 2px;
         background: var(--vscode-editorGroupHeader-tabsBackground);
         border: 1px solid var(--vscode-editorGroupHeader-tabsBorder);
-        border-radius: 4px;
+        border-radius: 6px;
         z-index: 1;
         width: max-content;
         cursor: default;
+    }
+
+    .hover-actions :global(.icon-button) {
+        width: 22px;
+        height: 22px;
+        border-radius: 5px;
+        background: var(--vscode-jjView-commitAction-background, var(--vscode-button-secondaryBackground));
+        color: var(--vscode-jjView-commitAction-foreground, var(--vscode-button-secondaryForeground));
+    }
+
+    .hover-actions :global(.icon-button:hover) {
+        background: var(--vscode-jjView-commitAction-hoverBackground, var(--vscode-button-secondaryHoverBackground));
     }
 
     .right-column {
