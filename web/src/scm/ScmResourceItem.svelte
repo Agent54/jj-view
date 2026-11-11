@@ -4,6 +4,7 @@
 -->
 <script lang="ts">
 import type { JjResourceState } from '../../../src/core/scm-resource-state';
+import FileLabel from '../../../src/core/webview/common/components/FileLabel.svelte';
 import type { IContextKeyService } from '../menu/context-key-service';
 import type { MenuRegistry } from '../menu/menu-registry';
 import type { ResolvedMenuItem } from '../menu/menu-types';
@@ -123,10 +124,7 @@ function handleDblClick(): void {
 >
     <div class="resource-label-container">
         <FileIcon filename={fileName} />
-        <span class="file-name" class:deleted={isDeleted}>{fileName}</span>
-        {#if dirName}
-            <span class="dir-name">{dirName}</span>
-        {/if}
+        <FileLabel {fileName} {dirName} deleted={isDeleted} />
     </div>
 
     <div class="resource-actions-container">
@@ -202,29 +200,6 @@ function handleDblClick(): void {
     white-space: nowrap;
     text-overflow: ellipsis;
     line-height: 22px;
-}
-
-.file-name {
-    font-weight: normal;
-    color: var(--vscode-foreground, #d4d4d4);
-    font-size: var(--vscode-font-size, 13px);
-    flex-shrink: 0;
-    line-height: 22px;
-}
-
-.file-name.deleted {
-    text-decoration: line-through;
-    opacity: 0.75;
-}
-
-.dir-name {
-    font-size: 11px;
-    color: var(--vscode-descriptionForeground, #8a8a8a);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    line-height: 22px;
-    opacity: 0.85;
 }
 
 .resource-actions-container {

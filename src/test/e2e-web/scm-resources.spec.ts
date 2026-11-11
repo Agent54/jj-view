@@ -18,7 +18,7 @@ test.describe('Standalone Web SCM Resources', () => {
 
         // Create working copy changes: 1 modified, 1 added
         testRepo.writeFile('committed.txt', 'hello world modified\n');
-        testRepo.writeFile('untracked.ts', 'export const added = true;\n');
+        testRepo.writeFile('src/components/untracked.ts', 'export const added = true;\n');
 
         await page.goto(server.serverUrl);
         await waitForScmReady(page);
@@ -61,6 +61,23 @@ test.describe('Standalone Web SCM Resources', () => {
             );
             await expect(detailRow.locator(':scope > .file-icon-wrapper')).toHaveCount(1);
             await expect(detailRow.locator('.file-status-badge')).toHaveText('');
+            await expect(detailRow.locator('.file-name')).toHaveText(filename);
+            await expect(detailRow.locator('.file-name')).toHaveCSS(
+                'font-size',
+                await sourceRow.locator('.file-name').evaluate((el) => getComputedStyle(el).fontSize),
+            );
+            if (filename === 'untracked.ts') {
+                for (const row of [sourceRow, detailRow]) {
+                    await expect(row.locator('.dir-name')).toHaveText('src/components');
+                    const nameBox = await row.locator('.file-name').boundingBox();
+                    const dirBox = await row.locator('.dir-name').boundingBox();
+                    expect(nameBox).not.toBeNull();
+                    expect(dirBox).not.toBeNull();
+                    expect(dirBox?.x).toBeGreaterThan((nameBox?.x ?? 0) + (nameBox?.width ?? 0));
+                }
+            } else {
+                await expect(detailRow.locator('.dir-name')).toHaveCount(0);
+            }
         }
         await page.screenshot({ path: path.join(ARTIFACT_DIR, 'file-status-glyphs.png') });
     });

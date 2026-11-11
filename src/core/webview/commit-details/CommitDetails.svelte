@@ -12,6 +12,7 @@ import {
 } from '../../host/ipc/commit-details-schemas';
 import type { JjBookmark, JjStatusEntry } from '../../jj-types';
 import { BasePill, BookmarkPill, PersonInfo, TagPill } from '../common/components';
+import FileLabel from '../common/components/FileLabel.svelte';
 import { useRpcReceiver } from '../transport/bridge.svelte';
 
 interface Props {
@@ -172,7 +173,7 @@ function splitFilePath(filePath: string): { dir: string; name: string } {
         return { dir: '', name: filePath };
     }
     return {
-        dir: filePath.slice(0, lastSlash + 1),
+        dir: filePath.slice(0, lastSlash),
         name: filePath.slice(lastSlash + 1),
     };
 }
@@ -634,7 +635,12 @@ function getFileColor(status: string, conflicted?: boolean): string {
                                 <span class="codicon codicon-file file-icon" aria-hidden="true"></span>
                             {/if}
                             <span class="file-path-container" title={file.path}>
-                                {#if dir}<span class="file-dir">{dir}</span>{/if}<span class="file-name" style:color={file.conflicted ? 'var(--vscode-gitDecoration-conflictingResourceForeground, #e51400)' : undefined}>{name}</span>
+                                <FileLabel
+                                    fileName={name}
+                                    dirName={dir}
+                                    deleted={file.status === 'deleted'}
+                                    conflicted={file.conflicted}
+                                />
                             </span>
                             <span class="file-meta-group">
                                 {#if file.additions !== undefined || file.deletions !== undefined}
@@ -1179,16 +1185,6 @@ function getFileColor(status: string, conflicted?: boolean): string {
         white-space: nowrap;
         display: flex;
         align-items: baseline;
-    }
-
-    .file-dir {
-        color: var(--vscode-descriptionForeground);
-        font-size: 12px;
-    }
-
-    .file-name {
-        color: var(--vscode-foreground);
-        font-weight: 500;
     }
 
     .file-meta-group {
