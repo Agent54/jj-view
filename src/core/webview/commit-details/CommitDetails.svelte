@@ -13,6 +13,7 @@ import {
 import type { JjBookmark, JjStatusEntry } from '../../jj-types';
 import { BasePill, BookmarkPill, PersonInfo, TagPill } from '../common/components';
 import FileLabel from '../common/components/FileLabel.svelte';
+import { tooltip } from '../common/tooltip.svelte';
 import { useRpcReceiver } from '../transport/bridge.svelte';
 
 interface Props {
@@ -452,27 +453,29 @@ function getFileColor(status: string, conflicted?: boolean): string {
                         style:color={isImmutable
                             ? 'var(--vscode-descriptionForeground)'
                             : 'var(--vscode-gitDecoration-addedResourceForeground)'}
-                        title={changeId}
+                        use:tooltip={changeId}
                     >{#if hasShortId && shortId}<span class="change-id-prefix">{shortId}</span>{#if idPart.length > shortId.length}<span class="change-id-rest">{idPart.substring(shortId.length)}</span>{/if}{:else}{idPart}{/if}{#if displayOffset}<span class="change-id-offset">/{displayOffset}</span>{/if}</span>
                     <button
                         type="button"
                         class="copy-button"
                         onclick={() => copyToClipboard(changeId, 'change')}
-                        title="Copy Change ID"
+                        use:tooltip={'Copy Change ID'}
+                        aria-label="Copy Change ID"
                     >
                         <span class="codicon {copiedId === 'change' ? 'codicon-check copied-icon' : 'codicon-copy'}"></span>
                     </button>
                 </div>
                 <div class="id-row">
                     <span class="id-label">Commit:</span>
-                    <span class="id-value" title={commitId}>
+                    <span class="id-value" use:tooltip={commitId}>
                         {commitId.substring(0, 12)}
                     </span>
                     <button
                         type="button"
                         class="copy-button"
                         onclick={() => copyToClipboard(commitId, 'commit')}
-                        title="Copy Commit ID"
+                        use:tooltip={'Copy Commit ID'}
+                        aria-label="Copy Commit ID"
                     >
                         <span class="codicon {copiedId === 'commit' ? 'codicon-check copied-icon' : 'codicon-copy'}"></span>
                     </button>
@@ -498,12 +501,13 @@ function getFileColor(status: string, conflicted?: boolean): string {
                 <label for="commit-message" class="section-title">
                     Message
                 </label>
-                <span class="ruler-indicator" title="Configured rulers for title / body width">
+                <span class="ruler-indicator" use:tooltip={'Configured rulers for title / body width'}>
                     {titleWidthRuler}/{bodyWidthRuler} ch
                 </span>
                 <a
                     href="command:workbench.action.openSettings?%5B%22jj-view.commit%22%5D"
-                    title="Configure width rulers"
+                    use:tooltip={'Configure width rulers'}
+                    aria-label="Configure width rulers"
                     class="settings-icon-btn"
                 >
                     <span class="codicon codicon-settings-gear"></span>
@@ -514,7 +518,7 @@ function getFileColor(status: string, conflicted?: boolean): string {
                     <button
                         type="button"
                         onclick={handleFormat}
-                        title={`Format body to ${bodyWidthRuler} characters`}
+                        use:tooltip={`Format body to ${bodyWidthRuler} characters`}
                         class="secondary-button"
                     >
                         <span class="codicon codicon-word-wrap"></span>
@@ -522,7 +526,7 @@ function getFileColor(status: string, conflicted?: boolean): string {
                     </button>
                     <button
                         type="button"
-                        title={`Save Changes (${saveShortcutHint})`}
+                        use:tooltip={`Save Changes (${saveShortcutHint})`}
                         onclick={handleSave}
                         disabled={isSaving || !isDirty}
                         class="primary-button"
@@ -597,6 +601,7 @@ function getFileColor(status: string, conflicted?: boolean): string {
                 type="button"
                 onclick={onOpenMultiDiff}
                 class="secondary-button"
+                use:tooltip={'Open diffs for all changed files'}
             >
                 <span class="codicon codicon-diff"></span>
                 Multi-file Diff
@@ -634,7 +639,7 @@ function getFileColor(status: string, conflicted?: boolean): string {
                             {:else}
                                 <span class="codicon codicon-file file-icon" aria-hidden="true"></span>
                             {/if}
-                            <span class="file-path-container" title={file.path}>
+                            <span class="file-path-container" use:tooltip={file.path}>
                                 <FileLabel
                                     fileName={name}
                                     dirName={dir}
@@ -657,7 +662,7 @@ function getFileColor(status: string, conflicted?: boolean): string {
                                     class="file-status-badge codicon codicon-{getFileIcon(file.status, file.conflicted)}"
                                     role="img"
                                     style:color={getFileColor(file.status, file.conflicted)}
-                                    title={file.conflicted ? conflictLabel : file.status}
+                                    use:tooltip={file.conflicted ? conflictLabel : file.status}
                                     aria-label={file.conflicted ? conflictLabel : file.status.charAt(0).toUpperCase() + file.status.slice(1)}
                                 ></span>
                             </span>

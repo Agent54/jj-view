@@ -3,6 +3,7 @@
   SPDX-License-Identifier: Apache-2.0
 -->
 <script lang="ts">
+import { tooltip } from '../tooltip.svelte';
 import { getPersonDisplayStrings, type PersonInfoProps } from '../utils/person-utils';
 
 let { person, label }: PersonInfoProps = $props();
@@ -17,7 +18,7 @@ let displayStrings = $derived(person ? getPersonDisplayStrings(person) : null);
         <span
             class="email"
             class:no-email={!displayStrings.hasEmail}
-            title="<{displayStrings.emailToDisplay}>"
+            use:tooltip={`<${displayStrings.emailToDisplay}>`}
         >
             &lt;{displayStrings.emailToDisplay}&gt;
         </span>
@@ -25,7 +26,7 @@ let displayStrings = $derived(person ? getPersonDisplayStrings(person) : null);
         <time
             dateTime={person.timestamp}
             class="time"
-            title={displayStrings.fullTime}
+            use:tooltip={displayStrings.fullTime}
         >
             {displayStrings.relTime}
         </time>

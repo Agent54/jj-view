@@ -4,6 +4,7 @@
 -->
 <script lang="ts">
 import type { Snippet } from 'svelte';
+import { tooltip } from '../tooltip.svelte';
 
 interface Props {
     children?: Snippet;
@@ -16,7 +17,7 @@ let { children, title, className = '', style = '' }: Props = $props();
 </script>
 
 <span
-    {title}
+    use:tooltip={title}
     class="bookmark-pill {className}"
     {style}
 >

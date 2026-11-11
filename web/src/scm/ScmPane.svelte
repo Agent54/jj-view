@@ -6,6 +6,7 @@
 import type { ScmSnapshot } from '../../../src/core/scm-model';
 import { createJjResourceState, type JjResourceState } from '../../../src/core/scm-resource-state';
 import { Uri } from '../../../src/core/uri-utils';
+import { tooltip } from '../../../src/core/webview/common/tooltip.svelte';
 import type { IContextKeyService } from '../menu/context-key-service';
 import type { MenuRegistry } from '../menu/menu-registry';
 import type { ResolvedMenuItem } from '../menu/menu-types';
@@ -278,7 +279,7 @@ function getRepoTitleActions(entry: ScmRepositoryEntry): ResolvedMenuItem[] {
                             }
                         }}
                     >
-                        <div class="repo-header-title" title={root}>
+                        <div class="repo-header-title">
                             <span class="chevron-icon">
                                 <i
                                     class={`codicon codicon-chevron-${expanded ? 'down' : 'right'}`}
@@ -286,7 +287,7 @@ function getRepoTitleActions(entry: ScmRepositoryEntry): ResolvedMenuItem[] {
                                 ></i>
                             </span>
                             <i class="codicon codicon-repo repo-icon" aria-hidden="true"></i>
-                            <span class="repo-name" data-testid="scm-repository-name">{displayLabel}</span>
+                            <span class="repo-name" data-testid="scm-repository-name" use:tooltip={root}>{displayLabel}</span>
                             {#if shortChangeId}
                                 <span class="repo-revision-summary">
                                     {shortChangeId}{bookmarkName ? ` (${bookmarkName})` : ''}
@@ -296,7 +297,7 @@ function getRepoTitleActions(entry: ScmRepositoryEntry): ResolvedMenuItem[] {
                                 <span
                                     class="repo-focused-indicator"
                                     data-testid="scm-repository-focused-badge"
-                                    title="Active in Commit Graph"
+                                    use:tooltip={'Active in Commit Graph'}
                                 >
                                     Active
                                 </span>
@@ -310,7 +311,7 @@ function getRepoTitleActions(entry: ScmRepositoryEntry): ResolvedMenuItem[] {
                                         type="button"
                                         class="icon-button repo-action-button"
                                         data-testid={`scm-title-action-${action.command}`}
-                                        title={action.title}
+                                        use:tooltip={action.title}
                                         aria-label={action.title}
                                         onclick={(e) => {
                                             e.stopPropagation();
@@ -335,7 +336,7 @@ function getRepoTitleActions(entry: ScmRepositoryEntry): ResolvedMenuItem[] {
                                 {/each}
                             </div>
                             {#if !expanded && totalChanges > 0}
-                                <span class="repo-count-badge" title={`${totalChanges} working copy changes`}>
+                                <span class="repo-count-badge" use:tooltip={`${totalChanges} working copy changes`}>
                                     {totalChanges}
                                 </span>
                             {/if}

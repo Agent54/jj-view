@@ -4,6 +4,7 @@
 -->
 <script lang="ts">
 import CommitDetailsApp from '../../../src/core/webview/commit-details/CommitDetailsApp.svelte';
+import { tooltip } from '../../../src/core/webview/common/tooltip.svelte';
 import { initBridge } from '../../../src/core/webview/transport/bridge.svelte';
 import type { WebviewTransport } from '../../../src/core/webview/transport/types';
 import FileIcon from '../scm/FileIcon.svelte';
@@ -27,7 +28,8 @@ initBridge(transport);
                 type="button"
                 class="icon-button close-button"
                 data-testid="commit-details-close"
-                title="Close"
+                use:tooltip={'Close'}
+                aria-label="Close"
                 onclick={() => onClose?.()}
             >
                 <i class="codicon codicon-close" aria-hidden="true"></i>

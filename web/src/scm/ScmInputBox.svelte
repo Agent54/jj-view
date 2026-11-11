@@ -4,6 +4,7 @@
 -->
 <script lang="ts">
 import { onDestroy, onMount } from 'svelte';
+import { tooltip } from '../../../src/core/webview/common/tooltip.svelte';
 
 interface Props {
     value?: string;
@@ -149,7 +150,7 @@ onMount(() => {
                 class="agent-draft-button"
                 class:loading={isDrafting}
                 data-testid="agent-draft-button"
-                title={isDrafting ? 'Drafting description with AI agent...' : 'Draft description with AI agent'}
+                use:tooltip={isDrafting ? 'Drafting description with AI agent...' : 'Draft description with AI agent'}
                 aria-label="Draft description with AI agent"
                 onclick={handleDraftWithAgent}
                 disabled={isDrafting}

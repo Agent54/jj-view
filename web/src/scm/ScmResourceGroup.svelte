@@ -6,6 +6,7 @@
 import type { JjStatusEntry } from '../../../src/core/jj-types';
 import type { JjResourceState } from '../../../src/core/scm-resource-state';
 import { Uri } from '../../../src/core/uri-utils';
+import { tooltip } from '../../../src/core/webview/common/tooltip.svelte';
 import type { IContextKeyService } from '../menu/context-key-service';
 import type { MenuRegistry } from '../menu/menu-registry';
 import type { ResolvedMenuItem } from '../menu/menu-types';
@@ -118,7 +119,7 @@ const groupVsCodeContext = $derived(
             <span class="chevron-icon">
                 <i class={`codicon codicon-chevron-${isExpanded ? 'down' : 'right'}`} aria-hidden="true"></i>
             </span>
-            <span class="group-label" title={label}>{label}</span>
+            <span class="group-label" use:tooltip={label}>{label}</span>
         </div>
 
         <div class="group-actions-row">
@@ -128,7 +129,7 @@ const groupVsCodeContext = $derived(
                         type="button"
                         class="icon-button group-action-button"
                         data-testid={`scm-group-action-${action.command}`}
-                        title={action.title}
+                        use:tooltip={action.title}
                         aria-label={action.title}
                         onclick={(e) => {
                             e.stopPropagation();
@@ -147,15 +148,15 @@ const groupVsCodeContext = $derived(
             {#if totalAdditions > 0 || totalDeletions > 0}
                 <span class="diff-summary-badges">
                     {#if totalAdditions > 0}
-                        <span class="stat-pill stat-added" title={`Lines added: ${totalAdditions}`}>+{totalAdditions}</span>
+                        <span class="stat-pill stat-added" use:tooltip={`Lines added: ${totalAdditions}`}>+{totalAdditions}</span>
                     {/if}
                     {#if totalDeletions > 0}
-                        <span class="stat-pill stat-deleted" title={`Lines removed: ${totalDeletions}`}>-{totalDeletions}</span>
+                        <span class="stat-pill stat-deleted" use:tooltip={`Lines removed: ${totalDeletions}`}>-{totalDeletions}</span>
                     {/if}
                 </span>
             {/if}
 
-            <span class="count-badge" title={`${items.length} files`}>
+            <span class="count-badge" use:tooltip={`${items.length} files`}>
                 {items.length}
             </span>
         </div>

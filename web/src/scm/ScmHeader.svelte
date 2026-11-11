@@ -3,6 +3,7 @@
   SPDX-License-Identifier: Apache-2.0
 -->
 <script lang="ts">
+import { tooltip } from '../../../src/core/webview/common/tooltip.svelte';
 import type { IContextKeyService } from '../menu/context-key-service';
 import type { MenuRegistry } from '../menu/menu-registry';
 import type { ResolvedMenuItem } from '../menu/menu-types';
@@ -56,6 +57,7 @@ const actions: ResolvedMenuItem[] = $derived.by(() => {
                 data-testid="scm-collapse-toggle"
                 aria-expanded={!collapsed}
                 aria-label={collapsed ? 'Expand Source Control' : 'Collapse Source Control'}
+                use:tooltip={collapsed ? 'Expand Source Control' : 'Collapse Source Control'}
                 onclick={onToggleCollapsed}
             >
                 <i class={`codicon ${collapsed ? 'codicon-chevron-right' : 'codicon-chevron-down'}`} aria-hidden="true"></i>
@@ -70,7 +72,7 @@ const actions: ResolvedMenuItem[] = $derived.by(() => {
                     type="button"
                     class="icon-button toolbar-button"
                     data-testid={`scm-title-action-${action.command}`}
-                    title={action.title}
+                    use:tooltip={action.title}
                     aria-label={action.title}
                     onclick={() => onAction(action.command)}
                 >
@@ -85,7 +87,7 @@ const actions: ResolvedMenuItem[] = $derived.by(() => {
                 type="button"
                 class="icon-button toolbar-button"
                 data-testid="scm-settings-button"
-                title="Settings (Ctrl+,)"
+                use:tooltip={'Settings (Ctrl+,)'}
                 aria-label="Settings"
                 onclick={() => onAction('jj-view.openSettings')}
             >

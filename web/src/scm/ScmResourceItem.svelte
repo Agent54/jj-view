@@ -5,6 +5,7 @@
 <script lang="ts">
 import type { JjResourceState } from '../../../src/core/scm-resource-state';
 import FileLabel from '../../../src/core/webview/common/components/FileLabel.svelte';
+import { tooltip } from '../../../src/core/webview/common/tooltip.svelte';
 import type { IContextKeyService } from '../menu/context-key-service';
 import type { MenuRegistry } from '../menu/menu-registry';
 import type { ResolvedMenuItem } from '../menu/menu-types';
@@ -134,7 +135,7 @@ function handleDblClick(): void {
                     type="button"
                     class="icon-button item-action-button"
                     data-testid={`scm-resource-action-${action.command}`}
-                    title={action.title}
+                    use:tooltip={action.title}
                     aria-label={action.title}
                     onclick={(e) => {
                         e.stopPropagation();
@@ -153,10 +154,10 @@ function handleDblClick(): void {
         {#if (resourceState.additions ?? 0) > 0 || (resourceState.deletions ?? 0) > 0}
             <span class="file-diff-stats">
                 {#if (resourceState.additions ?? 0) > 0}
-                    <span class="stat-added" title={`Lines added: ${resourceState.additions}`}>+{resourceState.additions}</span>
+                    <span class="stat-added" use:tooltip={`Lines added: ${resourceState.additions}`}>+{resourceState.additions}</span>
                 {/if}
                 {#if (resourceState.deletions ?? 0) > 0}
-                    <span class="stat-deleted" title={`Lines removed: ${resourceState.deletions}`}>-{resourceState.deletions}</span>
+                    <span class="stat-deleted" use:tooltip={`Lines removed: ${resourceState.deletions}`}>-{resourceState.deletions}</span>
                 {/if}
             </span>
         {/if}
@@ -164,7 +165,7 @@ function handleDblClick(): void {
         <span
             class={`status-badge codicon codicon-${statusBadge.icon} ${statusBadge.className}`}
             role="img"
-            title={statusBadge.title}
+            use:tooltip={statusBadge.title}
             aria-label={statusBadge.title}
         ></span>
     </div>
