@@ -6,6 +6,7 @@
 import type { ActionPayload, CommitAction } from '../../../host/ipc/log-view-schemas';
 import type { JjLogEntry } from '../../../jj-types';
 import { BookmarkPill, IconButton, TagPill, WorkspacePill } from '../../common/components';
+import Tooltip from '../../common/components/Tooltip.svelte';
 import type { DragManager } from '../drag-manager.svelte';
 import { COMMIT_ROW_PADDING_LEFT } from '../layout-constants';
 import { formatCommitTooltip } from '../utils/commit-tooltip';
@@ -45,6 +46,7 @@ let {
 }: Props = $props();
 
 let isHovered = $state(false);
+let rowElement: HTMLDivElement | undefined = $state();
 let isGeneratingDescription = $state(false);
 
 async function handleGenerateDescription(e: MouseEvent): Promise<void> {
@@ -196,6 +198,7 @@ const hasActiveBookmarkAlready = $derived(
 
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <div
+    bind:this={rowElement}
     class="commit-row"
     class:working-copy={isCurrentWorkingCopy}
     role="option"
@@ -206,7 +209,6 @@ const hasActiveBookmarkAlready = $derived(
     data-highlighted={isHighlighted}
     data-hovered={isHovered}
     data-vscode-context={JSON.stringify(vscodeContext)}
-    title={commitTooltip}
     style:padding-left={`${graphPaddingLeft + COMMIT_ROW_PADDING_LEFT}px`}
     style:background-color={backgroundColor}
     style:outline={outline}
@@ -356,7 +358,6 @@ const hasActiveBookmarkAlready = $derived(
         <div class="desc-row">
             <span
                 class="commit-desc"
-                title={commitTooltip}
                 style:font-weight={isCurrentWorkingCopy ? 'bold' : 'normal'}
                 style:color={isImmutable
                     ? 'var(--vscode-descriptionForeground)'
@@ -519,6 +520,14 @@ const hasActiveBookmarkAlready = $derived(
         {/if}
     </div>
 </div>
+
+<Tooltip
+    anchor={rowElement}
+    text={commitTooltip}
+    multiline
+    disabled={dragManager.isDragging}
+    ignoreSelector=".hover-actions, .pills-group, a, button, [title]"
+/>
 
 <style>
     .commit-row {

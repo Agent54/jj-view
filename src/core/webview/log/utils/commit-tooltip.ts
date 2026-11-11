@@ -103,7 +103,7 @@ export function fromUnicodeSansRegular(text: string): string {
 export const DIVIDER = '────────────────';
 
 /**
- * Formats a rich, multi-line native title tooltip for a JJ commit revision.
+ * Formats a rich, multi-line tooltip for a JJ commit revision.
  * Uses small caps labels, Mathematical Sans-Serif bold shortest change ID prefix,
  * Mathematical Sans-Serif regular hashes, relative timestamps, and short divider.
  */
@@ -134,6 +134,11 @@ export function formatCommitTooltip(commit: JjLogEntry): string {
     if (person?.timestamp) {
         const { relTime, fullTime } = getPersonDisplayStrings(person);
         lines.push(`ᴅᴀᴛᴇ: ${relTime} (${fullTime})`);
+    }
+
+    const status = [commit.is_empty ? 'Empty commit' : '', commit.is_immutable ? 'Immutable' : ''].filter(Boolean);
+    if (status.length > 0) {
+        lines.push(status.join(' · '));
     }
 
     // Bookmarks, Tags, Working Copies

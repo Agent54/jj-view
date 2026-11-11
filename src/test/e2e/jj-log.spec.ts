@@ -548,7 +548,7 @@ test.describe('JJ Log Pane E2E', () => {
         await expect(featureRow).toHaveAttribute('data-selected', 'false');
     });
 
-    test('Commit description title tooltip displays relative timestamps and details', async ({ vscode }) => {
+    test('Commit tooltip displays relative timestamps and details', async ({ vscode }) => {
         const repo = new TestRepo();
         repo.init();
         const nodes = await buildGraph(repo, [
@@ -565,9 +565,8 @@ test.describe('JJ Log Pane E2E', () => {
         await focusJJLog(page);
 
         const featureRow = await waitForLogCommitRow(page, { changeId: nodes.feature.changeId });
-        const featureDesc = featureRow.locator('.commit-desc');
 
-        // Verify the title tooltip format. Use a regex pattern for relative time to prevent
+        // Verify the tooltip format. Use a regex pattern for relative time to prevent
         // race conditions where the webview and test runner evaluate Date.now() on different
         // second boundaries (e.g. "just now" vs "1 second ago").
         const shortest = repo.getLog(nodes.feature.commitId, 'change_id.shortest()');
@@ -593,6 +592,7 @@ test.describe('JJ Log Pane E2E', () => {
                 `$`,
         );
 
-        await expect(featureDesc).toHaveAttribute('title', expectedPattern);
+        await featureRow.locator('.commit-id').hover();
+        await expect(featureRow.locator('..').getByRole('tooltip')).toHaveText(expectedPattern);
     });
 });
