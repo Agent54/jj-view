@@ -517,6 +517,8 @@ const hasActiveBookmarkAlready = $derived(
 <Tooltip
     anchor={rowElement}
     text={commitTooltip}
+    heading={isCurrentWorkingCopy ? 'You are here' : undefined}
+    accentColor={isCurrentWorkingCopy ? 'var(--vscode-gitDecoration-addedResourceForeground)' : undefined}
     multiline
     disabled={dragManager.isDragging}
     ignoreSelector=".hover-actions, .pills-group, a, button, [title]"

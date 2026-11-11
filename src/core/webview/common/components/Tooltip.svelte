@@ -8,21 +8,25 @@ import { tooltipTiming } from '../tooltip-timing';
 interface Props {
     anchor?: HTMLElement;
     text: string;
+    heading?: string;
+    accentColor?: string;
     disabled?: boolean;
     multiline?: boolean;
     ignoreSelector?: string;
 }
 
-let { anchor, text, disabled = false, multiline = false, ignoreSelector }: Props = $props();
+let { anchor, text, heading, accentColor, disabled = false, multiline = false, ignoreSelector }: Props = $props();
 const tooltipId = $props.id();
 let tooltipElement: HTMLDivElement | undefined = $state();
+// Live text updates must not detach hover listeners or cancel the pending timer.
+const hasText = $derived(Boolean(text));
 
 $effect(() => {
     const target = anchor;
     const tip = tooltipElement;
     const ignored = ignoreSelector;
     const usePointerPosition = multiline;
-    if (!target || !tip || disabled || !text) {
+    if (!target || !tip || disabled || !hasText) {
         return;
     }
     let timer: ReturnType<typeof setTimeout> | undefined;
@@ -126,7 +130,19 @@ $effect(() => {
 });
 </script>
 
-<div bind:this={tooltipElement} id={tooltipId} role="tooltip" popover="manual" class="tooltip" class:multiline>
+<div
+    bind:this={tooltipElement}
+    id={tooltipId}
+    role="tooltip"
+    popover="manual"
+    class="tooltip"
+    class:multiline
+    class:accented={Boolean(accentColor)}
+    style:--tooltip-accent={accentColor}
+>
+    {#if heading}
+        <strong class="tooltip-heading">{heading}</strong>
+    {/if}
     {text}
 </div>
 
@@ -148,6 +164,18 @@ $effect(() => {
         overflow-wrap: anywhere;
         pointer-events: none;
         user-select: none;
+    }
+
+    .tooltip.accented {
+        border-color: var(--tooltip-accent);
+        background: color-mix(in srgb, var(--tooltip-accent) 16%, var(--vscode-editorHoverWidget-background, var(--vscode-editor-background)));
+    }
+
+    .tooltip-heading {
+        display: block;
+        margin-bottom: 4px;
+        color: var(--tooltip-accent, inherit);
+        font-weight: 600;
     }
 
     .multiline {
