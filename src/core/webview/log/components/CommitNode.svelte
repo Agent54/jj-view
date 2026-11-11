@@ -182,6 +182,26 @@ const fontStyle = $derived(isImmutable && !isSelected ? 'italic' : 'normal');
 
 const descriptionFull = $derived(commit.description.trim());
 const descriptionFirstLine = $derived(descriptionFull.split('\n')[0]);
+const fileSummary = $derived.by(() => {
+    const counts = { added: 0, modified: 0, deleted: 0 };
+    if (!descriptionFull) {
+        for (const file of commit.changes ?? []) {
+            if (file.status === 'added' || file.status === 'copied') {
+                counts.added++;
+            } else if (file.status === 'deleted') {
+                counts.deleted++;
+            } else {
+                counts.modified++;
+            }
+        }
+    }
+    return [
+        { status: 'added', count: counts.added, icon: 'diff-added' },
+        { status: 'modified', count: counts.modified, icon: 'diff-modified' },
+        { status: 'deleted', count: counts.deleted, icon: 'diff-removed' },
+    ].filter((summary) => summary.count > 0);
+});
+const hasFileSummary = $derived(fileSummary.length > 0);
 const commitTooltip = $derived(formatCommitTooltip(commit));
 const timestamp = $derived(commit.author.timestamp || commit.committer.timestamp);
 const relativeTime = $derived(getCompactRelativeTimeString(timestamp, now));
@@ -206,6 +226,7 @@ const hasActiveBookmarkAlready = $derived(
     bind:this={rowElement}
     class="commit-row"
     class:working-copy={isCurrentWorkingCopy}
+    class:has-file-summary={hasFileSummary}
     role="option"
     aria-selected={isSelected}
     tabindex="0"
@@ -348,7 +369,22 @@ const hasActiveBookmarkAlready = $derived(
                 {#if commit.is_divergent}
                     <span class="divergent-label">(divergent) </span>
                 {/if}
-                {descriptionFirstLine}
+                {#if hasFileSummary}
+                    <span class="commit-file-summary">
+                        {#each fileSummary as summary (summary.status)}
+                            <span
+                                class="file-count file-count-{summary.status}"
+                                role="img"
+                                aria-label={`${summary.count} ${summary.count === 1 ? 'file' : 'files'} ${summary.status}`}
+                            >
+                                <span class="codicon codicon-{summary.icon}" aria-hidden="true"></span>
+                                <span aria-hidden="true">{summary.count}</span>
+                            </span>
+                        {/each}
+                    </span>
+                {:else}
+                    {descriptionFirstLine}
+                {/if}
             </span>
 
             <!-- Right-aligned Bookmarks & Pills -->
@@ -643,6 +679,16 @@ const hasActiveBookmarkAlready = $derived(
         background: var(--vscode-jjView-commitAction-hoverBackground, var(--vscode-button-secondaryHoverBackground));
     }
 
+    .has-file-summary .row-actions-anchor:has(.hover-actions) {
+        width: auto;
+        margin-right: 6px;
+    }
+
+    .has-file-summary .hover-actions {
+        position: static;
+        transform: none;
+    }
+
     .right-column {
         flex: 1;
         display: flex;
@@ -671,6 +717,46 @@ const hasActiveBookmarkAlready = $derived(
     .divergent-label {
         color: var(--vscode-charts-purple);
         margin-right: 4px;
+    }
+
+    .commit-file-summary {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        vertical-align: middle;
+        color: var(--vscode-descriptionForeground);
+        font-size: 11px;
+        font-weight: normal;
+        font-style: normal;
+        line-height: 1;
+        opacity: 0.55;
+    }
+
+    .file-count {
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .file-count .codicon {
+        font-size: 12px;
+    }
+
+    .commit-row:is(:hover, :focus-within) .commit-file-summary {
+        opacity: 1;
+    }
+
+    .commit-row:is(:hover, :focus-within) .file-count-added {
+        color: var(--vscode-gitDecoration-addedResourceForeground);
+    }
+
+    .commit-row:is(:hover, :focus-within) .file-count-modified {
+        color: var(--vscode-gitDecoration-modifiedResourceForeground);
+    }
+
+    .commit-row:is(:hover, :focus-within) .file-count-deleted {
+        color: var(--vscode-gitDecoration-deletedResourceForeground);
     }
 
     .pills-group {

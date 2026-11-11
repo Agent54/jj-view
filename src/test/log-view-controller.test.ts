@@ -169,6 +169,30 @@ describe('LogViewController Domain Unit Tests', () => {
         expect(controller.commits[0].description).toContain('feature: add example');
     });
 
+    test('loads file changes only for undescribed nonempty commits', async () => {
+        testRepo.writeFile('baseline.txt', 'baseline\n');
+        testRepo.describe('Named baseline');
+        const namedChange = testRepo.getChangeId('@');
+        testRepo.new();
+        testRepo.writeFile('first.txt', 'first\n');
+        const firstChange = testRepo.getChangeId('@');
+        testRepo.new();
+        testRepo.writeFile('second.txt', 'second\n');
+        const secondChange = testRepo.getChangeId('@');
+        testRepo.new();
+        const emptyChange = testRepo.getChangeId('@');
+
+        await controller.refresh('file summaries');
+        expect(controller.commits.find((commit) => commit.change_id === firstChange)?.changes).toMatchObject([
+            { path: 'first.txt', status: 'added' },
+        ]);
+        expect(controller.commits.find((commit) => commit.change_id === secondChange)?.changes).toMatchObject([
+            { path: 'second.txt', status: 'added' },
+        ]);
+        expect(controller.commits.find((commit) => commit.change_id === namedChange)?.changes).toBeUndefined();
+        expect(controller.commits.find((commit) => commit.change_id === emptyChange)?.changes).toBeUndefined();
+    });
+
     test('replays initial snapshot on setMessenger and updates context keys on setCommits', async () => {
         testRepo.writeFile('example.txt', 'test content\n');
         testRepo.describe('feature: add example');
