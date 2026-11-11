@@ -23,6 +23,7 @@ import { commitCommand } from '../core/commands/commit';
 import { commitPromptCommand } from '../core/commands/commit-prompt';
 import { compareAllFilesWithRevisionCommand } from '../core/commands/compare-all-files-with-revision';
 import { compareFileWithRevisionCommand } from '../core/commands/compare-file-with-revision';
+import { copyChangeIdCommand } from '../core/commands/copy-change-id';
 import { setDescriptionCommand } from '../core/commands/describe';
 import { describePromptCommand } from '../core/commands/describe-prompt';
 import { showDetailsCommand } from '../core/commands/details';
@@ -90,6 +91,7 @@ import { createCommitPayload, createCommitPromptPayload } from './payloads/commi
 import { createCompareAllFilesWithRevisionPayload } from './payloads/compare-all-files-with-revision.payload';
 import { createCompareFileWithRevisionPayload } from './payloads/compare-file-with-revision.payload';
 import { createCompleteSquashRevisionPayload } from './payloads/complete-squash-revision.payload';
+import { createCopyChangeIdPayload } from './payloads/copy-change-id.payload';
 import { createDescribePromptPayload, createSetDescriptionPayload } from './payloads/describe.payload';
 import { createShowDetailsPayload } from './payloads/details.payload';
 import { createDiscardChangePayload } from './payloads/discard-change.payload';
@@ -298,6 +300,7 @@ export function registerCommands(options: RegisterCommandsOptions): void {
         registerCommandWithPayload('jj-view.deleteBookmark', createDeleteBookmarkPayload, deleteBookmarkCommand),
         registerCommandWithPayload('jj-view.deleteTag', createDeleteTagPayload, deleteTagCommand),
         registerCommandWithPayload('jj-view.showDetails', createShowDetailsPayload, showDetailsCommand),
+        registerCommandWithPayload('jj-view.copyChangeId', createCopyChangeIdPayload, copyChangeIdCommand),
         registerCommandWithPayload('jj-view.openMergeEditor', createOpenMergeEditorPayload, openMergeEditorCommand),
         registerCommandWithPayload('jj-view.absorb', createAbsorbPayload, absorbCommand),
         registerCommandWithPayload(

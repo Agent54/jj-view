@@ -230,6 +230,12 @@ export const DEFAULT_PACKAGE_JSON_CONTRIBUTES: PackageJsonContributes = {
             icon: '$(tag)',
         },
         {
+            command: 'jj-view.copyChangeId',
+            title: 'Copy Change ID',
+            category: 'JJ View',
+            icon: '$(copy)',
+        },
+        {
             command: 'jj-view.advanceBookmark',
             title: 'Advance Bookmark',
             category: 'JJ View',
@@ -803,6 +809,11 @@ export const DEFAULT_PACKAGE_JSON_CONTRIBUTES: PackageJsonContributes = {
                 command: 'jj-view.createTag',
                 when: "webviewSection == 'commit'",
                 group: '3_bookmark@1.1',
+            },
+            {
+                command: 'jj-view.copyChangeId',
+                when: "webviewSection == 'commit'",
+                group: '6_copy@1',
             },
             {
                 command: 'jj-view.advanceBookmark',

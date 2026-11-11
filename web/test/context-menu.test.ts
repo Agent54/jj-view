@@ -120,6 +120,7 @@ describe('Generalized Context Menu System', () => {
             expect(allCommands).toContain('jj-view.absorb');
             expect(allCommands).toContain('jj-view.setBookmark');
             expect(allCommands).toContain('jj-view.createTag');
+            expect(allCommands).toContain('jj-view.copyChangeId');
         });
 
         it('returns bookmark actions when webviewSection is jj.bookmark', () => {
@@ -149,6 +150,7 @@ describe('Generalized Context Menu System', () => {
             expect(allCommands).toContain('jj-view.deleteTag');
             expect(allCommands).not.toContain('jj-view.deleteBookmark');
             expect(allCommands).not.toContain('jj-view.createTag');
+            expect(allCommands).not.toContain('jj-view.copyChangeId');
             expect(allCommands).not.toContain('jj-view.abandon');
         });
 
