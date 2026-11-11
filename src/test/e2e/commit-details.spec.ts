@@ -129,14 +129,13 @@ test.describe('Commit Details E2E', () => {
             await expect(conflictedFileRow).toBeVisible();
 
             // Verify the warning icon with tooltip inside the specific file row
-            const conflictIcon = conflictedFileRow.locator('.file-icon.codicon-warning');
+            const conflictIcon = conflictedFileRow.getByRole('img', { name: '2-way conflict' });
             await expect(conflictIcon).toBeVisible();
+            await expect(conflictIcon).toHaveClass(/codicon-warning/);
             await expect(conflictIcon).toHaveAttribute('title', '2-way conflict');
 
-            // Verify the conflicted status badge inside the specific file row
-            const conflictBadge = conflictedFileRow.locator('.file-status-badge.status-conflicted');
-            await expect(conflictBadge).toBeVisible();
-            await expect(conflictBadge).toHaveText('2-way conflict');
+            // The leading file-type icon is independent of its conflict status.
+            await expect(conflictedFileRow.locator('.file-icon.codicon-file')).toBeVisible();
         });
 
         test('Save description via button', async () => {

@@ -40,7 +40,7 @@ let vscodeContext = $derived(
     .tag-wrapper {
         display: inline-flex;
         align-items: center;
-        min-width: 22px;
+        min-width: 18px;
         flex-shrink: 1;
     }
 </style>

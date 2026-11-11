@@ -6,7 +6,11 @@ import * as path from 'node:path';
 import { ARTIFACT_DIR, expect, recordGifFlow, test, waitForScmReady } from './standalone-fixture';
 
 test.describe('Standalone Web SCM Resources', () => {
-    test('should list modified and added files with correct status badges', async ({ page, server, testRepo }) => {
+    test('should show matching file icons and status glyphs in SCM and commit details', async ({
+        page,
+        server,
+        testRepo,
+    }) => {
         // Create initial commit
         testRepo.writeFile('committed.txt', 'hello world\n');
         testRepo.describe('initial commit');
@@ -14,28 +18,51 @@ test.describe('Standalone Web SCM Resources', () => {
 
         // Create working copy changes: 1 modified, 1 added
         testRepo.writeFile('committed.txt', 'hello world modified\n');
-        testRepo.writeFile('untracked.txt', 'new untracked file\n');
+        testRepo.writeFile('untracked.ts', 'export const added = true;\n');
 
         await page.goto(server.serverUrl);
         await waitForScmReady(page);
+        await page.evaluate(async () => {
+            await window.__JJ_VIEW_ENV__?.config.update?.('appearance.theme', 'pierre-dark-cobalt');
+        });
 
         // Find working copy resource group
         const workingCopyGroup = page.locator('[data-testid="scm-group-working-copy"]');
         await expect(workingCopyGroup).toBeVisible();
 
-        // Verify committed.txt has 'M' badge
+        // Verify modified files use the change glyph.
         const modifiedItem = workingCopyGroup
             .locator('[data-testid="scm-resource-item"]')
             .filter({ hasText: 'committed.txt' });
         await expect(modifiedItem).toBeVisible();
-        await expect(modifiedItem.locator('.status-badge')).toHaveText('M');
+        await expect(modifiedItem.getByRole('img', { name: 'Modified' })).toHaveClass(/codicon-diff-modified/);
 
-        // Verify untracked.txt has 'A' badge
+        // Verify added files use the addition glyph.
         const addedItem = workingCopyGroup
             .locator('[data-testid="scm-resource-item"]')
-            .filter({ hasText: 'untracked.txt' });
+            .filter({ hasText: 'untracked.ts' });
         await expect(addedItem).toBeVisible();
-        await expect(addedItem.locator('.status-badge')).toHaveText('A');
+        await expect(addedItem.getByRole('img', { name: 'Added' })).toHaveClass(/codicon-diff-added/);
+
+        await page.locator('.commit-row.working-copy .commit-id').click();
+        const details = page.getByTestId('commit-details-view');
+        for (const [filename, label, glyph] of [
+            ['committed.txt', 'Modified', 'diff-modified'],
+            ['untracked.ts', 'Added', 'diff-added'],
+        ]) {
+            const sourceRow = workingCopyGroup.getByTestId('scm-resource-item').filter({ hasText: filename });
+            const detailRow = details.locator('.file-row').filter({ hasText: filename });
+            const sourceIcon = sourceRow.getByTestId(`file-icon-${filename}`);
+            const detailIcon = detailRow.getByTestId(`file-icon-${filename}`);
+            await expect(detailIcon).toBeVisible();
+            expect(await detailIcon.innerHTML()).toBe(await sourceIcon.innerHTML());
+            await expect(detailRow.locator('.file-meta-group').getByRole('img', { name: label })).toHaveClass(
+                new RegExp(`codicon-${glyph}`),
+            );
+            await expect(detailRow.locator(':scope > .file-icon-wrapper')).toHaveCount(1);
+            await expect(detailRow.locator('.file-status-badge')).toHaveText('');
+        }
+        await page.screenshot({ path: path.join(ARTIFACT_DIR, 'file-status-glyphs.png') });
     });
 
     test('should display clean working copy when there are no changes', async ({ page, server, testRepo }) => {
@@ -53,7 +80,7 @@ test.describe('Standalone Web SCM Resources', () => {
         await expect(workingCopyItems).toHaveCount(0);
     });
 
-    test('should list deleted files with D status badge and strikethrough styling', async ({
+    test('should list deleted files with a removal glyph and strikethrough styling', async ({
         page,
         server,
         testRepo,
@@ -74,7 +101,7 @@ test.describe('Standalone Web SCM Resources', () => {
             .filter({ hasText: 'remove-me.txt' });
 
         await expect(deletedItem).toBeVisible();
-        await expect(deletedItem.locator('.status-badge')).toHaveText('D');
+        await expect(deletedItem.getByRole('img', { name: 'Deleted' })).toHaveClass(/codicon-diff-removed/);
         await expect(deletedItem.locator('.file-name')).toHaveClass(/deleted/);
     });
 

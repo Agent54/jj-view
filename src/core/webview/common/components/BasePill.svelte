@@ -26,10 +26,10 @@ let { children, title, className = '', style = '' }: Props = $props();
 <style>
     .bookmark-pill {
         border-radius: 4px;
-        padding: 0 6px;
-        font-size: inherit;
+        padding: 0 3px;
+        font-size: calc(var(--vscode-font-size, 13px) - 2px);
         line-height: normal;
-        height: 22px;
+        height: 18px;
         display: inline-flex;
         align-items: center;
         justify-content: flex-start;
@@ -37,9 +37,9 @@ let { children, title, className = '', style = '' }: Props = $props();
         vertical-align: middle;
         box-sizing: border-box;
         border: 1px solid transparent;
-        min-width: 22px;
+        min-width: 18px;
         overflow: hidden;
-        gap: 4px;
+        gap: 2px;
         user-select: none;
     }
 

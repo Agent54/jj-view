@@ -7,6 +7,7 @@ import type { ActionPayload, CommitAction } from '../../../host/ipc/log-view-sch
 import type { JjLogEntry } from '../../../jj-types';
 import { BookmarkPill, IconButton, TagPill, WorkspacePill } from '../../common/components';
 import Tooltip from '../../common/components/Tooltip.svelte';
+import { getCompactRelativeTimeString, getRelativeTimeString } from '../../common/utils/time-utils';
 import type { DragManager } from '../drag-manager.svelte';
 import { COMMIT_ROW_PADDING_LEFT } from '../layout-constants';
 import { formatCommitTooltip } from '../utils/commit-tooltip';
@@ -16,6 +17,7 @@ import DraggableBookmark from './DraggableBookmark.svelte';
 interface Props {
     onGenerateDescription?: (commit: JjLogEntry) => Promise<void>;
     commit: JjLogEntry;
+    now: number;
     onClick: (modifiers: { multiSelect: boolean }) => void;
     onAction: (action: string, payload: ActionPayload) => void;
     isSelected?: boolean;
@@ -32,6 +34,7 @@ interface Props {
 let {
     onGenerateDescription,
     commit,
+    now,
     onClick,
     onAction,
     isSelected = false,
@@ -135,9 +138,9 @@ const isDraggingThis = $derived(
 const backgroundColor = $derived.by(() => {
     if (isSelected) {
         if (isConflict) {
-            return 'color-mix(in srgb, var(--vscode-list-inactiveSelectionBackground), var(--vscode-charts-red) 20%)';
+            return 'color-mix(in srgb, var(--vscode-list-activeSelectionBackground), var(--vscode-charts-red) 20%)';
         }
-        return 'var(--vscode-list-inactiveSelectionBackground)';
+        return 'var(--vscode-list-activeSelectionBackground)';
     }
     if (isHovered || isOver || isHighlighted) {
         if (isConflict) {
@@ -175,11 +178,13 @@ const outline = $derived.by(() => {
 });
 
 const textOpacity = $derived(isDraggingThis ? 0.5 : 1);
-const fontStyle = $derived(isImmutable ? 'italic' : 'normal');
+const fontStyle = $derived(isImmutable && !isSelected ? 'italic' : 'normal');
 
 const descriptionFull = $derived(commit.description.trim());
 const descriptionFirstLine = $derived(descriptionFull.split('\n')[0]);
 const commitTooltip = $derived(formatCommitTooltip(commit));
+const timestamp = $derived(commit.author.timestamp || commit.committer.timestamp);
+const relativeTime = $derived(getCompactRelativeTimeString(timestamp, now));
 
 // Change ID parts
 const [idPart, offsetPart] = $derived(commit.change_id.split('/'));
@@ -213,6 +218,7 @@ const hasActiveBookmarkAlready = $derived(
     style:background-color={backgroundColor}
     style:outline={outline}
     style:opacity={textOpacity}
+    style:font-weight={isSelected ? 'normal' : undefined}
     use:dragManager.draggable={() => ({
         type: 'commit',
         changeId: commit.change_id,
@@ -242,39 +248,8 @@ const hasActiveBookmarkAlready = $derived(
             <div class="drop-indicator-line bottom" style:--drop-color={dropColor}></div>
         {/if}
     {/if}
-    <!-- Left Column: ID and Actions -->
-    <span
-        class="id-actions-area"
-        style:min-width={`${idDisplayLength}ch`}
-    >
-        <!-- Always render ID to maintain layout stability -->
-        <span
-            class="commit-id"
-            style:color={isImmutable
-                ? 'var(--vscode-descriptionForeground)'
-                : 'var(--vscode-gitDecoration-addedResourceForeground)'}
-        >
-            {#if hasShortId && shortId}
-                <span style:font-weight="bold">{shortId}</span>
-                {#if idPart.length > shortId.length}
-                    <span style:opacity="0.6">
-                        {idPart.substring(shortId.length, idDisplayLength)}
-                    </span>
-                {/if}
-            {:else}
-                {idPart.substring(0, idDisplayLength)}
-            {/if}
-            {#if offsetPart}
-                <span
-                    style:color={commit.is_hidden
-                        ? 'var(--vscode-descriptionForeground)'
-                        : 'var(--vscode-charts-purple)'}
-                >
-                    /{offsetPart}
-                </span>
-            {/if}
-        </span>
-
+    <!-- Anchor actions at the start of the description, independently of trailing metadata. -->
+    <div class="row-actions-anchor">
         <!-- Overlay Actions -->
         {#if isHovered && !dragManager.isDragging && (canGenerateDescription || (selectionCount <= 1 && (visibleActions.newChild || visibleActions.edit || visibleActions.squash)))}
             <div
@@ -350,22 +325,24 @@ const hasActiveBookmarkAlready = $derived(
 
             </div>
         {/if}
-    </span>
+    </div>
 
-    <!-- Right Column: Description, Bookmarks, Code Forge Info -->
+    <!-- Description, Bookmarks, Trailing Metadata, and Code Forge Info -->
     <div class="right-column">
         <!-- Description & Bookmarks -->
         <div class="desc-row">
             <span
                 class="commit-desc"
-                style:font-weight={isCurrentWorkingCopy ? 'bold' : 'normal'}
-                style:color={isImmutable
-                    ? 'var(--vscode-descriptionForeground)'
-                    : isEmpty
-                      ? 'var(--vscode-testing-iconPassed)'
-                      : !commit.description
-                        ? 'var(--vscode-editorWarning-foreground)'
-                        : 'inherit'}
+                style:font-weight={isCurrentWorkingCopy && !isSelected ? 'bold' : 'normal'}
+                style:color={isSelected
+                    ? 'var(--vscode-list-activeSelectionForeground)'
+                    : isImmutable
+                      ? 'var(--vscode-descriptionForeground)'
+                      : isEmpty
+                        ? 'var(--vscode-testing-iconPassed)'
+                        : !commit.description
+                          ? 'var(--vscode-editorWarning-foreground)'
+                          : 'inherit'}
                 style:font-style={fontStyle}
             >
                 {#if commit.is_divergent}
@@ -376,16 +353,14 @@ const hasActiveBookmarkAlready = $derived(
 
             <!-- Right-aligned Bookmarks & Pills -->
             <span class="pills-group">
-                {#if !codeForgeChange}
-                    {#each commit.bookmarks || [] as bookmark (`${bookmark.name}-${bookmark.remote || 'local'}`)}
-                        <DraggableBookmark {bookmark} {dragManager} />
-                    {/each}
-                    {#if isOver && isDraggingBookmark && activeBookmark && !hasActiveBookmarkAlready}
-                        <BookmarkPill
-                            bookmark={{ name: activeBookmark.name, remote: activeBookmark.remote }}
-                            style="opacity: 0.7; background-color: transparent; border: 1px dashed var(--vscode-charts-blue); box-shadow: inset 0 0 8px var(--vscode-charts-blue);"
-                        />
-                    {/if}
+                {#each commit.bookmarks || [] as bookmark (`${bookmark.name}-${bookmark.remote || 'local'}`)}
+                    <DraggableBookmark {bookmark} {dragManager} />
+                {/each}
+                {#if isOver && isDraggingBookmark && activeBookmark && !hasActiveBookmarkAlready}
+                    <BookmarkPill
+                        bookmark={{ name: activeBookmark.name, remote: activeBookmark.remote }}
+                        style="opacity: 0.7; background-color: transparent; border: 1px dashed var(--vscode-charts-blue); box-shadow: inset 0 0 8px var(--vscode-charts-blue);"
+                    />
                 {/if}
                 {#each commit.working_copies || [] as workspace (workspace)}
                     <WorkspacePill {workspace} />
@@ -402,6 +377,36 @@ const hasActiveBookmarkAlready = $derived(
                         {dragManager.activeModifier?.badgeText || 'Drop here'}
                     </span>
                 {/if}
+            </span>
+
+            <span class="commit-metadata">
+                <!-- Always render ID to maintain layout stability. -->
+                <span class="commit-id" style:min-width={`${idDisplayLength}ch`}>
+                    {#if hasShortId && shortId}
+                        <span style:font-weight="bold">{shortId}</span>
+                        {#if idPart.length > shortId.length}
+                            <span style:opacity="0.6">
+                                {idPart.substring(shortId.length, idDisplayLength)}
+                            </span>
+                        {/if}
+                    {:else}
+                        {idPart.substring(0, idDisplayLength)}
+                    {/if}
+                    {#if offsetPart}
+                        <span
+                            style:color={commit.is_hidden
+                                ? 'var(--vscode-descriptionForeground)'
+                                : 'var(--vscode-charts-purple)'}
+                        >
+                            /{offsetPart}
+                        </span>
+                    {/if}
+                </span>
+                <time
+                    class="commit-time"
+                    datetime={relativeTime === '—' ? undefined : timestamp}
+                    aria-label={getRelativeTimeString(timestamp, now)}
+                >{relativeTime}</time>
             </span>
         </div>
 
@@ -504,18 +509,6 @@ const hasActiveBookmarkAlready = $derived(
                     </span>
                 {/if}
 
-                <!-- Right-aligned Bookmarks on second row -->
-                <span class="pills-group" style:margin-left="auto">
-                    {#each commit.bookmarks || [] as bookmark (`${bookmark.name}-${bookmark.remote || 'local'}`)}
-                        <DraggableBookmark {bookmark} {dragManager} />
-                    {/each}
-                    {#if isOver && isDraggingBookmark && activeBookmark && !hasActiveBookmarkAlready}
-                        <BookmarkPill
-                            bookmark={{ name: activeBookmark.name, remote: activeBookmark.remote }}
-                            style="opacity: 0.7; background-color: transparent; border: 1px dashed var(--vscode-charts-blue); box-shadow: inset 0 0 8px var(--vscode-charts-blue);"
-                        />
-                    {/if}
-                </span>
             </div>
         {/if}
     </div>
@@ -531,7 +524,6 @@ const hasActiveBookmarkAlready = $derived(
 
 <style>
     .commit-row {
-        --commit-column-gap: 8px;
         position: relative;
         min-height: 28px;
         height: auto;
@@ -547,6 +539,7 @@ const hasActiveBookmarkAlready = $derived(
         touch-action: none;
         min-width: 0;
         padding-top: 0;
+        padding-right: 8px;
     }
 
     .drop-indicator-line {
@@ -578,10 +571,9 @@ const hasActiveBookmarkAlready = $derived(
         background-color: var(--drop-color);
     }
 
-    .id-actions-area {
-        margin-right: var(--commit-column-gap);
+    .row-actions-anchor {
         flex-shrink: 0;
-        width: auto;
+        width: 0;
         position: relative;
         display: flex;
         align-items: center;
@@ -592,20 +584,44 @@ const hasActiveBookmarkAlready = $derived(
         display: flex;
         align-items: center;
         opacity: 1;
-        font-family: monospace;
+        font-family: var(--vscode-editor-font-family, monospace);
+        font-size: var(--vscode-editor-font-size, 12px);
+        color: var(--vscode-descriptionForeground);
+        justify-content: flex-end;
+        flex-shrink: 0;
+    }
+
+    .commit-metadata {
+        display: inline-flex;
+        align-items: center;
+        flex-shrink: 0;
+        gap: 4px;
+        margin-left: 12px;
+        color: var(--vscode-descriptionForeground);
+        font-weight: normal;
+    }
+
+    .commit-time {
+        flex: 0 0 auto;
+        min-width: 3ch;
+        text-align: right;
+        font-family: var(--vscode-editor-font-family, monospace);
+        font-size: calc(var(--vscode-font-size, 13px) - 3px);
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
     }
 
     .hover-actions {
         position: absolute;
-        /* Start at the description column so the change ID stays visible. */
-        left: calc(100% + var(--commit-column-gap));
+        /* Stay aligned with the description while the ID and time remain at the row end. */
+        left: 0;
         top: 50%;
         transform: translateY(-50%);
         display: flex;
         align-items: center;
         gap: 2px;
         padding: 2px;
-        background: var(--vscode-editorGroupHeader-tabsBackground);
+        background: var(--vscode-list-hoverBackground);
         border: 1px solid var(--vscode-editorGroupHeader-tabsBorder);
         border-radius: 6px;
         z-index: 1;

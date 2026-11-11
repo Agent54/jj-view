@@ -3,6 +3,7 @@
   SPDX-License-Identifier: Apache-2.0
 -->
 <script lang="ts">
+import type { Snippet } from 'svelte';
 import {
     type CommitDetailsHostToWebviewMessage,
     CommitDetailsHostToWebviewMessageSchema,
@@ -16,9 +17,10 @@ import CommitDetails from './CommitDetails.svelte';
 
 interface Props {
     initialCommit?: CommitDetailsPayload;
+    fileIcon?: Snippet<[filename: string]>;
 }
 
-let { initialCommit }: Props = $props();
+let { initialCommit, fileIcon }: Props = $props();
 
 function getInitialCommit(): CommitDetailsPayload | null {
     if (typeof document === 'undefined') {
@@ -73,6 +75,7 @@ $effect(() => {
     </div>
 {:else}
     <CommitDetails
+        {fileIcon}
         changeId={detailsCommit.changeId || ''}
         changeIdShortest={detailsCommit.changeIdShortest}
         isDivergent={detailsCommit.isDivergent}

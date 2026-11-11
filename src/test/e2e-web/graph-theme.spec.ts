@@ -54,8 +54,8 @@ test('Cobalt badges and actions, Silver lanes, and dotted history retain theme a
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'pierre-dark-cobalt');
     await expect(page.getByTestId('log-pane')).toHaveCSS('background-color', 'rgb(0, 0, 0)');
     await expect(page.getByTestId('log-header')).toHaveCSS('background-color', 'rgb(0, 0, 0)');
-    await expect(page.getByTestId('scm-input-textarea')).toHaveCSS('background-color', 'rgb(17, 17, 17)');
-    await expect(page.getByTestId('scm-input-textarea')).toHaveCSS('font-size', '13px');
+    await expect(page.getByTestId('scm-input-textarea')).toHaveCSS('background-color', 'rgb(14, 14, 14)');
+    await expect(page.getByTestId('scm-input-textarea')).toHaveCSS('font-size', '14px');
     await expect(page.locator('html')).toHaveCSS('font-size', '16px');
     await expect(page.locator('body')).toHaveCSS('-webkit-font-smoothing', 'antialiased');
     await expect(page.locator('.commit-desc').first()).toHaveCSS('font-size', '14px');
@@ -76,7 +76,16 @@ test('Cobalt badges and actions, Silver lanes, and dotted history retain theme a
         await expect(badge).toHaveCSS('border-radius', '4px');
     }
     const current = graph.locator('.node-working-copy');
-    await expect(current).toHaveCSS('fill', 'rgb(45, 160, 68)');
+    const currentId = graph.locator('.commit-row.working-copy .commit-id');
+    const immutableId = graph.locator(`[data-change-id="${remoteChange}"] .commit-id`);
+    const immutableDiamond = graph.locator(`[data-commit-id="${remoteCommit}"] polygon`);
+    const immutableColor = await immutableId.evaluate((el) => getComputedStyle(el).color);
+    await expect(currentId).toHaveCSS('color', immutableColor);
+    await expect(currentId).not.toHaveCSS('color', 'rgb(7, 196, 128)');
+    await expect(current).toHaveCSS('fill', 'rgb(230, 237, 244)');
+    await expect(current).toHaveCSS('stroke', 'rgb(7, 196, 128)');
+    await expect(immutableDiamond).toHaveCSS('stroke', immutableColor);
+    await expect(immutableDiamond).toHaveCSS('fill', immutableColor);
     await expect(current).not.toHaveCSS('filter', 'none');
     await expect(graph.locator('.graph-svg text')).toHaveCount(0);
     await expect(graph.locator('.graph-svg > path').first()).toHaveCSS('stroke', 'rgb(230, 237, 244)');
@@ -96,8 +105,12 @@ test('Cobalt badges and actions, Silver lanes, and dotted history retain theme a
             await capture();
             await releaseRow.hover();
             const actions = releaseRow.locator('.hover-actions');
+            await expect(releaseRow).toHaveCSS('background-color', 'rgb(31, 31, 31)');
+            await expect(actions).toHaveCSS('background-color', 'rgb(31, 31, 31)');
             await expect(actions.getByRole('button').first()).toHaveCSS('background-color', 'rgb(35, 134, 54)');
             await expect(actions.getByRole('button').first()).toHaveCSS('border-radius', '5px');
+            await actions.getByRole('button').first().hover();
+            await expect(actions.getByRole('button').first()).toHaveCSS('background-color', 'rgb(45, 160, 68)');
             await page.screenshot({ path: path.join(ARTIFACT_DIR, 'pierre-dark-cobalt.png') });
             await capture();
         },
@@ -105,7 +118,21 @@ test('Cobalt badges and actions, Silver lanes, and dotted history retain theme a
     );
 
     // The custom theme must also resolve in Pierre's diff highlighter and worker.
+    const workingRow = graph.locator('.commit-row.working-copy');
+    await workingRow.locator('.commit-id').click();
+    await expect(workingRow).toHaveAttribute('aria-selected', 'true');
+    await expect(workingRow.locator('.commit-desc')).toHaveCSS('font-weight', '400');
+    await expect(workingRow.locator('.commit-desc')).toHaveCSS('font-style', 'normal');
     await releaseRow.locator('.commit-id').click();
+    await expect(releaseRow).toHaveAttribute('aria-selected', 'true');
+    await expect(releaseRow).toHaveCSS('background-color', 'rgb(31, 31, 31)');
+    await expect(releaseRow.locator('.commit-desc')).toHaveCSS('color', 'rgb(241, 243, 247)');
+    await expect(releaseRow.locator('.commit-desc')).toHaveCSS('font-weight', '400');
+    await expect(releaseRow.locator('.commit-desc')).toHaveCSS('font-style', 'normal');
+    const toolbarButton = page.locator('.log-toolbar button').first();
+    await toolbarButton.hover();
+    await expect(toolbarButton).toHaveCSS('background-color', 'rgb(31, 31, 31)');
+    await page.screenshot({ path: path.join(ARTIFACT_DIR, 'xenon-darc-active-row.png') });
     await page.getByTestId('commit-details-view').locator('.file-row', { hasText: 'release.txt' }).click();
     await expect(
         page.getByTestId('diff-content-container').getByText('release candidate', { exact: true }),
@@ -117,6 +144,12 @@ test('Cobalt badges and actions, Silver lanes, and dotted history retain theme a
         await window.__JJ_VIEW_ENV__?.config.update?.('logTheme', 'default');
     });
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'pierre-light');
+    const lightImmutableColor = await immutableId.evaluate((el) => getComputedStyle(el).color);
+    await expect(currentId).toHaveCSS('color', lightImmutableColor);
+    await expect(current).toHaveCSS('fill', 'rgb(10, 10, 10)');
+    await expect(current).toHaveCSS('stroke', 'rgb(24, 164, 108)');
+    await expect(immutableDiamond).toHaveCSS('stroke', lightImmutableColor);
+    await expect(immutableDiamond).toHaveCSS('fill', lightImmutableColor);
     await expect(page.getByTestId('log-pane')).not.toHaveCSS('background-color', 'rgb(0, 0, 0)');
     await expect(page.locator('.commit-desc').first()).toHaveCSS('font-size', '13px');
     await expect(page.locator('.commit-id').first()).toHaveCSS('font-size', '12px');

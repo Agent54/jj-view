@@ -30,7 +30,7 @@ test.describe('Standalone Web File Watcher', () => {
             .filter({ hasText: 'watched-file.txt' });
 
         await expect(newItem).toBeVisible({ timeout: 10000 });
-        await expect(newItem.locator('.status-badge')).toHaveText('A');
+        await expect(newItem.getByRole('img', { name: 'Added' })).toHaveClass(/codicon-diff-added/);
     });
 
     test('should automatically detect modified file without page reload', async ({ page, server, testRepo }) => {
@@ -49,7 +49,7 @@ test.describe('Standalone Web File Watcher', () => {
             .filter({ hasText: 'tracked.txt' });
 
         await expect(modifiedItem).toBeVisible({ timeout: 10000 });
-        await expect(modifiedItem.locator('.status-badge')).toHaveText('M');
+        await expect(modifiedItem.getByRole('img', { name: 'Modified' })).toHaveClass(/codicon-diff-modified/);
     });
 
     test('should refresh the log graph after an external jj operation without page reload', async ({

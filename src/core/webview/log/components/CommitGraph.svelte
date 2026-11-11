@@ -49,6 +49,14 @@ let {
 }: Props = $props();
 
 let fontSize = $state(13);
+let now = $state(Date.now());
+$effect(() => {
+    const timer = setInterval(() => {
+        now = Date.now();
+    }, 60_000);
+    return () => clearInterval(timer);
+});
+
 $effect(() => {
     if (typeof document !== 'undefined') {
         const size = parseInt(getComputedStyle(document.body).fontSize, 10);
@@ -150,6 +158,7 @@ const graphAreaWidth = $derived(computeGraphAreaWidth(layout.width, LANE_WIDTH, 
                 >
                     <CommitNode
                         commit={row}
+                        {now}
                         {onGenerateDescription}
                         onClick={(modifiers) =>
                             onAction('select', {

@@ -10,6 +10,7 @@ import pierreDark from '@pierre/theme/pierre-dark';
 // Preserve Pierre's syntax colors and Cobalt's bookmark/tag/action accents.
 const canvas = '#000000';
 const raised = '#111111';
+const activeSurface = '#1f1f1f';
 const foreground = '#f5f5f5';
 const sidebarForeground = '#f1f3f7';
 const muted = '#a3a3a3';
@@ -18,7 +19,7 @@ const border = '#ffffff14';
 export default {
     ...pierreDark,
     name: 'pierre-dark-cobalt',
-    displayName: 'Pierre Dark Cobalt',
+    displayName: 'Xenon Darc',
     colors: {
         ...pierreDark.colors,
         'editor.background': canvas,
@@ -59,15 +60,16 @@ export default {
         'statusBar.noFolderBackground': canvas,
         'statusBarItem.remoteBackground': canvas,
         'statusBarItem.remoteForeground': muted,
-        'list.hoverBackground': '#f1f3f714',
-        'list.activeSelectionBackground': '#f1f3f71c',
+        'list.hoverBackground': activeSurface,
+        'list.activeSelectionBackground': activeSurface,
         'list.activeSelectionForeground': sidebarForeground,
-        'list.inactiveSelectionBackground': '#f1f3f712',
-        'toolbar.hoverBackground': '#ffffff0a',
-        'input.background': raised,
+        'list.inactiveSelectionBackground': activeSurface,
+        'list.inactiveSelectionForeground': sidebarForeground,
+        'toolbar.hoverBackground': activeSurface,
+        'input.background': '#0e0e0e',
         'input.foreground': foreground,
         'input.placeholderForeground': muted,
-        'input.border': '#ffffff1c',
+        'input.border': '#ffffff0f',
         'dropdown.background': raised,
         'dropdown.foreground': foreground,
         'dropdown.border': border,
@@ -101,6 +103,5 @@ export default {
         'jjView.commitAction.background': '#238636',
         'jjView.commitAction.hoverBackground': '#2da044',
         'jjView.commitAction.foreground': '#ffffff',
-        'jjView.workingCopy.foreground': '#2da044',
     },
 };

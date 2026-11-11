@@ -39,7 +39,7 @@
         "strategy": "clamp",
         "colors": ["#e6edf4"],
         "lightColors": ["#596774"],
-        "nodeColor": "#2da044",
+        "nodeColor": "var(--vscode-gitDecoration-addedResourceForeground)",
         "nodeFill": "#e6edf4"
     },
     "nord": {

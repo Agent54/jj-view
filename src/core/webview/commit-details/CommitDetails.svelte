@@ -3,7 +3,7 @@
   SPDX-License-Identifier: Apache-2.0
 -->
 <script lang="ts">
-import { tick, untrack } from 'svelte';
+import { type Snippet, tick, untrack } from 'svelte';
 import { writeClipboardText } from '../../../utils/clipboard';
 import { formatCommitDescription } from '../../../utils/format-utils';
 import {
@@ -24,6 +24,7 @@ interface Props {
     /** In-progress edit held by the host; seeds the editor on mount. */
     unsavedDraft?: string;
     files: JjStatusEntry[];
+    fileIcon?: Snippet<[filename: string]>;
     isLoadingFiles?: boolean;
     isImmutable: boolean;
     isEmpty?: boolean;
@@ -50,6 +51,7 @@ let {
     description,
     unsavedDraft,
     files,
+    fileIcon,
     isLoadingFiles = false,
     isImmutable,
     isEmpty = false,
@@ -626,12 +628,11 @@ function getFileColor(status: string, conflicted?: boolean): string {
                                 }
                             }}
                         >
-                            <span
-                                class="codicon codicon-{getFileIcon(file.status, file.conflicted)} file-icon"
-                                style:color={getFileColor(file.status, file.conflicted)}
-                                title={file.conflicted ? conflictLabel : undefined}
-                                aria-label={file.conflicted ? conflictLabel : undefined}
-                            ></span>
+                            {#if fileIcon}
+                                {@render fileIcon(name)}
+                            {:else}
+                                <span class="codicon codicon-file file-icon" aria-hidden="true"></span>
+                            {/if}
                             <span class="file-path-container" title={file.path}>
                                 {#if dir}<span class="file-dir">{dir}</span>{/if}<span class="file-name" style:color={file.conflicted ? 'var(--vscode-gitDecoration-conflictingResourceForeground, #e51400)' : undefined}>{name}</span>
                             </span>
@@ -646,11 +647,13 @@ function getFileColor(status: string, conflicted?: boolean): string {
                                         {/if}
                                     </span>
                                 {/if}
-                                {#if file.conflicted}
-                                    <span class="file-status-badge status-conflicted" title={conflictLabel}>{file.conflictSides ? `${file.conflictSides}-way conflict` : 'conflicted'}</span>
-                                {:else}
-                                    <span class="file-status-badge status-{file.status}">{file.status}</span>
-                                {/if}
+                                <span
+                                    class="file-status-badge codicon codicon-{getFileIcon(file.status, file.conflicted)}"
+                                    role="img"
+                                    style:color={getFileColor(file.status, file.conflicted)}
+                                    title={file.conflicted ? conflictLabel : file.status}
+                                    aria-label={file.conflicted ? conflictLabel : file.status.charAt(0).toUpperCase() + file.status.slice(1)}
+                                ></span>
                             </span>
                         </button>
                     {/each}
@@ -970,17 +973,16 @@ function getFileColor(status: string, conflicted?: boolean): string {
         display: flex;
         background-color: var(--vscode-input-background);
         border: 1px solid var(--vscode-input-border, color-mix(in srgb, var(--vscode-editor-foreground), transparent 82%));
-        border-radius: 8px;
+        border-radius: 14px;
         font-family: var(--vscode-editor-font-family), monospace;
         font-size: var(--vscode-editor-font-size, 13px);
         line-height: 1.5em;
         overflow: hidden;
-        transition: border-color 0.15s, box-shadow 0.15s;
+        transition: border-color 0.15s;
     }
 
     .editor-wrapper:focus-within {
         border-color: var(--vscode-focusBorder, #007fd4);
-        box-shadow: 0 0 0 1px var(--vscode-focusBorder, #007fd4);
     }
 
     .editor-wrapper.is-immutable {
@@ -1209,43 +1211,12 @@ function getFileColor(status: string, conflicted?: boolean): string {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        white-space: nowrap;
-        font-size: 10px;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        padding: 1px 6px;
-        border-radius: 10px;
-        line-height: 14px;
+        width: 16px;
+        height: 16px;
+        font-size: 14px;
+        line-height: 1;
         user-select: none;
     }
-
-    .file-status-badge.status-conflicted {
-        color: var(--vscode-gitDecoration-conflictingResourceForeground, #e51400);
-        background: color-mix(in srgb, var(--vscode-gitDecoration-conflictingResourceForeground, #e51400) 12%, transparent);
-    }
-
-    .file-status-badge.status-added,
-    .file-status-badge.status-copied {
-        color: var(--vscode-gitDecoration-addedResourceForeground, #23d18b);
-        background: color-mix(in srgb, var(--vscode-gitDecoration-addedResourceForeground, #23d18b) 12%, transparent);
-    }
-
-    .file-status-badge.status-modified {
-        color: var(--vscode-gitDecoration-modifiedResourceForeground, #e2c08d);
-        background: color-mix(in srgb, var(--vscode-gitDecoration-modifiedResourceForeground, #e2c08d) 12%, transparent);
-    }
-
-    .file-status-badge.status-deleted {
-        color: var(--vscode-gitDecoration-deletedResourceForeground, #f14c4c);
-        background: color-mix(in srgb, var(--vscode-gitDecoration-deletedResourceForeground, #f14c4c) 12%, transparent);
-    }
-
-    .file-status-badge.status-renamed {
-        color: var(--vscode-gitDecoration-renamedResourceForeground, #73c991);
-        background: color-mix(in srgb, var(--vscode-gitDecoration-renamedResourceForeground, #73c991) 12%, transparent);
-    }
-
 
     .no-files-message {
         display: flex;

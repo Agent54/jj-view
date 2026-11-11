@@ -66,7 +66,7 @@ export const THEME_DESCRIPTIONS: readonly string[] = [
     // Pierre Themes
     'Pierre Dark Soft (Recommended - softer contrast canvas)',
     'Pierre Dark (Standard dark theme)',
-    'Pierre Dark Cobalt (T3 black surfaces and typography, blue bookmarks, purple remotes, amber tags)',
+    'Xenon Darc (T3 black surfaces and typography, blue bookmarks, purple remotes, amber tags)',
     'Pierre Dark Vibrant (Vibrant accents)',
     'Pierre Dark Protanopia/Deuteranopia (Red-green accessible)',
     'Pierre Dark Tritanopia (Blue-yellow accessible)',

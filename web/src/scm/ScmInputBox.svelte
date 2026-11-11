@@ -181,25 +181,24 @@ onMount(() => {
     max-height: 240px;
     resize: vertical;
     box-sizing: border-box;
-    font-family: var(--vscode-editor-font-family, monospace);
-    font-size: var(--vscode-editor-font-size, 12px);
+    font-family: var(--vscode-font-family, system-ui, sans-serif);
+    font-size: var(--vscode-font-size, 13px);
     background-color: var(--vscode-input-background, #262626);
     color: var(--vscode-input-foreground, #d4d4d4);
     border: 1px solid var(--vscode-input-border, #2c2c2c);
-    border-radius: 6px;
-    padding: 8px 10px;
+    border-radius: 14px;
+    padding: 12px 14px;
     line-height: 1.5;
     outline: none;
-    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    transition: border-color 0.15s ease;
 }
 
 .scm-textarea.with-agent-btn {
-    padding-right: 32px;
+    padding-right: 40px;
 }
 
 .scm-textarea:focus {
     border-color: var(--vscode-focusBorder, #69b1ff);
-    box-shadow: 0 0 0 1px var(--vscode-focusBorder, #69b1ff);
 }
 
 .scm-textarea::placeholder {
@@ -208,8 +207,8 @@ onMount(() => {
 
 .agent-draft-button {
     position: absolute;
-    top: 6px;
-    right: 6px;
+    top: 10px;
+    right: 10px;
     width: 24px;
     height: 24px;
     display: flex;

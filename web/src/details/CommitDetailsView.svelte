@@ -6,6 +6,7 @@
 import CommitDetailsApp from '../../../src/core/webview/commit-details/CommitDetailsApp.svelte';
 import { initBridge } from '../../../src/core/webview/transport/bridge.svelte';
 import type { WebviewTransport } from '../../../src/core/webview/transport/types';
+import FileIcon from '../scm/FileIcon.svelte';
 
 interface Props {
     transport: WebviewTransport;
@@ -35,7 +36,11 @@ initBridge(transport);
     </header>
 
     <div class="details-content" data-testid="commit-details-content">
-        <CommitDetailsApp />
+        <CommitDetailsApp>
+            {#snippet fileIcon(filename: string)}
+                <FileIcon {filename} />
+            {/snippet}
+        </CommitDetailsApp>
     </div>
 </div>
 

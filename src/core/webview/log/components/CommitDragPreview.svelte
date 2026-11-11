@@ -179,7 +179,7 @@ const showDescendantsBadge = $derived(includesDescendants && descendantCount > 0
     }
 
     .short-id {
-        color: var(--vscode-gitDecoration-addedResourceForeground);
+        color: var(--vscode-descriptionForeground);
         font-weight: bold;
     }
 

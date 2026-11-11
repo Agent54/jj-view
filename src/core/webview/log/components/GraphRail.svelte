@@ -236,8 +236,12 @@ const svgHeight = $derived(height + BOTTOM_PADDING);
         {@const cy = getLayoutRowPixelY({ type: 'node', x: node.x, y: node.y })}
         {@const isSelected = selectedNodes.has(node.changeId)}
         {@const isHighlighted = highlightedNodeId !== undefined && node.changeId === highlightedNodeId}
-        {@const nodeColor = `var(--jj-node-color, ${node.color})`}
-        {@const nodeFill = `var(--jj-node-fill, ${node.color})`}
+        {@const nodeColor = node.isImmutable
+            ? 'var(--vscode-descriptionForeground)'
+            : 'var(--jj-node-color, var(--vscode-gitDecoration-addedResourceForeground))'}
+        {@const nodeFill = node.isImmutable
+            ? 'var(--vscode-descriptionForeground)'
+            : 'var(--jj-node-fill, var(--vscode-editor-foreground))'}
         <g data-commit-id={node.commitId}>
             {#if isSelected}
                 <circle
@@ -270,12 +274,12 @@ const svgHeight = $derived(height + BOTTOM_PADDING);
                     r="6"
                     class="node-working-copy"
                     class:empty={node.isEmpty}
+                    fill={node.isEmpty ? 'var(--vscode-sideBar-background)' : nodeFill}
                     stroke={node.conflict
                         ? 'var(--vscode-charts-red)'
-                        : node.isEmpty
-                          ? 'var(--vscode-jjView-workingCopy-foreground, var(--vscode-charts-green))'
-                          : 'none'}
+                        : nodeColor}
                     stroke-width="2"
+                    style:color={nodeColor}
                 />
             {:else if node.isHidden}
                 <g transform={`translate(${cx}, ${cy})`}>
@@ -357,11 +361,6 @@ const svgHeight = $derived(height + BOTTOM_PADDING);
     }
 
     .node-working-copy {
-        fill: var(--vscode-jjView-workingCopy-foreground, var(--vscode-charts-green));
-        filter: drop-shadow(0 0 3px color-mix(in srgb, var(--vscode-jjView-workingCopy-foreground, var(--vscode-charts-green)) 45%, transparent));
-    }
-
-    .node-working-copy.empty {
-        fill: var(--vscode-sideBar-background);
+        filter: drop-shadow(0 0 3px color-mix(in srgb, currentColor 45%, transparent));
     }
 </style>
