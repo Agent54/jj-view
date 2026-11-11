@@ -150,6 +150,17 @@ function handleDblClick(): void {
             {/each}
         </div>
 
+        {#if (resourceState.additions ?? 0) > 0 || (resourceState.deletions ?? 0) > 0}
+            <span class="file-diff-stats">
+                {#if (resourceState.additions ?? 0) > 0}
+                    <span class="stat-added" title={`Lines added: ${resourceState.additions}`}>+{resourceState.additions}</span>
+                {/if}
+                {#if (resourceState.deletions ?? 0) > 0}
+                    <span class="stat-deleted" title={`Lines removed: ${resourceState.deletions}`}>-{resourceState.deletions}</span>
+                {/if}
+            </span>
+        {/if}
+
         <span
             class={`status-badge codicon codicon-${statusBadge.icon} ${statusBadge.className}`}
             role="img"
@@ -243,6 +254,25 @@ function handleDblClick(): void {
 .item-action-button:hover {
     background-color: var(--vscode-toolbar-hoverBackground, rgba(31, 62, 94, 0.45));
     color: var(--vscode-foreground);
+}
+
+.file-diff-stats {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    line-height: 14px;
+    font-family: var(--vscode-editor-font-family), monospace;
+}
+
+.stat-added {
+    color: var(--vscode-gitDecoration-addedResourceForeground, #23d18b);
+    background: color-mix(in srgb, var(--vscode-gitDecoration-addedResourceForeground, #23d18b) 14%, transparent);
+}
+
+.stat-deleted {
+    color: var(--vscode-gitDecoration-deletedResourceForeground, #f14c4c);
+    background: color-mix(in srgb, var(--vscode-gitDecoration-deletedResourceForeground, #f14c4c) 14%, transparent);
 }
 
 .status-badge {

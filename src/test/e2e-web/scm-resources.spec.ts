@@ -29,6 +29,12 @@ test.describe('Standalone Web SCM Resources', () => {
         // Find working copy resource group
         const workingCopyGroup = page.locator('[data-testid="scm-group-working-copy"]');
         await expect(workingCopyGroup).toBeVisible();
+        const workingCopyHeader = workingCopyGroup.locator('.group-header');
+        await expect(workingCopyHeader.locator('.stat-added')).toHaveText('+2');
+        await expect(workingCopyHeader.locator('.stat-deleted')).toHaveText('-1');
+        const ancestorGroup = page.getByTestId('scm-group-ancestor-0');
+        await expect(ancestorGroup.locator('.group-header .stat-added')).toHaveText('+1');
+        await expect(ancestorGroup.locator('.file-diff-stats .stat-added')).toHaveText('+1');
 
         // Verify modified files use the change glyph.
         const modifiedItem = workingCopyGroup
@@ -36,6 +42,8 @@ test.describe('Standalone Web SCM Resources', () => {
             .filter({ hasText: 'committed.txt' });
         await expect(modifiedItem).toBeVisible();
         await expect(modifiedItem.getByRole('img', { name: 'Modified' })).toHaveClass(/codicon-diff-modified/);
+        await expect(modifiedItem.locator('.stat-added')).toHaveText('+1');
+        await expect(modifiedItem.locator('.stat-deleted')).toHaveText('-1');
 
         // Verify added files use the addition glyph.
         const addedItem = workingCopyGroup
@@ -43,6 +51,14 @@ test.describe('Standalone Web SCM Resources', () => {
             .filter({ hasText: 'untracked.ts' });
         await expect(addedItem).toBeVisible();
         await expect(addedItem.getByRole('img', { name: 'Added' })).toHaveClass(/codicon-diff-added/);
+        await expect(addedItem.locator('.stat-added')).toHaveText('+1');
+        await expect(addedItem.locator('.stat-deleted')).toHaveCount(0);
+
+        await workingCopyHeader.locator('.chevron-icon').click();
+        await expect(modifiedItem).toBeHidden();
+        await expect(workingCopyHeader.locator('.stat-added')).toHaveText('+2');
+        await expect(workingCopyHeader.locator('.stat-deleted')).toHaveText('-1');
+        await workingCopyHeader.locator('.chevron-icon').click();
 
         await page.locator('.commit-row.working-copy .commit-id').click();
         const details = page.getByTestId('commit-details-view');
@@ -61,6 +77,9 @@ test.describe('Standalone Web SCM Resources', () => {
             );
             await expect(detailRow.locator(':scope > .file-icon-wrapper')).toHaveCount(1);
             await expect(detailRow.locator('.file-status-badge')).toHaveText('');
+            await expect(sourceRow.locator('.file-diff-stats')).toHaveText(
+                await detailRow.locator('.file-diff-stats').innerText(),
+            );
             await expect(detailRow.locator('.file-name')).toHaveText(filename);
             await expect(detailRow.locator('.file-name')).toHaveCSS(
                 'font-size',
@@ -120,6 +139,9 @@ test.describe('Standalone Web SCM Resources', () => {
         await expect(deletedItem).toBeVisible();
         await expect(deletedItem.getByRole('img', { name: 'Deleted' })).toHaveClass(/codicon-diff-removed/);
         await expect(deletedItem.locator('.file-name')).toHaveClass(/deleted/);
+        await expect(deletedItem.locator('.stat-deleted')).toHaveText('-1');
+        await expect(deletedItem.locator('.stat-added')).toHaveCount(0);
+        await expect(workingCopyGroup.locator('.group-header .stat-deleted')).toHaveText('-1');
     });
 
     test('should maintain strict 22px row height and prevent layout shift on hover with baseline alignment', async ({

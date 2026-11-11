@@ -84,11 +84,21 @@ function buildConflictItems(snap: ScmSnapshot | undefined, root: string): JjReso
     const changeId = snap?.currentEntry?.change_id || '@';
     return (
         snap?.conflictedPaths.map((cPath) =>
-            createJjResourceState({ path: cPath, status: 'modified', conflicted: true }, '@', root, {
-                openDiffOnClick,
-                inConflictGroup: true,
-                workingCopyChangeId: changeId,
-            }),
+            createJjResourceState(
+                {
+                    ...snap.workingCopyChanges.find((file) => file.path === cPath),
+                    path: cPath,
+                    status: 'modified',
+                    conflicted: true,
+                },
+                '@',
+                root,
+                {
+                    openDiffOnClick,
+                    inConflictGroup: true,
+                    workingCopyChangeId: changeId,
+                },
+            ),
         ) ?? []
     );
 }
@@ -384,6 +394,7 @@ function getRepoTitleActions(entry: ScmRepositoryEntry): ResolvedMenuItem[] {
                                     label={snap?.workingCopyLabel || 'Working Copy'}
                                     contextValue={snap?.workingCopyContextValue || 'jj.group.workingCopy'}
                                     items={repoWorkingCopy}
+                                    changes={snap?.workingCopyChanges}
                                     workspaceRoot={root}
                                     expanded={true}
                                     {rootContext}
@@ -492,6 +503,7 @@ function getRepoTitleActions(entry: ScmRepositoryEntry): ResolvedMenuItem[] {
                 label={snapshot?.workingCopyLabel || 'Working Copy'}
                 contextValue={snapshot?.workingCopyContextValue || 'jj.group.workingCopy'}
                 items={workingCopyItems}
+                changes={snapshot?.workingCopyChanges}
                 {workspaceRoot}
                 expanded={true}
                 {rootContext}

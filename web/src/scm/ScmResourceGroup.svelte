@@ -3,6 +3,7 @@
   SPDX-License-Identifier: Apache-2.0
 -->
 <script lang="ts">
+import type { JjStatusEntry } from '../../../src/core/jj-types';
 import type { JjResourceState } from '../../../src/core/scm-resource-state';
 import { Uri } from '../../../src/core/uri-utils';
 import type { IContextKeyService } from '../menu/context-key-service';
@@ -15,6 +16,7 @@ interface Props {
     label: string;
     contextValue?: string;
     items: JjResourceState[];
+    changes?: JjStatusEntry[];
     workspaceRoot?: string;
     revision?: string;
     changeId?: string;
@@ -34,6 +36,7 @@ let {
     label,
     contextValue = '',
     items,
+    changes,
     workspaceRoot,
     revision,
     changeId,
@@ -50,6 +53,8 @@ let {
 
 // svelte-ignore state_referenced_locally
 let isExpanded = $state(expanded);
+const totalAdditions = $derived((changes ?? items).reduce((sum, file) => sum + (file.additions ?? 0), 0));
+const totalDeletions = $derived((changes ?? items).reduce((sum, file) => sum + (file.deletions ?? 0), 0));
 const groupContext = $derived(
     rootContext.createScoped({
         scmResourceGroupState: contextValue,
@@ -138,6 +143,17 @@ const groupVsCodeContext = $derived(
                     </button>
                 {/each}
             </div>
+
+            {#if totalAdditions > 0 || totalDeletions > 0}
+                <span class="diff-summary-badges">
+                    {#if totalAdditions > 0}
+                        <span class="stat-pill stat-added" title={`Lines added: ${totalAdditions}`}>+{totalAdditions}</span>
+                    {/if}
+                    {#if totalDeletions > 0}
+                        <span class="stat-pill stat-deleted" title={`Lines removed: ${totalDeletions}`}>-{totalDeletions}</span>
+                    {/if}
+                </span>
+            {/if}
 
             <span class="count-badge" title={`${items.length} files`}>
                 {items.length}
@@ -274,6 +290,36 @@ const groupVsCodeContext = $derived(
 .group-action-button:hover {
     background-color: var(--vscode-toolbar-hoverBackground, rgba(31, 62, 94, 0.45));
     color: var(--vscode-foreground);
+}
+
+.diff-summary-badges {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-family: var(--vscode-editor-font-family), monospace;
+}
+
+.stat-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+    padding: 1px 6px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 14px;
+    user-select: none;
+}
+
+.stat-added {
+    color: var(--vscode-gitDecoration-addedResourceForeground, #23d18b);
+    background: color-mix(in srgb, var(--vscode-gitDecoration-addedResourceForeground, #23d18b) 14%, transparent);
+}
+
+.stat-deleted {
+    color: var(--vscode-gitDecoration-deletedResourceForeground, #f14c4c);
+    background: color-mix(in srgb, var(--vscode-gitDecoration-deletedResourceForeground, #f14c4c) 14%, transparent);
 }
 
 .count-badge {

@@ -28,6 +28,8 @@ export interface JjResourceState {
     diffTitle?: string;
     revision: string;
     status?: JjStatusEntry['status'];
+    additions?: number;
+    deletions?: number;
 }
 
 export function createJjResourceState(
@@ -108,5 +110,7 @@ export function createJjResourceState(
         contextValue,
         revision,
         status: entry.status,
+        additions: entry.additions,
+        deletions: entry.deletions,
     };
 }
