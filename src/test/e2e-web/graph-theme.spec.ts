@@ -121,13 +121,13 @@ test('Cobalt badges and actions, Silver lanes, and dotted history retain theme a
     const workingRow = graph.locator('.commit-row.working-copy');
     await workingRow.locator('.commit-id').click();
     await expect(workingRow).toHaveAttribute('aria-selected', 'true');
-    await expect(workingRow.locator('.commit-desc')).toHaveCSS('font-weight', '400');
+    await expect(workingRow.locator('.commit-desc')).toHaveCSS('font-weight', '500');
     await expect(workingRow.locator('.commit-desc')).toHaveCSS('font-style', 'normal');
     await releaseRow.locator('.commit-id').click();
     await expect(releaseRow).toHaveAttribute('aria-selected', 'true');
     await expect(releaseRow).toHaveCSS('background-color', 'rgb(31, 31, 31)');
-    await expect(releaseRow.locator('.commit-desc')).toHaveCSS('color', 'rgb(241, 243, 247)');
-    await expect(releaseRow.locator('.commit-desc')).toHaveCSS('font-weight', '400');
+    await expect(releaseRow.locator('.commit-desc')).toHaveCSS('color', 'oklab(0.963762 -0.000504732 -0.00571203)');
+    await expect(releaseRow.locator('.commit-desc')).toHaveCSS('font-weight', '500');
     await expect(releaseRow.locator('.commit-desc')).toHaveCSS('font-style', 'normal');
     const toolbarButton = page.locator('.log-toolbar button').first();
     await toolbarButton.hover();

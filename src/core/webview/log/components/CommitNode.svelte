@@ -354,8 +354,8 @@ const hasActiveBookmarkAlready = $derived(
         <div class="desc-row">
             <span
                 class="commit-desc"
-                style:font-weight={isCurrentWorkingCopy && !isSelected ? 'bold' : 'normal'}
-                style:color={isSelected
+                style:font-weight={`var(--vscode-jjView-commitDescription-fontWeight, ${isCurrentWorkingCopy && !isSelected ? 'bold' : 'normal'})`}
+                style:color={`var(--vscode-jjView-commitDescription-foreground, ${isSelected
                     ? 'var(--vscode-list-activeSelectionForeground)'
                     : isImmutable
                       ? 'var(--vscode-descriptionForeground)'
@@ -363,7 +363,7 @@ const hasActiveBookmarkAlready = $derived(
                         ? 'var(--vscode-testing-iconPassed)'
                         : !commit.description
                           ? 'var(--vscode-editorWarning-foreground)'
-                          : 'inherit'}
+                          : 'inherit'})`}
                 style:font-style={fontStyle}
             >
                 {#if commit.is_divergent}
