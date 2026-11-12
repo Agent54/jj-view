@@ -197,9 +197,7 @@ test('Cobalt badges and actions, Silver lanes, and dotted history retain theme a
     await expect(olderDiamonds).toHaveCount(1);
     await expect(olderDiamonds).toHaveCSS('fill', immutableTextColor);
     const currentCircles = current.locator('..').locator('circle');
-    await expect(currentCircles).toHaveCount(2);
-    await expect(currentCircles.first()).toHaveCSS('stroke', 'rgb(37, 177, 69)');
-    await expect(currentCircles.first()).toHaveCSS('opacity', '1');
+    await expect(currentCircles).toHaveCount(1);
     await expect(current).not.toHaveCSS('filter', 'none');
     await expect(graph.locator('.graph-svg text')).toHaveCount(0);
     const currentEdge = graph.locator(`[data-edge-id="${workingChange}->${releaseChange}"]`);
@@ -212,7 +210,7 @@ test('Cobalt badges and actions, Silver lanes, and dotted history retain theme a
     await expect(termination.locator('.history-dot').last()).toHaveCSS('fill', tildeColor);
     await expect(termination.locator('.history-dot').last()).toHaveCSS('opacity', '1');
 
-    const releaseDot = graph.locator(`[data-commit-id="${releaseCommit}"] > circle`).last();
+    const releaseDot = graph.locator(`[data-commit-id="${releaseCommit}"] > .node-mutable`);
     await expect(releaseDot).toHaveCSS('stroke', 'rgb(37, 177, 69)');
     await expect(releaseDot).toHaveCSS('fill', inactiveColor);
     expect(Number(await current.getAttribute('r'))).toBeGreaterThan(Number(await releaseDot.getAttribute('r')));

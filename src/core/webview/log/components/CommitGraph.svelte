@@ -126,7 +126,6 @@ const graphAreaWidth = $derived(computeGraphAreaWidth(layout.width, LANE_WIDTH, 
         height={rowOffsetsData.totalHeight}
         rowOffsets={rowOffsetsData.rowOffsets}
         rows={displayRows}
-        selectedNodes={selectedCommitIds}
         highlightedNodeId={highlightedCommitId}
         hoveredNodeId={hoveredCommitId}
     />

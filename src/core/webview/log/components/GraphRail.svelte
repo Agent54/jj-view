@@ -23,7 +23,6 @@ interface Props {
     height: number;
     rowOffsets: number[];
     rows: GraphRow[];
-    selectedNodes?: Set<string>;
     highlightedNodeId?: string;
     hoveredNodeId?: string;
 }
@@ -36,10 +35,11 @@ let {
     height,
     rowOffsets,
     rows,
-    selectedNodes = new Set(),
     highlightedNodeId,
     hoveredNodeId,
 }: Props = $props();
+
+const graphId = $props.id();
 
 const W = LANE_WIDTH;
 const CX = LANE_CENTER_X;
@@ -193,6 +193,12 @@ const svgHeight = $derived(height + BOTTOM_PADDING);
     aria-label="Commit graph"
     class="graph-svg"
 >
+    <defs>
+        <radialGradient id={`${graphId}-inset-shadow`}>
+            <stop offset="70%" stop-color="var(--vscode-jjView-graph-insetShadow, var(--vscode-widget-shadow))" stop-opacity="0" />
+            <stop offset="100%" stop-color="var(--vscode-jjView-graph-insetShadow, var(--vscode-widget-shadow))" />
+        </radialGradient>
+    </defs>
     <!-- Edges -->
     {#each sortedEdges as edge, i (`edge-${i}`)}
         {@const pathData = computeEdgePath(edge)}
@@ -254,7 +260,6 @@ const svgHeight = $derived(height + BOTTOM_PADDING);
     {#each nodes as node (node.commitId)}
         {@const cx = getPixelX(node.x)}
         {@const cy = getLayoutRowPixelY({ type: 'node', x: node.x, y: node.y })}
-        {@const isSelected = selectedNodes.has(node.changeId)}
         {@const isHighlighted = highlightedNodeId !== undefined && node.changeId === highlightedNodeId}
         {@const isHovered = hoveredNodeId !== undefined && node.changeId === hoveredNodeId}
         {@const isDefaultBranchTip = node.isImmutable && node.isDefaultBranchTip}
@@ -270,17 +275,7 @@ const svgHeight = $derived(height + BOTTOM_PADDING);
         {@const nodeFill = isHovered && !isDefaultBranchTip ? `var(--vscode-jjView-graph-hoverForeground, ${baseNodeFill})` : baseNodeFill}
         {@const currentColor = node.conflict ? 'var(--vscode-charts-red)' : nodeColor}
         <g data-commit-id={node.commitId}>
-            {#if isSelected}
-                <circle
-                    {cx}
-                    {cy}
-                    r={node.isCurrentWorkingCopy ? 10 : 9}
-                    fill="none"
-                    stroke={node.isCurrentWorkingCopy ? currentColor : 'var(--vscode-list-activeSelectionForeground)'}
-                    stroke-width="2"
-                    style:opacity={node.isCurrentWorkingCopy ? 1 : 0.6}
-                />
-            {:else if isHighlighted}
+            {#if isHighlighted}
                 <circle
                     {cx}
                     {cy}
@@ -369,7 +364,9 @@ const svgHeight = $derived(height + BOTTOM_PADDING);
                     stroke-linejoin="round"
                 />
             {:else}
-                <circle {cx} {cy} r="5" fill={nodeFill} stroke={nodeColor} stroke-width="2" />
+                <circle class="node-mutable" {cx} {cy} r="5" fill={nodeFill} stroke={nodeColor} stroke-width="2" />
+                <!-- Shade only the inside edge of the fill, preserving the green status outline. -->
+                <circle class="node-inset-shadow" {cx} {cy} r="4" fill={`url(#${graphId}-inset-shadow)`} />
             {/if}
         </g>
     {/each}
