@@ -305,6 +305,5 @@ function handleHeaderClick(e: MouseEvent): void {
 :global(.log-content .commit-desc) {
     font-family: var(--vscode-font-family, -apple-system, BlinkMacSystemFont, 'Segoe WPC', 'Segoe UI', system-ui, 'Ubuntu', 'Droid Sans', sans-serif);
     font-size: var(--vscode-font-size, 13px);
-    color: var(--vscode-foreground, #d4d4d4);
 }
 </style>

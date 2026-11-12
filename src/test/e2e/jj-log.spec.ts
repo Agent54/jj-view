@@ -55,9 +55,9 @@ test.describe('JJ Log Pane E2E', () => {
         await expect(await waitForLogCommitRow(page, 'side branch commit')).toBeVisible();
         await expect(await waitForLogCommitRow(page, 'working tree')).toBeVisible();
 
-        // Assert Working Copy row is styled bold
+        // The working copy uses the same medium description weight as other commits.
         const wcDesc = webview.locator('.working-copy .commit-desc');
-        await expect(wcDesc).toHaveCSS('font-weight', '700' /* bold */);
+        await expect(wcDesc).toHaveCSS('font-weight', '500');
 
         // Assert Bookmark pill is present inside the working copy row
         await waitForLogPill(page, 'main', 'bookmark');

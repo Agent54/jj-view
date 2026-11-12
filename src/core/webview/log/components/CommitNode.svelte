@@ -69,7 +69,6 @@ const isImmutable = $derived(commit.is_immutable || false);
 const canGenerateDescription = $derived(Boolean(onGenerateDescription) && !isImmutable);
 const isCurrentWorkingCopy = $derived(commit.is_current_working_copy);
 const isConflict = $derived(commit.conflict);
-const isEmpty = $derived(commit.is_empty);
 const codeForgeChange = $derived(commit.codeForgeChange);
 
 const commentButtonState = $derived.by(() => {
@@ -178,7 +177,6 @@ const outline = $derived.by(() => {
 });
 
 const textOpacity = $derived(isDraggingThis ? 0.5 : 1);
-const fontStyle = $derived(isImmutable && !isSelected ? 'italic' : 'normal');
 
 const descriptionFull = $derived(commit.description.trim());
 const descriptionFirstLine = $derived(descriptionFull.split('\n')[0]);
@@ -354,17 +352,6 @@ const hasActiveBookmarkAlready = $derived(
         <div class="desc-row">
             <span
                 class="commit-desc"
-                style:font-weight={`var(--vscode-jjView-commitDescription-fontWeight, ${isCurrentWorkingCopy && !isSelected ? 'bold' : 'normal'})`}
-                style:color={`var(--vscode-jjView-commitDescription-foreground, ${isSelected
-                    ? 'var(--vscode-list-activeSelectionForeground)'
-                    : isImmutable
-                      ? 'var(--vscode-descriptionForeground)'
-                      : isEmpty
-                        ? 'var(--vscode-testing-iconPassed)'
-                        : !commit.description
-                          ? 'var(--vscode-editorWarning-foreground)'
-                          : 'inherit'})`}
-                style:font-style={fontStyle}
             >
                 {#if commit.is_divergent}
                     <span class="divergent-label">(divergent) </span>
@@ -707,12 +694,19 @@ const hasActiveBookmarkAlready = $derived(
     }
 
     .commit-desc {
+        font-weight: var(--vscode-jjView-commitDescription-fontWeight, 500);
+        font-style: normal;
+        color: color-mix(in srgb, var(--vscode-jjView-commitDescription-foreground, var(--vscode-foreground)) 80%, var(--vscode-sideBar-background));
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
         margin-right: 8px;
         flex: 1 1 40px;
         min-width: 0;
+    }
+
+    .commit-row[aria-selected="true"] .commit-desc {
+        color: var(--vscode-jjView-commitDescription-foreground, var(--vscode-list-activeSelectionForeground));
     }
 
     .divergent-label {

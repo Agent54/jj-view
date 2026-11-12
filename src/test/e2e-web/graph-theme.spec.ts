@@ -8,6 +8,47 @@ import * as path from 'node:path';
 import { TestRepo } from '../test-repo';
 import { ARTIFACT_DIR, expect, recordGifFlow, test, waitForScmReady } from './standalone-fixture';
 
+test('empty current commit descriptions keep the same typography when selection changes', async ({
+    page,
+    server,
+    testRepo,
+}) => {
+    testRepo.writeFile('base.txt', 'base\n');
+    testRepo.describe('Initial commit');
+    testRepo.new();
+    testRepo.describe('Plan next change');
+    await page.goto(server.serverUrl);
+    await waitForScmReady(page);
+
+    const workingRow = page.locator('.commit-row.working-copy');
+    const parentRow = page.locator('.commit-row', { hasText: 'Initial commit' });
+    const workingDescription = workingRow.locator('.commit-desc');
+    const parentDescription = parentRow.locator('.commit-desc');
+    for (const theme of ['pierre-dark-cobalt', 'pierre-light']) {
+        await page.evaluate(async (value) => {
+            await window.__JJ_VIEW_ENV__?.config.update?.('appearance.theme', value);
+        }, theme);
+        await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
+        await workingRow.locator('.commit-id').click();
+        await expect(workingRow).toHaveAttribute('aria-selected', 'true');
+        await expect(workingDescription).toHaveCSS('font-weight', '500');
+        await expect(workingDescription).toHaveCSS('font-style', 'normal');
+        const selectedColor = await workingDescription.evaluate((el) => getComputedStyle(el).color);
+        const inactiveColor = await parentDescription.evaluate((el) => getComputedStyle(el).color);
+        expect(inactiveColor).not.toBe(selectedColor);
+
+        await parentRow.locator('.commit-id').click();
+        await expect(workingRow).toHaveAttribute('aria-selected', 'false');
+        await expect(workingDescription).toHaveCSS('color', inactiveColor);
+        await expect(workingDescription).toHaveCSS('font-weight', '500');
+        await expect(workingDescription).toHaveCSS('font-style', 'normal');
+        await expect(parentDescription).toHaveCSS('color', selectedColor);
+        await expect(parentDescription).toHaveCSS('font-weight', '500');
+        await page.mouse.move(1000, 600);
+        await page.screenshot({ path: path.join(ARTIFACT_DIR, `commit-selection-${theme}.png`) });
+    }
+});
+
 test('Cobalt badges and actions, Silver lanes, and dotted history retain theme and diff behavior', async ({
     page,
     server,
