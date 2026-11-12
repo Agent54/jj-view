@@ -403,6 +403,11 @@ const hasActiveBookmarkAlready = $derived(
             </span>
 
             <span class="commit-metadata">
+                <time
+                    class="commit-time"
+                    datetime={relativeTime === '—' ? undefined : timestamp}
+                    aria-label={getRelativeTimeString(timestamp, now)}
+                >{relativeTime}</time>
                 <!-- Always render ID to maintain layout stability. -->
                 <span class="commit-id" style:min-width={`${idDisplayLength}ch`}>
                     {#if hasShortId && shortId}
@@ -425,11 +430,6 @@ const hasActiveBookmarkAlready = $derived(
                         </span>
                     {/if}
                 </span>
-                <time
-                    class="commit-time"
-                    datetime={relativeTime === '—' ? undefined : timestamp}
-                    aria-label={getRelativeTimeString(timestamp, now)}
-                >{relativeTime}</time>
             </span>
         </div>
 
