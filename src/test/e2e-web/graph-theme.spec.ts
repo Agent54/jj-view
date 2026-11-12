@@ -53,10 +53,7 @@ test('current commit descriptions stay bright when selection and focus change', 
             .getByTestId('log-pane')
             .evaluate((el) => getComputedStyle(el).backgroundColor);
         await expect(emptyDot).toHaveCSS('fill', graphBackground);
-        const currentSymbol = page.locator('.node-working-copy-symbol');
-        await expect(currentSymbol).toHaveText('@');
-        await expect(currentSymbol).toHaveCSS('font-size', '10px');
-        await expect(currentSymbol).toHaveCSS('fill', await emptyDot.evaluate((el) => getComputedStyle(el).stroke));
+        await expect(page.locator('.graph-svg text')).toHaveCount(0);
         await expect(page.locator('.working-copy-badge')).toHaveCount(0);
         const selectedColor = await workingDescription.evaluate((el) => getComputedStyle(el).color);
         const inactiveColor = await parentDescription.evaluate((el) => getComputedStyle(el).color);
@@ -69,7 +66,6 @@ test('current commit descriptions stay bright when selection and focus change', 
         await expect(workingDescription).toHaveCSS('font-style', 'normal');
         await expect(parentDescription).toHaveCSS('color', selectedColor);
         await expect(parentDescription).toHaveCSS('font-weight', '500');
-        await expect(currentSymbol).toBeVisible();
         await page.getByTestId('scm-input-textarea').focus();
         await expect(workingDescription).toHaveCSS('color', selectedColor);
         await expect(parentDescription).toHaveCSS('color', selectedColor);
@@ -184,8 +180,7 @@ test('Cobalt badges and actions, Silver lanes, and dotted history retain theme a
     const currentCircles = current.locator('..').locator('circle');
     await expect(currentCircles).toHaveCount(1);
     await expect(current).not.toHaveCSS('filter', 'none');
-    await expect(graph.locator('.graph-svg text')).toHaveText('@');
-    await expect(graph.locator('.node-working-copy-symbol')).toHaveCSS('fill', 'rgb(255, 255, 255)');
+    await expect(graph.locator('.graph-svg text')).toHaveCount(0);
     const currentEdge = graph.locator(`[data-edge-id="${workingChange}->${releaseChange}"]`);
     await expect(currentEdge).toHaveCSS('stroke', 'rgb(37, 177, 69)');
     const defaultBranchEdge = graph.locator(`[data-edge-id^="${remoteChange}->"]`);

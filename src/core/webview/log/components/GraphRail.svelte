@@ -309,15 +309,6 @@ const svgHeight = $derived(height + BOTTOM_PADDING);
                     stroke-width="2"
                     style:color={currentColor}
                 />
-                <text
-                    class="node-working-copy-symbol"
-                    x={cx}
-                    y={cy}
-                    text-anchor="middle"
-                    dominant-baseline="central"
-                    fill={node.isEmpty ? currentColor : 'var(--vscode-jjView-currentCommit-foreground, var(--vscode-editor-background))'}
-                    aria-label="Current working copy"
-                >@</text>
             {:else if node.isHidden}
                 <g transform={`translate(${cx}, ${cy})`}>
                     <circle cx="0" cy="0" r="8" fill="var(--vscode-sideBar-background)" />
@@ -402,11 +393,5 @@ const svgHeight = $derived(height + BOTTOM_PADDING);
     .node-working-copy {
         filter: drop-shadow(0 0 4px color-mix(in srgb, currentColor 65%, transparent))
             drop-shadow(0 0 9px color-mix(in srgb, currentColor 35%, transparent));
-    }
-
-    .node-working-copy-symbol {
-        font-family: var(--vscode-font-family);
-        font-size: 10px;
-        font-weight: 600;
     }
 </style>
