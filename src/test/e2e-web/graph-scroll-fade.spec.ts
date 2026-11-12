@@ -106,6 +106,24 @@ test('graph title fades follow initial layout, native scrolling, resizing, and l
     expect(await row.locator('.pills-group').boundingBox()).toEqual(bookmark);
     await expect(page.locator('.drag-preview-overlay')).toHaveCount(0);
 
+    // Returning the pointer to the text restores actions without resetting its scroll.
+    const offset = await description.evaluate((element) => element.scrollLeft);
+    await description.hover({ position: { x: titleWidth - 12, y: 14 } });
+    await expect(actions).toBeVisible();
+    expect(await description.evaluate((element) => element.scrollLeft)).toBe(offset);
+    // Scrollbars/keyboard/programmatic scrolling also hide them, without a wheel event.
+    await description.evaluate((element) => {
+        element.scrollLeft += 20;
+    });
+    await expect(actions).toBeHidden();
+    await row.focus();
+    await page.keyboard.press('Shift');
+    await expect(actions).toBeVisible();
+    // Starting a gesture on a button must uncover the title immediately too.
+    await actions.getByRole('button', { name: 'New Child', exact: true }).hover();
+    await page.mouse.wheel(25, 0);
+    await expect(actions).toBeHidden();
+
     await page.mouse.move(1200, 200);
     await recordGifFlow(
         page,
@@ -190,8 +208,10 @@ test('graph list fades track vertical scrolling, pane resizing, reopening, and c
     // Vertical wheel gestures over a nested title must still scroll the list.
     const title = page.locator('.commit-row.working-copy .commit-desc');
     await title.hover();
+    await expect(page.locator('.hover-actions:visible')).toHaveCount(1);
     await page.mouse.wheel(0, 40);
     await expectFades(scroller, 24, 24);
+    await expect(page.locator('.hover-actions:visible')).toHaveCount(0);
     expect(await title.evaluate((element) => element.scrollLeft)).toBe(0);
     await page.mouse.move(1100, 200);
     await page.screenshot({ path: path.join(ARTIFACT_DIR, 'graph-list-fades-middle.png') });
