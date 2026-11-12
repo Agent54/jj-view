@@ -436,7 +436,7 @@ describe('Graph Layout Integration Tests (Real jj output)', () => {
         expect(nodes.filter((node) => node.isDefaultBranchTip).map((node) => node.commitId)).toEqual([original]);
         expect(nodes.find((node) => node.commitId === original)?.isImmutable).toBe(true);
 
-        repo.bookmark('release-line', '@-');
+        repo.bookmarkMove('release-line', '@-');
         nodes = await getNodes();
         expect(nodes.filter((node) => node.isDefaultBranchTip).map((node) => node.commitId)).toEqual([next]);
         expect(nodes.find((node) => node.commitId === original)?.isImmutable).toBe(true);
