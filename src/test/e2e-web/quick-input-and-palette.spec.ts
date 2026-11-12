@@ -15,6 +15,58 @@ import {
 } from './standalone-fixture';
 
 test.describe('Standalone Web Quick Input & Command Palette', () => {
+    test('creates typed bookmarks and still moves selected existing bookmarks', async ({ page, server, testRepo }) => {
+        testRepo.writeFile('feature.txt', 'feature\n');
+        testRepo.describe('Bookmark target');
+        const target = testRepo.getChangeId('@');
+        testRepo.new();
+        testRepo.describe('Current commit');
+        const current = testRepo.getChangeId('@');
+
+        await page.goto(server.serverUrl);
+        await waitForScmReady(page);
+        const targetRow = page.locator(`.commit-row[data-change-id="${target}"]`);
+        const currentRow = page.locator(`.commit-row[data-change-id="${current}"]`);
+        const input = page.getByTestId('quick-input-text-input');
+        const widget = page.getByTestId('quick-input-widget');
+
+        for (const name of ['feature-existing', 'feature']) {
+            await targetRow.click({ button: 'right' });
+            await page.getByTestId('menu-item-jj-view.setBookmark').click();
+            await expect(input).toHaveAttribute('placeholder', 'Select a bookmark to move, or type a new name to create');
+            await input.fill(` ${name} `);
+            const create = page.getByTestId(`quick-pick-item-custom:${name}`);
+            await expect(create).toContainText('Use typed value');
+            if (name === 'feature') {
+                await expect(page.getByTestId('quick-pick-item-feature-existing')).toBeVisible();
+                await page.screenshot({ path: path.join(ARTIFACT_DIR, 'create-bookmark-picker.png') });
+                await create.click();
+            } else {
+                await input.press('Enter');
+            }
+            await expect(widget).not.toBeVisible();
+            await expect.poll(() => testRepo.getBookmarks(target)).toContain(name);
+            await expect(targetRow.locator('.bookmark-wrapper').getByText(name, { exact: true })).toBeVisible();
+        }
+
+        await currentRow.click({ button: 'right' });
+        await page.getByTestId('menu-item-jj-view.setBookmark').click();
+        await input.fill('feature-existing');
+        await expect(page.getByTestId('quick-pick-item-custom:feature-existing')).toHaveCount(0);
+        await input.press('Enter');
+        await expect(widget).not.toBeVisible();
+        await expect.poll(() => testRepo.getBookmarks(current)).toContain('feature-existing');
+        expect(testRepo.getBookmarks(target)).toEqual(['feature']);
+
+        await targetRow.click({ button: 'right' });
+        await page.getByTestId('menu-item-jj-view.setBookmark').click();
+        await input.fill('cancelled-bookmark');
+        await input.press('Escape');
+        await expect(widget).not.toBeVisible();
+        expect(testRepo.getBookmarks(target)).toEqual(['feature']);
+        expect(testRepo.getChangeId('@')).toBe(current);
+    });
+
     test('should open command palette via keyboard shortcuts and close with Escape', async ({ page, server }) => {
         await page.goto(server.serverUrl);
         await waitForScmReady(page);

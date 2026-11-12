@@ -88,11 +88,29 @@ const filteredItems: QuickPickItem[] = $derived.by(() => {
     }
     const options = session.options;
     const items = options.items || [];
-    return filterAndScoreQuickPickItems(items, inputValue, {
+    const filtered = filterAndScoreQuickPickItems(items, inputValue, {
         matchOnDescription: options.matchOnDescription,
         matchOnDetail: options.matchOnDetail,
         preserveOrder: options.preserveOrder,
     });
+    const customValue = inputValue.trim();
+    if (
+        session.type === 'quick-pick' &&
+        options.acceptCustomValue &&
+        customValue &&
+        !items.some((item) => item.label === customValue)
+    ) {
+        return [
+            ...filtered,
+            {
+                id: `custom:${customValue}`,
+                label: customValue,
+                description: 'Use typed value',
+                value: { label: customValue, value: customValue },
+            },
+        ];
+    }
+    return filtered;
 });
 
 const hasAnyIcon = $derived(
@@ -182,8 +200,6 @@ function handleKeyDown(e: KeyboardEvent): void {
             const item = filteredItems[selectedIndex];
             if (item) {
                 service.accept(item);
-            } else if (session.options.acceptCustomValue && inputValue) {
-                service.accept({ id: inputValue, label: inputValue, value: inputValue });
             }
             return;
         }
