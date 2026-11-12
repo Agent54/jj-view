@@ -1,5 +1,6 @@
 # JJ View
 
+
 **JJ View** brings the power of [Jujutsu (jj)](https://github.com/martinvonz/jj) version control directly into VS Code. Visualize your revision graph, manage changes, and streamline your workflow without leaving the editor.
 
 ![JJ View Overview](media/screenshots/scm-view.png)
