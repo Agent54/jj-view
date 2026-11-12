@@ -62,7 +62,10 @@ test('commit type glyphs stay monochrome and share the main row tooltip', async 
                         (await glyph.locator('path').getAttribute('d')) ?? '',
                     );
                     const textColor = await description.evaluate((el) => getComputedStyle(el).color);
-                    await expect(glyph.locator('svg')).toHaveCSS('fill', textColor);
+                    const glyphColor = await glyph.evaluate((el) => getComputedStyle(el).color);
+                    expect(glyphColor).not.toBe(textColor);
+                    await expect(glyph).toHaveCSS('opacity', '0.55');
+                    await expect(glyph.locator('svg')).toHaveCSS('fill', glyphColor);
                     await expect(glyph.locator('svg')).toHaveCSS('stroke', 'none');
                     await capture();
                     await row.locator('.commit-id').hover();

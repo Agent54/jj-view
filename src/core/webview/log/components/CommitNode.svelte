@@ -719,6 +719,8 @@ const hasActiveBookmarkAlready = $derived(
         height: 14px;
         margin-right: 4px;
         vertical-align: -2px;
+        color: var(--vscode-descriptionForeground);
+        opacity: 0.55;
     }
 
     .commit-tooltip-title {
