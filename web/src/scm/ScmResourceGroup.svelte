@@ -145,7 +145,7 @@ const groupVsCodeContext = $derived(
                 {/each}
             </div>
 
-            {#if totalAdditions > 0 || totalDeletions > 0}
+            {#if !isExpanded && (totalAdditions > 0 || totalDeletions > 0)}
                 <span class="diff-summary-badges">
                     {#if totalAdditions > 0}
                         <span class="stat-pill stat-added" use:tooltip={`Lines added: ${totalAdditions}`}>+{totalAdditions}</span>

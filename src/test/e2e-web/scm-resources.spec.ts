@@ -30,11 +30,14 @@ test.describe('Standalone Web SCM Resources', () => {
         const workingCopyGroup = page.locator('[data-testid="scm-group-working-copy"]');
         await expect(workingCopyGroup).toBeVisible();
         const workingCopyHeader = workingCopyGroup.locator('.group-header');
-        await expect(workingCopyHeader.locator('.stat-added')).toHaveText('+2');
-        await expect(workingCopyHeader.locator('.stat-deleted')).toHaveText('-1');
+        await expect(workingCopyHeader.locator('.diff-summary-badges')).toHaveCount(0);
         const ancestorGroup = page.getByTestId('scm-group-ancestor-0');
-        await expect(ancestorGroup.locator('.group-header .stat-added')).toHaveText('+1');
+        await expect(ancestorGroup.locator('.group-header .diff-summary-badges')).toHaveCount(0);
         await expect(ancestorGroup.locator('.file-diff-stats .stat-added')).toHaveText('+1');
+        await ancestorGroup.locator('.group-header .chevron-icon').click();
+        await expect(ancestorGroup.locator('.group-header .stat-added')).toHaveText('+1');
+        await ancestorGroup.locator('.group-header .chevron-icon').click();
+        await expect(ancestorGroup.locator('.group-header .diff-summary-badges')).toHaveCount(0);
 
         // Verify modified files use the change glyph.
         const modifiedItem = workingCopyGroup
@@ -59,6 +62,7 @@ test.describe('Standalone Web SCM Resources', () => {
         await expect(workingCopyHeader.locator('.stat-added')).toHaveText('+2');
         await expect(workingCopyHeader.locator('.stat-deleted')).toHaveText('-1');
         await workingCopyHeader.locator('.chevron-icon').click();
+        await expect(workingCopyHeader.locator('.diff-summary-badges')).toHaveCount(0);
 
         await page.locator('.commit-row.working-copy .commit-id').click();
         const details = page.getByTestId('commit-details-view');
@@ -142,7 +146,7 @@ test.describe('Standalone Web SCM Resources', () => {
         await expect(deletedItem.locator('.file-name')).toHaveClass(/deleted/);
         await expect(deletedItem.locator('.stat-deleted')).toHaveText('-1');
         await expect(deletedItem.locator('.stat-added')).toHaveCount(0);
-        await expect(workingCopyGroup.locator('.group-header .stat-deleted')).toHaveText('-1');
+        await expect(workingCopyGroup.locator('.group-header .diff-summary-badges')).toHaveCount(0);
     });
 
     test('should maintain strict 22px row height and prevent layout shift on hover with baseline alignment', async ({
