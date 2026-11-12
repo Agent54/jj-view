@@ -83,25 +83,6 @@ function ensureGoBinary(): string {
     return binaryPath;
 }
 
-function openBrowser(targetUrl: string): void {
-    if (process.env.NO_OPEN || process.argv.includes('--no-open')) {
-        return;
-    }
-    const isWin = process.platform === 'win32';
-    const isMac = process.platform === 'darwin';
-    try {
-        if (isWin) {
-            cp.spawn('cmd', ['/c', 'start', '', targetUrl], { detached: true, stdio: 'ignore' });
-        } else if (isMac) {
-            cp.spawn('open', [targetUrl], { detached: true, stdio: 'ignore' });
-        } else {
-            cp.spawn('xdg-open', [targetUrl], { detached: true, stdio: 'ignore' });
-        }
-    } catch (err) {
-        console.warn('[dev] Could not automatically open browser:', err);
-    }
-}
-
 async function main(): Promise<void> {
     ensurePrerequisites();
     const binaryPath = ensureGoBinary();
@@ -174,8 +155,6 @@ async function main(): Promise<void> {
     console.log('  - Input state, open diffs, and WebSocket stay connected');
     console.log('\n  Press Ctrl+C to stop.');
     console.log('========================================================================\n');
-
-    openBrowser(devUrl);
 
     let isCleaningUp = false;
     const cleanup = async (): Promise<void> => {
