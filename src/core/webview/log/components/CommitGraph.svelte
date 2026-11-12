@@ -49,6 +49,7 @@ let {
 }: Props = $props();
 
 let fontSize = $state(13);
+let hoveredCommitId = $state<string>();
 let now = $state(Date.now());
 $effect(() => {
     const timer = setInterval(() => {
@@ -127,6 +128,7 @@ const graphAreaWidth = $derived(computeGraphAreaWidth(layout.width, LANE_WIDTH, 
         rows={displayRows}
         selectedNodes={selectedCommitIds}
         highlightedNodeId={highlightedCommitId}
+        hoveredNodeId={hoveredCommitId}
     />
 
     <!-- Commit List (Text) -->
@@ -172,6 +174,7 @@ const graphAreaWidth = $derived(computeGraphAreaWidth(layout.width, LANE_WIDTH, 
                         {onAction}
                         {isSelected}
                         {isHighlighted}
+                        onHoverChange={(hovered) => (hoveredCommitId = hovered ? row.change_id : undefined)}
                         selectionCount={selectedCommitIds.size}
                         hasImmutableSelection={hasImmutable}
                         idDisplayLength={maxShortestIdLength}
@@ -188,6 +191,10 @@ const graphAreaWidth = $derived(computeGraphAreaWidth(layout.width, LANE_WIDTH, 
 
 <style>
     .commit-graph {
+        --vscode-jjView-commit-activeForeground: var(--vscode-jjView-commitDescription-foreground, var(--vscode-list-activeSelectionForeground));
+        --vscode-jjView-commit-inactiveForeground: color-mix(in srgb, var(--vscode-jjView-commitDescription-foreground, var(--vscode-foreground)) 80%, var(--vscode-sideBar-background));
+        --vscode-jjView-commit-immutableForeground: color-mix(in srgb, var(--vscode-jjView-commit-inactiveForeground) 75%, var(--vscode-sideBar-background));
+        --vscode-jjView-commit-hoverForeground: color-mix(in srgb, var(--vscode-jjView-commit-inactiveForeground), var(--vscode-jjView-commit-activeForeground));
         position: relative;
         padding-bottom: 20px;
         user-select: none;

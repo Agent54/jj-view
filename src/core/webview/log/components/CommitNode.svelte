@@ -22,6 +22,7 @@ interface Props {
     onAction: (action: string, payload: ActionPayload) => void;
     isSelected?: boolean;
     isHighlighted?: boolean;
+    onHoverChange?: (hovered: boolean) => void;
     selectionCount: number;
     hasImmutableSelection: boolean;
     idDisplayLength: number;
@@ -39,6 +40,7 @@ let {
     onAction,
     isSelected = false,
     isHighlighted = false,
+    onHoverChange,
     selectionCount,
     hasImmutableSelection,
     idDisplayLength,
@@ -232,6 +234,7 @@ const hasActiveBookmarkAlready = $derived(
     data-selected={isSelected}
     data-highlighted={isHighlighted}
     data-hovered={isHovered}
+    data-immutable={isImmutable}
     data-vscode-context={JSON.stringify(vscodeContext)}
     style:padding-left={`${graphPaddingLeft + COMMIT_ROW_PADDING_LEFT}px`}
     style:background-color={backgroundColor}
@@ -257,8 +260,14 @@ const hasActiveBookmarkAlready = $derived(
             onClick({ multiSelect: e.ctrlKey || e.metaKey });
         }
     }}
-    onmouseenter={() => (isHovered = true)}
-    onmouseleave={() => (isHovered = false)}
+    onmouseenter={() => {
+        isHovered = true;
+        onHoverChange?.(true);
+    }}
+    onmouseleave={() => {
+        isHovered = false;
+        onHoverChange?.(false);
+    }}
 >
     {#if isValidDropTarget && dragManager.activeDragItem?.type === 'commit'}
         {#if isInsertAfter}
@@ -350,6 +359,11 @@ const hasActiveBookmarkAlready = $derived(
     <div class="right-column">
         <!-- Description & Bookmarks -->
         <div class="desc-row">
+            {#if isCurrentWorkingCopy}
+                <BasePill className="working-copy-badge" title="Current working copy">
+                    <span class="working-copy-symbol">@</span>
+                </BasePill>
+            {/if}
             <span
                 class="commit-desc"
             >
@@ -700,10 +714,25 @@ const hasActiveBookmarkAlready = $derived(
         width: 100%;
     }
 
+    .desc-row :global(.working-copy-badge) {
+        background-color: var(--vscode-jjView-currentCommit-background, color-mix(in srgb, var(--vscode-gitDecoration-addedResourceForeground), transparent 90%));
+        border-color: var(--vscode-jjView-currentCommit-background, color-mix(in srgb, var(--vscode-gitDecoration-addedResourceForeground), transparent 50%));
+        color: var(--vscode-jjView-currentCommit-foreground, var(--vscode-gitDecoration-addedResourceForeground));
+        font-weight: normal;
+        justify-content: center;
+        flex-shrink: 0;
+        margin-right: 6px;
+    }
+
+    .working-copy-symbol {
+        line-height: 1;
+        transform: translateY(-1px);
+    }
+
     .commit-desc {
         font-weight: var(--vscode-jjView-commitDescription-fontWeight, 500);
         font-style: normal;
-        color: color-mix(in srgb, var(--vscode-jjView-commitDescription-foreground, var(--vscode-foreground)) 80%, var(--vscode-sideBar-background));
+        color: var(--vscode-jjView-commit-inactiveForeground);
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -712,8 +741,16 @@ const hasActiveBookmarkAlready = $derived(
         min-width: 0;
     }
 
-    .commit-row[aria-selected="true"] .commit-desc {
-        color: var(--vscode-jjView-commitDescription-foreground, var(--vscode-list-activeSelectionForeground));
+    .commit-row[data-immutable="true"] .commit-desc {
+        color: var(--vscode-jjView-commit-immutableForeground);
+    }
+
+    .commit-row:is([data-hovered="true"], [data-highlighted="true"]) .commit-desc {
+        color: var(--vscode-jjView-commit-hoverForeground);
+    }
+
+    .commit-row:is([aria-selected="true"], .working-copy) .commit-desc {
+        color: var(--vscode-jjView-commit-activeForeground);
     }
 
     .divergent-label {

@@ -25,6 +25,7 @@ interface Props {
     rows: GraphRow[];
     selectedNodes?: Set<string>;
     highlightedNodeId?: string;
+    hoveredNodeId?: string;
 }
 
 let {
@@ -37,6 +38,7 @@ let {
     rows,
     selectedNodes = new Set(),
     highlightedNodeId,
+    hoveredNodeId,
 }: Props = $props();
 
 const W = LANE_WIDTH;
@@ -63,6 +65,16 @@ const sortedEdges = $derived.by(() => {
     });
     return edgesWithBounds.sort((a, b) => b.minX - a.minX || b.maxX - a.maxX).map((item) => item.edge);
 });
+
+function isEdgeHovered(edge: GraphEdge): boolean {
+    if (hoveredNodeId === undefined) {
+        return false;
+    }
+    return [edge.points[0], edge.points.at(-1)].some((point) => {
+        const row = point && rows[point.y];
+        return row && !isElisionRow(row) && row.change_id === hoveredNodeId;
+    });
+}
 
 function getLayoutRowPixelY(point: GraphPoint): number {
     const commitIndex = Math.floor(point.y);
@@ -185,9 +197,16 @@ const svgHeight = $derived(height + BOTTOM_PADDING);
     {#each sortedEdges as edge, i (`edge-${i}`)}
         {@const pathData = computeEdgePath(edge)}
         {#if pathData}
+            {@const sourceRow = rows[edge.points[0].y]}
+            {@const edgeColor = isEdgeHovered(edge)
+                ? `var(--vscode-jjView-graph-hoverForeground, ${edge.color})`
+                : `var(--vscode-jjView-graph-foreground, ${edge.color})`}
             <path
                 d={pathData}
-                stroke={edge.color}
+                data-edge-id={edge.id}
+                stroke={sourceRow && !isElisionRow(sourceRow) && sourceRow.is_current_working_copy
+                    ? `var(--vscode-jjView-graph-currentEdge, ${edgeColor})`
+                    : edgeColor}
                 stroke-width="2"
                 fill="none"
                 stroke-linecap="round"
@@ -208,10 +227,11 @@ const svgHeight = $derived(height + BOTTOM_PADDING);
             term.y >= rows.length
                 ? (rowOffsets[rows.length - 1] || 0) + lastRowOffset
                 : getLayoutRowPixelY({ type: 'node', x: term.x, y: term.y })}
+        {@const termColor = `var(--vscode-jjView-graph-foreground, ${term.color})`}
         <g class="history-termination" transform={`translate(${mx}, ${my})`}>
             <!-- Clear the solid edge before drawing the dotted continuation and tilde. -->
             <rect x="-5" y="-18" width="10" height="24" fill="var(--vscode-sideBar-background)" />
-            {#each [term.color, `color-mix(in srgb, ${term.color}, var(--vscode-descriptionForeground))`, 'var(--vscode-descriptionForeground)'] as color, dot (dot)}
+            {#each [termColor, `color-mix(in srgb, ${termColor}, var(--vscode-descriptionForeground))`, 'var(--vscode-descriptionForeground)'] as color, dot (dot)}
                 <circle
                     class="history-dot"
                     cx="0"
@@ -236,18 +256,22 @@ const svgHeight = $derived(height + BOTTOM_PADDING);
         {@const cy = getLayoutRowPixelY({ type: 'node', x: node.x, y: node.y })}
         {@const isSelected = selectedNodes.has(node.changeId)}
         {@const isHighlighted = highlightedNodeId !== undefined && node.changeId === highlightedNodeId}
-        {@const nodeColor = node.isImmutable
-            ? 'var(--vscode-descriptionForeground)'
-            : 'var(--jj-node-color, var(--vscode-gitDecoration-addedResourceForeground))'}
-        {@const nodeFill = node.isImmutable
-            ? 'var(--vscode-descriptionForeground)'
-            : 'var(--jj-node-fill, var(--vscode-editor-foreground))'}
+        {@const isHovered = hoveredNodeId !== undefined && node.changeId === hoveredNodeId}
+        {@const baseNodeColor = node.isImmutable
+            ? 'var(--vscode-jjView-graph-immutableForeground, var(--vscode-descriptionForeground))'
+            : 'var(--vscode-jjView-graph-mutableForeground, var(--jj-node-color, var(--vscode-gitDecoration-addedResourceForeground)))'}
+        {@const baseNodeFill = node.isImmutable
+            ? 'var(--vscode-jjView-graph-immutableForeground, var(--vscode-descriptionForeground))'
+            : 'var(--vscode-jjView-graph-foreground, var(--jj-node-fill, var(--vscode-editor-foreground)))'}
+        <!-- Mutable outlines convey status independently of the neutral fill and hover colors. -->
+        {@const nodeColor = isHovered && node.isImmutable ? `var(--vscode-jjView-graph-hoverForeground, ${baseNodeColor})` : baseNodeColor}
+        {@const nodeFill = isHovered ? `var(--vscode-jjView-graph-hoverForeground, ${baseNodeFill})` : baseNodeFill}
         <g data-commit-id={node.commitId}>
             {#if isSelected}
                 <circle
                     {cx}
                     {cy}
-                    r="9"
+                    r={node.isCurrentWorkingCopy ? 11 : 9}
                     fill="none"
                     stroke="var(--vscode-list-activeSelectionForeground)"
                     stroke-width="2"
@@ -257,7 +281,7 @@ const svgHeight = $derived(height + BOTTOM_PADDING);
                 <circle
                     {cx}
                     {cy}
-                    r="9"
+                    r={node.isCurrentWorkingCopy ? 11 : 9}
                     fill="none"
                     stroke="var(--vscode-list-activeSelectionForeground)"
                     stroke-width="2"
@@ -267,19 +291,19 @@ const svgHeight = $derived(height + BOTTOM_PADDING);
             {/if}
 
             {#if node.isCurrentWorkingCopy}
-                <circle {cx} {cy} r="8" fill="var(--vscode-sideBar-background)" />
+                <circle {cx} {cy} r="10" fill="var(--vscode-sideBar-background)" />
                 <circle
                     {cx}
                     {cy}
-                    r="6"
+                    r="8"
                     class="node-working-copy"
                     class:empty={node.isEmpty}
-                    fill={node.isEmpty ? 'var(--vscode-sideBar-background)' : nodeFill}
+                    fill={node.isEmpty ? 'var(--vscode-sideBar-background)' : node.conflict ? nodeFill : `var(--vscode-jjView-graph-currentFill, ${nodeFill})`}
                     stroke={node.conflict
                         ? 'var(--vscode-charts-red)'
                         : nodeColor}
                     stroke-width="2"
-                    style:color={nodeColor}
+                    style:color={node.conflict ? 'var(--vscode-charts-red)' : nodeColor}
                 />
             {:else if node.isHidden}
                 <g transform={`translate(${cx}, ${cy})`}>
@@ -361,6 +385,7 @@ const svgHeight = $derived(height + BOTTOM_PADDING);
     }
 
     .node-working-copy {
-        filter: drop-shadow(0 0 3px color-mix(in srgb, currentColor 45%, transparent));
+        filter: drop-shadow(0 0 4px color-mix(in srgb, currentColor 65%, transparent))
+            drop-shadow(0 0 9px color-mix(in srgb, currentColor 35%, transparent));
     }
 </style>

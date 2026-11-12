@@ -19,12 +19,18 @@
 
 :root[data-theme="pierre-dark-cobalt"] {
     font-size: 16px;
+    --vscode-jjView-commitDescription-foreground: oklab(0.963762 -0.000504732 -0.00571203);
+}
+
+:root[data-theme="pierre-dark-cobalt"] .commit-graph {
+    --vscode-jjView-graph-foreground: var(--vscode-jjView-commit-inactiveForeground);
+    --vscode-jjView-graph-immutableForeground: var(--vscode-jjView-commit-immutableForeground);
+    --vscode-jjView-graph-hoverForeground: var(--vscode-jjView-commit-hoverForeground);
 }
 
 :root[data-theme="pierre-dark-cobalt"] .commit-desc {
     --vscode-font-family: -apple-system, "system-ui", "Inter Variable", "Segoe UI", system-ui, sans-serif;
     --vscode-jjView-commitDescription-fontWeight: 500;
-    --vscode-jjView-commitDescription-foreground: oklab(0.963762 -0.000504732 -0.00571203);
     font-family: var(--vscode-font-family);
     font-feature-settings: normal;
     font-size: 14px;

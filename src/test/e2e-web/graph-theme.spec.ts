@@ -6,13 +6,24 @@ import { execFileSync } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { TestRepo } from '../test-repo';
-import { ARTIFACT_DIR, expect, recordGifFlow, test, waitForScmReady } from './standalone-fixture';
+import { ARTIFACT_DIR, expect, type Locator, recordGifFlow, test, waitForScmReady } from './standalone-fixture';
 
-test('empty current commit descriptions keep the same typography when selection changes', async ({
-    page,
-    server,
-    testRepo,
-}) => {
+async function textBrightness(locator: Locator): Promise<number> {
+    return locator.evaluate((element) => {
+        const canvas = document.createElement('canvas');
+        canvas.width = canvas.height = 1;
+        const context = canvas.getContext('2d');
+        if (!context) {
+            throw new Error('A canvas context is required to compare computed text colors');
+        }
+        context.fillStyle = getComputedStyle(element).color;
+        context.fillRect(0, 0, 1, 1);
+        const [r, g, b] = context.getImageData(0, 0, 1, 1).data;
+        return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    });
+}
+
+test('current commit descriptions stay bright when selection and focus change', async ({ page, server, testRepo }) => {
     testRepo.writeFile('base.txt', 'base\n');
     testRepo.describe('Initial commit');
     testRepo.new();
@@ -33,18 +44,54 @@ test('empty current commit descriptions keep the same typography when selection 
         await expect(workingRow).toHaveAttribute('aria-selected', 'true');
         await expect(workingDescription).toHaveCSS('font-weight', '500');
         await expect(workingDescription).toHaveCSS('font-style', 'normal');
+        const emptyDot = page.locator('.node-working-copy');
+        await expect(emptyDot).toHaveCSS(
+            'stroke',
+            theme === 'pierre-dark-cobalt' ? 'rgb(37, 177, 69)' : 'rgb(24, 164, 108)',
+        );
+        const graphBackground = await page
+            .getByTestId('log-pane')
+            .evaluate((el) => getComputedStyle(el).backgroundColor);
+        await expect(emptyDot).toHaveCSS('fill', graphBackground);
+        const currentBadge = workingRow.locator('.working-copy-badge');
+        await expect(currentBadge).toHaveText('@');
+        const hereBadge = page.locator('.tooltip-heading.badge', { hasText: 'You are here' });
+        for (const property of [
+            'background-color',
+            'border-top-color',
+            'color',
+            'font-family',
+            'font-size',
+            'font-weight',
+            'height',
+            'padding-left',
+            'padding-right',
+            'border-radius',
+        ]) {
+            const value = await hereBadge.evaluate((el, name) => getComputedStyle(el).getPropertyValue(name), property);
+            await expect(currentBadge).toHaveCSS(property, value);
+        }
+        await expect(workingRow.locator('.desc-row > :first-child')).toHaveClass(/working-copy-badge/);
+        await expect(parentRow.locator('.working-copy-badge')).toHaveCount(0);
         const selectedColor = await workingDescription.evaluate((el) => getComputedStyle(el).color);
         const inactiveColor = await parentDescription.evaluate((el) => getComputedStyle(el).color);
         expect(inactiveColor).not.toBe(selectedColor);
 
         await parentRow.locator('.commit-id').click();
         await expect(workingRow).toHaveAttribute('aria-selected', 'false');
-        await expect(workingDescription).toHaveCSS('color', inactiveColor);
+        await expect(workingDescription).toHaveCSS('color', selectedColor);
         await expect(workingDescription).toHaveCSS('font-weight', '500');
         await expect(workingDescription).toHaveCSS('font-style', 'normal');
         await expect(parentDescription).toHaveCSS('color', selectedColor);
         await expect(parentDescription).toHaveCSS('font-weight', '500');
+        await expect(currentBadge).toBeVisible();
+        await page.getByTestId('scm-input-textarea').focus();
+        await expect(workingDescription).toHaveCSS('color', selectedColor);
+        await expect(parentDescription).toHaveCSS('color', selectedColor);
+        await workingRow.hover();
+        await expect(workingDescription).toHaveCSS('color', selectedColor);
         await page.mouse.move(1000, 600);
+        await expect(workingDescription).toHaveCSS('color', selectedColor);
         await page.screenshot({ path: path.join(ARTIFACT_DIR, `commit-selection-${theme}.png`) });
     }
 });
@@ -70,10 +117,12 @@ test('Cobalt badges and actions, Silver lanes, and dotted history retain theme a
     testRepo.writeFile('release.txt', 'release candidate\n');
     testRepo.describe('Release candidate');
     const releaseChange = testRepo.getChangeId('@');
+    const releaseCommit = testRepo.getCommitId('@');
     testRepo.new();
-    testRepo.tag('v1.0.0', '@-');
+    testRepo.tag('v1.0.0', remoteChange);
     testRepo.writeFile('working.txt', 'work in progress\n');
     testRepo.describe('Working copy');
+    const workingChange = testRepo.getChangeId('@');
     testRepo.addRemote('origin', testRepo.path);
     execFileSync(TestRepo.getGitBinary(), ['update-ref', 'refs/remotes/origin/main', remoteCommit], {
         cwd: testRepo.path,
@@ -109,7 +158,7 @@ test('Cobalt badges and actions, Silver lanes, and dotted history retain theme a
     const local = graph.locator('.bookmark-pill', { hasText: 'devlocal' });
     const remote = graph.locator('.bookmark-pill', { hasText: 'main@origin' });
     const tag = graph.locator('.tag-wrapper .bookmark-pill', { hasText: 'v1.0.0' });
-    await expect(local).toHaveCSS('background-color', 'rgb(31, 112, 235)');
+    await expect(local).toHaveCSS('background-color', 'rgb(31, 111, 235)');
     await expect(remote).toHaveCSS('background-color', 'rgb(130, 80, 223)');
     await expect(tag).toHaveCSS('background-color', 'rgb(128, 86, 6)');
     for (const badge of [local, remote, tag]) {
@@ -120,31 +169,71 @@ test('Cobalt badges and actions, Silver lanes, and dotted history retain theme a
     const currentId = graph.locator('.commit-row.working-copy .commit-id');
     const immutableId = graph.locator(`[data-change-id="${remoteChange}"] .commit-id`);
     const immutableDiamond = graph.locator(`[data-commit-id="${remoteCommit}"] polygon`);
+    const releaseRow = graph.locator('.commit-row', { hasText: 'Release candidate' });
+    const releaseDescription = releaseRow.locator('.commit-desc');
+    const immutableRow = graph.locator(`.commit-row[data-change-id="${remoteChange}"]`);
+    const immutableDescription = immutableRow.locator('.commit-desc');
+    const workingDescription = graph.locator('.commit-row.working-copy .commit-desc');
+    await graph.locator('.commit-row.working-copy .commit-id').click();
+    await expect(graph.locator('.commit-row.working-copy')).toHaveAttribute('aria-selected', 'true');
+    await page.mouse.move(1000, 600);
+    await expect(releaseRow).toHaveAttribute('data-immutable', 'false');
+    await expect(immutableRow).toHaveAttribute('data-immutable', 'true');
+    const inactiveColor = await releaseDescription.evaluate((el) => getComputedStyle(el).color);
+    const activeColor = await workingDescription.evaluate((el) => getComputedStyle(el).color);
+    const immutableTextColor = await immutableDescription.evaluate((el) => getComputedStyle(el).color);
+    const inactiveBrightness = await textBrightness(releaseDescription);
+    const activeBrightness = await textBrightness(workingDescription);
+    expect(await textBrightness(immutableDescription)).toBeLessThan(inactiveBrightness);
+    expect(inactiveBrightness).toBeLessThan(activeBrightness);
     const immutableColor = await immutableId.evaluate((el) => getComputedStyle(el).color);
     await expect(currentId).toHaveCSS('color', immutableColor);
-    await expect(currentId).not.toHaveCSS('color', 'rgb(7, 196, 128)');
-    await expect(current).toHaveCSS('fill', 'rgb(230, 237, 244)');
-    await expect(current).toHaveCSS('stroke', 'rgb(7, 196, 128)');
-    await expect(immutableDiamond).toHaveCSS('stroke', immutableColor);
-    await expect(immutableDiamond).toHaveCSS('fill', immutableColor);
+    await expect(currentId).not.toHaveCSS('color', 'rgb(37, 177, 69)');
+    await expect(current).toHaveCSS('fill', 'rgb(37, 177, 69)');
+    await expect(current).toHaveCSS('stroke', 'rgb(37, 177, 69)');
+    await expect(immutableDiamond).toHaveCSS('stroke', immutableTextColor);
+    await expect(immutableDiamond).toHaveCSS('fill', immutableTextColor);
     await expect(current).not.toHaveCSS('filter', 'none');
     await expect(graph.locator('.graph-svg text')).toHaveCount(0);
-    await expect(graph.locator('.graph-svg > path').first()).toHaveCSS('stroke', 'rgb(230, 237, 244)');
+    const currentEdge = graph.locator(`[data-edge-id="${workingChange}->${releaseChange}"]`);
+    await expect(currentEdge).toHaveCSS('stroke', 'rgb(37, 177, 69)');
     const termination = graph.locator('.history-termination').first();
     await expect(termination).toBeVisible();
     await expect(termination.locator('.history-dot')).toHaveCount(3);
-    await expect(termination.locator('.history-dot').first()).toHaveCSS('fill', 'rgb(230, 237, 244)');
+    await expect(termination.locator('.history-dot').first()).toHaveCSS('fill', inactiveColor);
     const tildeColor = await termination.locator('path').evaluate((el) => getComputedStyle(el).stroke);
     await expect(termination.locator('.history-dot').last()).toHaveCSS('fill', tildeColor);
     await expect(termination.locator('.history-dot').last()).toHaveCSS('opacity', '1');
 
-    const releaseRow = graph.locator('.commit-row', { hasText: 'Release candidate' });
+    const releaseDot = graph.locator(`[data-commit-id="${releaseCommit}"] > circle`).last();
+    await expect(releaseDot).toHaveCSS('stroke', 'rgb(37, 177, 69)');
+    await expect(releaseDot).toHaveCSS('fill', inactiveColor);
+    expect(Number(await current.getAttribute('r'))).toBeGreaterThan(Number(await releaseDot.getAttribute('r')));
+    const connectedLines = graph.locator(`[data-edge-id^="${releaseChange}->"]`);
+    const unrelatedLines = graph.locator(
+        `[data-edge-id]:not([data-edge-id^="${releaseChange}->"]):not([data-edge-id$="->${releaseChange}"])`,
+    );
     await recordGifFlow(
         page,
         async (capture) => {
             await page.mouse.move(700, 100);
             await capture();
             await releaseRow.hover();
+            const hoverColor = await releaseDescription.evaluate((el) => getComputedStyle(el).color);
+            const hoverBrightness = await textBrightness(releaseDescription);
+            expect(hoverBrightness).toBeGreaterThan(inactiveBrightness);
+            expect(hoverBrightness).toBeLessThan(activeBrightness);
+            await expect(releaseDot).toHaveCSS('stroke', 'rgb(37, 177, 69)');
+            await expect(releaseDot).toHaveCSS('fill', hoverColor);
+            await expect(currentEdge).toHaveCSS('stroke', 'rgb(37, 177, 69)');
+            await expect(current).toHaveCSS('fill', 'rgb(37, 177, 69)');
+            await expect(connectedLines).toHaveCount(1);
+            for (const line of await connectedLines.all()) {
+                await expect(line).toHaveCSS('stroke', hoverColor);
+            }
+            for (const line of await unrelatedLines.all()) {
+                await expect(line).toHaveCSS('stroke', inactiveColor);
+            }
             const actions = releaseRow.locator('.hover-actions');
             await expect(releaseRow).toHaveCSS('background-color', 'rgb(31, 31, 31)');
             await expect(actions).toHaveCSS('background-color', 'rgb(31, 31, 31)');
@@ -154,6 +243,26 @@ test('Cobalt badges and actions, Silver lanes, and dotted history retain theme a
             await expect(actions.getByRole('button').first()).toHaveCSS('background-color', 'rgb(45, 160, 68)');
             await page.screenshot({ path: path.join(ARTIFACT_DIR, 'pierre-dark-cobalt.png') });
             await capture();
+            await releaseRow.locator('.commit-id').click();
+            await expect(releaseDescription).toHaveCSS('color', activeColor);
+            await expect(releaseDot).toHaveCSS('stroke', 'rgb(37, 177, 69)');
+            await capture();
+            await immutableRow.hover();
+            await expect(immutableDescription).toHaveCSS('color', hoverColor);
+            await expect(immutableDiamond).toHaveCSS('stroke', hoverColor);
+            await capture();
+            await immutableRow.locator('.commit-id').click();
+            await expect(immutableDescription).toHaveCSS('color', activeColor);
+            await capture();
+            await page.mouse.move(1000, 600);
+            await expect(immutableDescription).toHaveCSS('color', activeColor);
+            await expect(releaseDescription).toHaveCSS('color', inactiveColor);
+            await expect(releaseDot).toHaveCSS('stroke', 'rgb(37, 177, 69)');
+            await expect(releaseDot).toHaveCSS('fill', inactiveColor);
+            await expect(currentEdge).toHaveCSS('stroke', 'rgb(37, 177, 69)');
+            for (const line of await connectedLines.all()) {
+                await expect(line).toHaveCSS('stroke', inactiveColor);
+            }
         },
         { outputPath: path.join(ARTIFACT_DIR, 'pierre-dark-cobalt.gif') },
     );
@@ -195,7 +304,7 @@ test('Cobalt badges and actions, Silver lanes, and dotted history retain theme a
     await expect(page.locator('.commit-desc').first()).toHaveCSS('font-size', '13px');
     await expect(page.locator('.commit-id').first()).toHaveCSS('font-size', '12px');
     await expect(page.locator('.commit-desc').first()).not.toHaveCSS('font-family', /Inter Variable/);
-    await expect(local).not.toHaveCSS('background-color', 'rgb(31, 112, 235)');
+    await expect(local).not.toHaveCSS('background-color', 'rgb(31, 111, 235)');
     await expect(graph.locator('.graph-svg > path').first()).not.toHaveCSS('stroke', 'rgb(230, 237, 244)');
     const lightLineColor = await graph
         .locator('.graph-svg > path')
