@@ -423,6 +423,26 @@ describe('Graph Layout Integration Tests (Real jj output)', () => {
 
     afterEach(() => {});
 
+    test('Default branch tip follows configured trunk and excludes root and other immutable commits', async () => {
+        const original = repo.getCommitId('@');
+        repo.bookmark('release-line', '@');
+        repo.config('revset-aliases."trunk()"', 'release-line');
+        repo.new();
+        const next = repo.getCommitId('@');
+        repo.new();
+
+        const getNodes = async () => computeGraphLayout(await jjService.getLog({ revision: 'all()' })).nodes;
+        let nodes = await getNodes();
+        expect(nodes.filter((node) => node.isDefaultBranchTip).map((node) => node.commitId)).toEqual([original]);
+        expect(nodes.find((node) => node.commitId === original)?.isImmutable).toBe(true);
+
+        repo.bookmark('release-line', '@-');
+        nodes = await getNodes();
+        expect(nodes.filter((node) => node.isDefaultBranchTip).map((node) => node.commitId)).toEqual([next]);
+        expect(nodes.find((node) => node.commitId === original)?.isImmutable).toBe(true);
+        expect(nodes.find((node) => node.commitId === next)?.isEmpty).toBe(true);
+    });
+
     /*
      * Linear History Layout
      *

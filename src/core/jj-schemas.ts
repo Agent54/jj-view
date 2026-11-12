@@ -183,6 +183,8 @@ export const JjLogEntrySchema = z.object({
     is_current_working_copy: z.boolean().optional(),
     /** Whether this commit revision is immutable. */
     is_immutable: z.boolean().optional(),
+    /** Whether this revision is a non-root tip of the configured default branch. */
+    is_default_branch_tip: z.boolean().optional(),
     /** Whether the revision contains no changes (empty). */
     is_empty: z.boolean().optional(),
     /** Whether the change ID is divergent (points to multiple commits). */

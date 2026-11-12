@@ -257,41 +257,43 @@ const svgHeight = $derived(height + BOTTOM_PADDING);
         {@const isSelected = selectedNodes.has(node.changeId)}
         {@const isHighlighted = highlightedNodeId !== undefined && node.changeId === highlightedNodeId}
         {@const isHovered = hoveredNodeId !== undefined && node.changeId === hoveredNodeId}
-        {@const baseNodeColor = node.isImmutable
+        {@const isDefaultBranchTip = node.isImmutable && node.isDefaultBranchTip}
+        {@const defaultBranchColor = 'var(--vscode-jjView-bookmark-background, var(--vscode-charts-blue))'}
+        {@const baseNodeColor = isDefaultBranchTip ? defaultBranchColor : node.isImmutable
             ? 'var(--vscode-jjView-graph-immutableForeground, var(--vscode-descriptionForeground))'
             : 'var(--vscode-jjView-graph-mutableForeground, var(--jj-node-color, var(--vscode-gitDecoration-addedResourceForeground)))'}
-        {@const baseNodeFill = node.isImmutable
+        {@const baseNodeFill = isDefaultBranchTip ? defaultBranchColor : node.isImmutable
             ? 'var(--vscode-jjView-graph-immutableForeground, var(--vscode-descriptionForeground))'
             : 'var(--vscode-jjView-graph-foreground, var(--jj-node-fill, var(--vscode-editor-foreground)))'}
         <!-- Mutable outlines convey status independently of the neutral fill and hover colors. -->
-        {@const nodeColor = isHovered && node.isImmutable ? `var(--vscode-jjView-graph-hoverForeground, ${baseNodeColor})` : baseNodeColor}
-        {@const nodeFill = isHovered ? `var(--vscode-jjView-graph-hoverForeground, ${baseNodeFill})` : baseNodeFill}
+        {@const nodeColor = isHovered && node.isImmutable && !isDefaultBranchTip ? `var(--vscode-jjView-graph-hoverForeground, ${baseNodeColor})` : baseNodeColor}
+        {@const nodeFill = isHovered && !isDefaultBranchTip ? `var(--vscode-jjView-graph-hoverForeground, ${baseNodeFill})` : baseNodeFill}
+        {@const currentColor = node.conflict ? 'var(--vscode-charts-red)' : nodeColor}
         <g data-commit-id={node.commitId}>
             {#if isSelected}
                 <circle
                     {cx}
                     {cy}
-                    r={node.isCurrentWorkingCopy ? 11 : 9}
+                    r={node.isCurrentWorkingCopy ? 10 : 9}
                     fill="none"
-                    stroke="var(--vscode-list-activeSelectionForeground)"
+                    stroke={node.isCurrentWorkingCopy ? currentColor : 'var(--vscode-list-activeSelectionForeground)'}
                     stroke-width="2"
-                    style:opacity="0.6"
+                    style:opacity={node.isCurrentWorkingCopy ? 1 : 0.6}
                 />
             {:else if isHighlighted}
                 <circle
                     {cx}
                     {cy}
-                    r={node.isCurrentWorkingCopy ? 11 : 9}
+                    r={node.isCurrentWorkingCopy ? 10 : 9}
                     fill="none"
-                    stroke="var(--vscode-list-activeSelectionForeground)"
+                    stroke={node.isCurrentWorkingCopy ? currentColor : 'var(--vscode-list-activeSelectionForeground)'}
                     stroke-width="2"
                     stroke-dasharray="2 2"
-                    style:opacity="0.8"
+                    style:opacity={node.isCurrentWorkingCopy ? 1 : 0.8}
                 />
             {/if}
 
             {#if node.isCurrentWorkingCopy}
-                <circle {cx} {cy} r="10" fill="var(--vscode-sideBar-background)" />
                 <circle
                     {cx}
                     {cy}
@@ -299,11 +301,9 @@ const svgHeight = $derived(height + BOTTOM_PADDING);
                     class="node-working-copy"
                     class:empty={node.isEmpty}
                     fill={node.isEmpty ? 'var(--vscode-sideBar-background)' : node.conflict ? nodeFill : `var(--vscode-jjView-graph-currentFill, ${nodeFill})`}
-                    stroke={node.conflict
-                        ? 'var(--vscode-charts-red)'
-                        : nodeColor}
+                    stroke={currentColor}
                     stroke-width="2"
-                    style:color={node.conflict ? 'var(--vscode-charts-red)' : nodeColor}
+                    style:color={currentColor}
                 />
             {:else if node.isHidden}
                 <g transform={`translate(${cx}, ${cy})`}>
@@ -341,7 +341,7 @@ const svgHeight = $derived(height + BOTTOM_PADDING);
                     stroke-width="2"
                     stroke-linecap="round"
                 />
-            {:else if node.isEmpty}
+            {:else if node.isEmpty && !isDefaultBranchTip}
                 {#if node.isImmutable}
                     <polygon
                         points={`${cx},${cy - 6} ${cx + 6},${cy} ${cx},${cy + 6} ${cx - 6},${cy}`}
