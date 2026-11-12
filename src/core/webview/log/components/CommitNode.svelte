@@ -12,7 +12,7 @@ import { getCompactRelativeTimeString, getRelativeTimeString } from '../../commo
 import type { DragManager } from '../drag-manager.svelte';
 import { COMMIT_ROW_PADDING_LEFT } from '../layout-constants';
 import { compactCommitTitle } from '../utils/commit-title';
-import { formatCommitTooltip } from '../utils/commit-tooltip';
+import { DIVIDER, formatCommitTooltipMetadata } from '../utils/commit-tooltip';
 import { computeCommitActions } from '../utils/commit-utils';
 import DraggableBookmark from './DraggableBookmark.svelte';
 
@@ -54,7 +54,6 @@ let {
 
 let isHovered = $state(false);
 let rowElement: HTMLDivElement | undefined = $state();
-let typeGlyphElement: HTMLSpanElement | undefined = $state();
 let isGeneratingDescription = $state(false);
 
 async function handleGenerateDescription(e: MouseEvent): Promise<void> {
@@ -206,7 +205,7 @@ const fileSummary = $derived.by(() => {
     ].filter((summary) => summary.count > 0);
 });
 const hasFileSummary = $derived(fileSummary.length > 0);
-const commitTooltip = $derived(formatCommitTooltip(commit));
+const commitTooltip = $derived(formatCommitTooltipMetadata(commit));
 const timestamp = $derived(commit.author.timestamp || commit.committer.timestamp);
 const relativeTime = $derived(getCompactRelativeTimeString(timestamp, now));
 
@@ -352,22 +351,11 @@ const hasActiveBookmarkAlready = $derived(
                 <span class="commit-desc-content">
                     {#if compactTitle.prefix}
                         <span
-                            bind:this={typeGlyphElement}
                             class="commit-type-glyph"
                             role="img"
                             aria-label={compactTitle.prefix}
                         >
-                            <svg
-                                width="14"
-                                height="14"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="1.75"
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                aria-hidden="true"
-                            ><path d={compactTitle.glyphPath} /></svg>
+                            {@render commitTypeIcon()}
                         </span>
                     {/if}
                     {#if commit.is_divergent}
@@ -560,23 +548,50 @@ const hasActiveBookmarkAlready = $derived(
     </div>
 </div>
 
-{#snippet immutableBadge()}
-    <BasePill className="badge-immutable">
-        <span class="pill-label">Immutable</span>
-    </BasePill>
+{#snippet commitTypeIcon()}
+    <svg
+        width="14"
+        height="14"
+        viewBox="0 0 24 24"
+        fill="currentColor"
+        stroke="none"
+        aria-hidden="true"
+    ><path d={compactTitle.glyphPath} /></svg>
+{/snippet}
+
+{#snippet commitTooltipBadges()}
+    {#if isImmutable}
+        <BasePill className="badge-immutable">
+            <span class="pill-label">Immutable</span>
+        </BasePill>
+    {/if}
+{/snippet}
+
+{#snippet commitTooltipContent()}
+    {commitTooltip}
+    {#if descriptionFull}
+        <div>{DIVIDER}</div>
+        <div class="commit-tooltip-title">
+            {#if compactTitle.prefix}
+                <span class="commit-tooltip-glyph">{@render commitTypeIcon()}</span>
+            {/if}
+            <span>{descriptionFirstLine}</span>
+        </div>
+        {descriptionFull.slice(descriptionFirstLine.length + 1)}
+    {/if}
 {/snippet}
 
 <Tooltip
     anchor={rowElement}
     text={commitTooltip}
+    content={commitTooltipContent}
     heading={isCurrentWorkingCopy ? 'You are here' : undefined}
     accentColor={isCurrentWorkingCopy ? 'var(--vscode-gitDecoration-addedResourceForeground)' : undefined}
-    badges={isImmutable ? immutableBadge : undefined}
+    badges={isImmutable ? commitTooltipBadges : undefined}
     multiline
     disabled={dragManager.isDragging}
-    ignoreSelector=".hover-actions, .pills-group, .commit-type-glyph, a, button, [title]"
+    ignoreSelector=".hover-actions, .pills-group, a, button, [title]"
 />
-<Tooltip anchor={typeGlyphElement} text={compactTitle.prefix} disabled={dragManager.isDragging} />
 
 <style>
     .commit-row {
@@ -704,6 +719,19 @@ const hasActiveBookmarkAlready = $derived(
         height: 14px;
         margin-right: 4px;
         vertical-align: -2px;
+    }
+
+    .commit-tooltip-title {
+        display: flex;
+        align-items: flex-start;
+        gap: 6px;
+        white-space: normal;
+    }
+
+    .commit-tooltip-glyph {
+        display: inline-flex;
+        flex-shrink: 0;
+        margin-top: 0.25em;
     }
 
     .hover-actions :global(.icon-button:hover) {

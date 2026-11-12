@@ -103,11 +103,11 @@ export function fromUnicodeSansRegular(text: string): string {
 export const DIVIDER = '────────────────';
 
 /**
- * Formats a rich, multi-line tooltip for a JJ commit revision.
+ * Formats the metadata in a rich, multi-line tooltip for a JJ commit revision.
  * Uses small caps labels, Mathematical Sans-Serif bold shortest change ID prefix,
- * Mathematical Sans-Serif regular hashes, relative timestamps, and short divider.
+ * Mathematical Sans-Serif regular hashes and relative timestamps.
  */
-export function formatCommitTooltip(commit: JjLogEntry): string {
+export function formatCommitTooltipMetadata(commit: JjLogEntry): string {
     const lines: string[] = [];
     const HASH_DISPLAY_LENGTH = 10;
 
@@ -152,6 +152,11 @@ export function formatCommitTooltip(commit: JjLogEntry): string {
         lines.push(`ᴡᴏʀᴋsᴘᴀᴄᴇs: ${commit.working_copies.join(', ')}`);
     }
 
+    return lines.join('\n');
+}
+
+export function formatCommitTooltip(commit: JjLogEntry): string {
+    const lines = [formatCommitTooltipMetadata(commit)];
     const desc = commit.description.trim();
     if (desc) {
         // Divider and description

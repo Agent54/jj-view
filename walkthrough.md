@@ -96,14 +96,16 @@ a file. The tooltip test, type checks, lint, and production build pass.
 ## Compact commit types
 
 Graph titles replace the section before the first colon with a 14px monochrome
-glyph when it contains `feat`, `chore`, `test`, `fix`, or `hotfix` as a word.
-The glyphs are a plus, wrench, flask, bug, and flame, respectively. Hovering a
-glyph reveals the original prefix, including scope and breaking-change markers.
+glyph when it contains `feat`, `chore`, `test`, `fix`, `hotfix`, `style`, `refactor`, or `ui` as a word.
+The glyphs are a softly curved four-point star, wrench, flask, bug, flame, paintbrush, opposing arrows, and window panels,
+respectively, drawn as small filled silhouettes without outlines. Hovering a glyph
+opens the same tooltip as the rest of the row. The glyph sits to the left of the
+original commit title, which retains its prefix. There is no separate type label.
 The glyph inherits the title color and stays accessible beside hover actions.
 Stored descriptions and editable commit messages retain their original text.
 
-Validation: 16 parser cases, type checks, the production build, and the focused
-browser test passed. Browser coverage checks all five glyphs and tooltips in
+Validation: 19 parser cases, the production build, and the focused
+browser test passed. Browser coverage checks all eight glyphs and tooltips in
 dark/light themes, plus external description updates that add or remove a prefix.
 
 ![Compact commit types in dark mode](test-artifacts/commit-types-pierre-dark-cobalt.png)

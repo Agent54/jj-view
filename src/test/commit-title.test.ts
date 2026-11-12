@@ -6,7 +6,16 @@ import { describe, expect, it } from 'vitest';
 import { compactCommitTitle } from '../core/webview/log/utils/commit-title';
 
 describe('compactCommitTitle', () => {
-    it.each(['feat', 'chore', 'test', 'fix', 'hotfix'])('compacts %s prefixes and preserves later colons', (type) => {
+    it.each([
+        'feat',
+        'chore',
+        'test',
+        'fix',
+        'hotfix',
+        'style',
+        'refactor',
+        'ui',
+    ])('compacts %s prefixes and preserves later colons', (type) => {
         const result = compactCommitTitle(`${type}: handle input: output`);
         expect(result.text).toBe('handle input: output');
         expect(result.prefix).toBe(`${type}:`);

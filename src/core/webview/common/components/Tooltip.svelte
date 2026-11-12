@@ -12,16 +12,17 @@ interface Props {
     heading?: string;
     accentColor?: string;
     badges?: Snippet;
+    content?: Snippet;
     disabled?: boolean;
     multiline?: boolean;
     ignoreSelector?: string;
 }
 
-let { anchor, text, heading, accentColor, badges, disabled = false, multiline = false, ignoreSelector }: Props = $props();
+let { anchor, text, heading, accentColor, badges, content, disabled = false, multiline = false, ignoreSelector }: Props = $props();
 const tooltipId = $props.id();
 let tooltipElement: HTMLDivElement | undefined = $state();
 // Live text updates must not detach hover listeners or cancel the pending timer.
-const hasText = $derived(Boolean(text));
+const hasText = $derived(Boolean(text) || Boolean(content));
 
 $effect(() => {
     const target = anchor;
@@ -147,7 +148,11 @@ $effect(() => {
     {#if badges}
         <div class="tooltip-badges">{@render badges()}</div>
     {/if}
-    {text}
+    {#if content}
+        {@render content()}
+    {:else}
+        {text}
+    {/if}
 </div>
 
 <style>
