@@ -217,6 +217,7 @@ test('Cobalt badges and actions, Silver lanes, and dotted history retain theme a
     await expect(releaseDot).toHaveCSS('fill', inactiveColor);
     expect(Number(await current.getAttribute('r'))).toBeGreaterThan(Number(await releaseDot.getAttribute('r')));
     const connectedLines = graph.locator(`[data-edge-id^="${releaseChange}->"]`);
+    await expect(connectedLines).toHaveCSS('stroke', 'rgb(31, 111, 235)');
     const unrelatedLines = graph.locator(
         `[data-edge-id]:not([data-edge-id^="${releaseChange}->"]):not([data-edge-id$="->${releaseChange}"]):not([data-edge-id^="${remoteChange}->"])`,
     );
@@ -236,7 +237,7 @@ test('Cobalt badges and actions, Silver lanes, and dotted history retain theme a
             await expect(current).toHaveCSS('fill', 'rgb(37, 177, 69)');
             await expect(connectedLines).toHaveCount(1);
             for (const line of await connectedLines.all()) {
-                await expect(line).toHaveCSS('stroke', hoverColor);
+                await expect(line).toHaveCSS('stroke', 'rgb(31, 111, 235)');
             }
             for (const line of await unrelatedLines.all()) {
                 await expect(line).toHaveCSS('stroke', inactiveColor);
@@ -259,6 +260,7 @@ test('Cobalt badges and actions, Silver lanes, and dotted history retain theme a
             await expect(immutableDiamond).toHaveCSS('stroke', 'rgb(31, 111, 235)');
             await expect(immutableDiamond).toHaveCSS('fill', 'rgb(31, 111, 235)');
             await expect(defaultBranchEdge).toHaveCSS('stroke', 'rgb(31, 111, 235)');
+            await expect(connectedLines).toHaveCSS('stroke', 'rgb(31, 111, 235)');
             await capture();
             await immutableRow.locator('.commit-id').click();
             await expect(immutableDescription).toHaveCSS('color', activeColor);
@@ -270,7 +272,7 @@ test('Cobalt badges and actions, Silver lanes, and dotted history retain theme a
             await expect(releaseDot).toHaveCSS('fill', inactiveColor);
             await expect(currentEdge).toHaveCSS('stroke', 'rgb(37, 177, 69)');
             for (const line of await connectedLines.all()) {
-                await expect(line).toHaveCSS('stroke', inactiveColor);
+                await expect(line).toHaveCSS('stroke', 'rgb(31, 111, 235)');
             }
         },
         { outputPath: path.join(ARTIFACT_DIR, 'pierre-dark-cobalt.gif') },
@@ -311,6 +313,7 @@ test('Cobalt badges and actions, Silver lanes, and dotted history retain theme a
     expect(lightDefaultColor).not.toBe(lightImmutableColor);
     await expect(immutableDiamond).toHaveCSS('fill', lightDefaultColor);
     await expect(defaultBranchEdge).toHaveCSS('stroke', lightDefaultColor);
+    await expect(connectedLines).toHaveCSS('stroke', lightDefaultColor);
     await expect(olderDiamonds).toHaveCSS('fill', lightImmutableColor);
     await expect(page.getByTestId('log-pane')).not.toHaveCSS('background-color', 'rgb(0, 0, 0)');
     await expect(page.locator('.commit-desc').first()).toHaveCSS('font-size', '13px');

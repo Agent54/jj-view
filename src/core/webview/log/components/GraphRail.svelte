@@ -67,6 +67,13 @@ const sortedEdges = $derived.by(() => {
     return edgesWithBounds.sort((a, b) => b.minX - a.minX || b.maxX - a.maxX).map((item) => item.edge);
 });
 
+function connectsDefaultBranchTip(edge: GraphEdge): boolean {
+    return [edge.points[0], edge.points.at(-1)].some((point) => {
+        const row = point && rows[point.y];
+        return row && !isElisionRow(row) && row.is_immutable && row.is_default_branch_tip;
+    });
+}
+
 function isEdgeHovered(edge: GraphEdge): boolean {
     if (hoveredNodeId === undefined) {
         return false;
@@ -197,7 +204,7 @@ const svgHeight = $derived(height + BOTTOM_PADDING);
     <defs>
         <radialGradient id={`${graphId}-inset-shadow`}>
             <stop offset="70%" stop-color="var(--vscode-jjView-graph-insetShadow, var(--vscode-widget-shadow))" stop-opacity="0" />
-            <stop offset="100%" stop-color="var(--vscode-jjView-graph-insetShadow, var(--vscode-widget-shadow))" />
+            <stop offset="88%" stop-color="var(--vscode-jjView-graph-insetShadow, var(--vscode-widget-shadow))" />
         </radialGradient>
     </defs>
     <!-- Edges -->
@@ -211,10 +218,10 @@ const svgHeight = $derived(height + BOTTOM_PADDING);
             <path
                 d={pathData}
                 data-edge-id={edge.id}
-                stroke={sourceRow && !isElisionRow(sourceRow) && sourceRow.is_current_working_copy
-                    ? `var(--vscode-jjView-graph-currentEdge, ${edgeColor})`
-                    : sourceRow && !isElisionRow(sourceRow) && sourceRow.is_immutable && sourceRow.is_default_branch_tip
-                        ? defaultBranchColor
+                stroke={connectsDefaultBranchTip(edge)
+                    ? defaultBranchColor
+                    : sourceRow && !isElisionRow(sourceRow) && sourceRow.is_current_working_copy
+                        ? `var(--vscode-jjView-graph-currentEdge, ${edgeColor})`
                         : edgeColor}
                 stroke-width="2"
                 fill="none"
