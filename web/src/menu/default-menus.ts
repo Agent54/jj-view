@@ -883,6 +883,11 @@ export const DEFAULT_PACKAGE_JSON_CONTRIBUTES: PackageJsonContributes = {
         ],
         'editor/title/context': [
             {
+                command: 'jj-view.completeSquashRevision',
+                when: "resourceFilename == 'SQUASH_MSG'",
+                group: '0_squash@1',
+            },
+            {
                 command: 'workbench.action.closeActiveEditor',
                 group: '1_close@1',
             },
@@ -915,6 +920,11 @@ export const DEFAULT_PACKAGE_JSON_CONTRIBUTES: PackageJsonContributes = {
             },
         ],
         'editor/context': [
+            {
+                command: 'jj-view.completeSquashRevision',
+                when: "resourceFilename == 'SQUASH_MSG'",
+                group: '0_squash@1',
+            },
             {
                 command: 'jj-view.addSelectionToChat',
                 group: 'jj-view@0',

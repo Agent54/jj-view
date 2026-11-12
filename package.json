@@ -218,6 +218,11 @@
                     "default": false,
                     "description": "Automatically format and wrap the commit description body when saving."
                 },
+                "jj-view.commit.editDescriptionOnSquash": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Edit the combined description before squashing when both commits have descriptions. When disabled, squash immediately, joining titles with commas and bodies with blank lines."
+                },
                 "jj-view.suppressGitColocationWarning": {
                     "type": "boolean",
                     "default": false,

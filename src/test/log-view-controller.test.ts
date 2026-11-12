@@ -131,6 +131,18 @@ describe('LogViewController Domain Unit Tests', () => {
         expect(controller.minChangeIdLength).toBe(8);
     });
 
+    test('routes squash-into through the shared description workflow', async () => {
+        const execute = vi.spyOn(fakeHost.commands, 'executeCommand');
+        await controller.handleMessage({
+            type: 'squashCommit',
+            payload: { sourceChangeId: 'source', targetChangeId: 'target', mode: 'into' },
+        });
+        expect(execute).toHaveBeenCalledWith('jj-view.squashRevisionIntoAncestor', {
+            revision: 'source',
+            ancestorRevision: 'target',
+        });
+    });
+
     test('handles RPC messages via handleMessage', async () => {
         testRepo.writeFile('file.txt', 'hello\n');
         testRepo.describe('initial commit');

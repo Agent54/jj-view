@@ -1246,7 +1246,7 @@ export class JjService {
         if (useDestinationMessage) {
             args.push('-u');
         }
-        if (message) {
+        if (message !== undefined) {
             args.push('-m', message);
         }
         if (relativePaths.length > 0) {

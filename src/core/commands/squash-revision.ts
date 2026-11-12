@@ -162,14 +162,30 @@ async function performSquashRevision(
     const parentDescription = parentEntry.description || '';
     const hasParentDesc = parentDescription.trim().length > 0;
 
-    if (hasSourceDesc && hasParentDesc) {
+    if (hasSourceDesc && hasParentDesc && ctx.host.config.get<boolean>('commit.editDescriptionOnSquash', false)) {
         await openSquashDescriptionEditor(ctx, revision, sourceDescription || '', intoRevision, parentDescription);
         return;
     }
 
     await ctx.host.ui.withProgress('Squashing revision...', () =>
-        ctx.repo.jj.squashRevision({ revision, intoRevision }),
+        ctx.repo.jj.squashRevision({
+            revision,
+            intoRevision,
+            message: combineSquashDescriptions(parentDescription, sourceDescription || ''),
+        }),
     );
+}
+
+function combineSquashDescriptions(parentDescription: string, sourceDescription: string): string {
+    const descriptions = [parentDescription, sourceDescription].map((description) => {
+        const [title, ...body] = description.trim().split(/\r?\n/);
+        return { title: title.trim(), body: body.join('\n').trim() };
+    });
+    const title = descriptions
+        .map((description) => description.title)
+        .filter(Boolean)
+        .join(', ');
+    return [title, ...descriptions.map((description) => description.body)].filter(Boolean).join('\n\n');
 }
 
 async function openSquashDescriptionEditor(
@@ -179,7 +195,7 @@ async function openSquashDescriptionEditor(
     parentRev: string,
     parentDesc: string,
 ) {
-    const combined = `${parentDesc.trim()}\n\n${sourceDesc.trim()}`;
+    const combined = combineSquashDescriptions(parentDesc, sourceDesc);
     const hostFs = ctx.host.system?.fs;
     if (!hostFs) {
         throw new Error('Host filesystem not available');

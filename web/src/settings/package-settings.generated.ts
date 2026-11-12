@@ -221,6 +221,15 @@ export const PACKAGE_SETTINGS: readonly SettingDefinition[] = [
         default: false,
     },
     {
+        key: 'commit.editDescriptionOnSquash',
+        title: 'Commit Edit Description On Squash',
+        description:
+            'Edit the combined description before squashing when both commits have descriptions. When disabled, squash immediately, joining titles with commas and bodies with blank lines.',
+        category: 'Commit Editor',
+        type: 'boolean',
+        default: false,
+    },
+    {
         key: 'suppressGitColocationWarning',
         title: 'Suppress Git Colocation Warning',
         description: 'Suppress the warning to disable the built-in Git extension in colocated repositories.',

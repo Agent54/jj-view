@@ -680,12 +680,15 @@ export class LogViewController implements Disposable {
                     if (!msg.sourceChangeId || !msg.targetChangeId || msg.sourceChangeId === msg.targetChangeId) {
                         return;
                     }
-                    const options =
-                        msg.mode === 'onto'
-                            ? { ontoRevision: msg.targetChangeId }
-                            : { intoRevision: msg.targetChangeId };
+                    if (msg.mode !== 'onto') {
+                        await this._host.commands.executeCommand('jj-view.squashRevisionIntoAncestor', {
+                            revision: msg.sourceChangeId,
+                            ancestorRevision: msg.targetChangeId,
+                        });
+                        return;
+                    }
                     await this.executeJjMutation('Squashing...', 'Failed to squash', (jj) =>
-                        jj.squashRevision({ revision: msg.sourceChangeId, ...options }),
+                        jj.squashRevision({ revision: msg.sourceChangeId, ontoRevision: msg.targetChangeId }),
                     );
                 },
                 duplicateCommit: async (msg) => {
