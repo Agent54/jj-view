@@ -678,7 +678,7 @@ export const DEFAULT_PACKAGE_JSON_CONTRIBUTES: PackageJsonContributes = {
             },
             {
                 command: 'jj-view.edit',
-                group: 'inline@6',
+                group: '2_edit',
                 when: 'scmResourceGroupState =~ /\\bjj\\.group\\.allowEdit\\b/',
             },
         ],
@@ -762,7 +762,7 @@ export const DEFAULT_PACKAGE_JSON_CONTRIBUTES: PackageJsonContributes = {
             },
             {
                 command: 'jj-view.edit',
-                when: "webviewSection == 'commit' && jj.canEdit",
+                when: "(webviewSection == 'commit' || webviewSection == 'commitAction' || webviewSection == 'commitActions') && jj.canEdit",
                 group: '2_edit@4',
             },
             {
@@ -841,11 +841,6 @@ export const DEFAULT_PACKAGE_JSON_CONTRIBUTES: PackageJsonContributes = {
                 group: '9_visibility_1_hide',
             },
             {
-                command: 'jj-view.hideCommitAction.edit',
-                when: "webviewSection == 'commitAction' && jj.actionId == 'edit' && jj.editVisible",
-                group: '9_visibility_1_hide',
-            },
-            {
                 command: 'jj-view.hideCommitAction.squash',
                 when: "webviewSection == 'commitAction' && jj.actionId == 'squash' && jj.squashVisible",
                 group: '9_visibility_1_hide',
@@ -859,16 +854,6 @@ export const DEFAULT_PACKAGE_JSON_CONTRIBUTES: PackageJsonContributes = {
                 command: 'jj-view.toggleCommitAction.newChild.off',
                 when: "(webviewSection == 'commitAction' || webviewSection == 'commitActions') && !jj.commitActionVisible.newChild",
                 group: '9_visibility_2_toggle@1',
-            },
-            {
-                command: 'jj-view.toggleCommitAction.edit.on',
-                when: "(webviewSection == 'commitAction' || webviewSection == 'commitActions') && jj.commitActionVisible.edit",
-                group: '9_visibility_2_toggle@2',
-            },
-            {
-                command: 'jj-view.toggleCommitAction.edit.off',
-                when: "(webviewSection == 'commitAction' || webviewSection == 'commitActions') && !jj.commitActionVisible.edit",
-                group: '9_visibility_2_toggle@2',
             },
             {
                 command: 'jj-view.toggleCommitAction.squash.on',

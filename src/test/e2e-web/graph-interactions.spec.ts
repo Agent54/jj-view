@@ -15,6 +15,7 @@ test('hover controls have a clear boundary, explanatory tooltips, and no abandon
     testRepo.new();
     testRepo.writeFile('feature.txt', 'feature\n');
     testRepo.describe('Feature commit');
+    const featureChange = testRepo.getChangeId('@');
     testRepo.new();
 
     await page.goto(server.serverUrl);
@@ -26,7 +27,8 @@ test('hover controls have a clear boundary, explanatory tooltips, and no abandon
     await expect(actions).toHaveCSS('border-top-style', 'solid');
     await expect(actions).toHaveCSS('border-top-width', '1px');
     await expect(actions).toHaveCSS('mask-image', 'none');
-    await expect(actions.getByRole('button')).toHaveCount(4);
+    await expect(actions.getByRole('button')).toHaveCount(3);
+    await expect(actions.getByRole('button', { name: 'Edit Commit' })).toHaveCount(0);
     await expect(actions.getByRole('button', { name: 'Abandon' })).toHaveCount(0);
     await expect(row).toHaveCSS('cursor', 'pointer');
     await expect(page.locator('.commit-graph')).toHaveCSS('user-select', 'none');
@@ -44,14 +46,13 @@ test('hover controls have a clear boundary, explanatory tooltips, and no abandon
                 throw new Error('Expected visible commit actions, description, and change ID');
             }
             expect(Math.abs(actionsBox.x - descriptionBox.x)).toBeLessThan(1);
-            expect(actionsBox.x).toBeGreaterThan(idBox.x + idBox.width);
+            expect(actionsBox.x + actionsBox.width).toBeLessThanOrEqual(idBox.x);
         }).toPass();
     }
 
     for (const [name, description] of [
         ['Generate description with AI', 'Generate a description for this commit without switching the working copy.'],
-        ['New Child', 'Create a new working-copy revision after this commit.'],
-        ['Edit Commit', 'Make this commit the working copy so you can edit its files.'],
+        ['New Child', 'add new change'],
         ['Squash', "Move this commit's changes into its parent and remove this commit."],
     ]) {
         const button = actions.getByRole('button', { name, exact: true });
@@ -70,16 +71,14 @@ test('hover controls have a clear boundary, explanatory tooltips, and no abandon
                     await window.__JJ_VIEW_ENV__?.config.update?.('appearance.theme', value);
                 }, theme);
                 await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
-                const headerBackground = await page
-                    .getByTestId('log-header')
-                    .evaluate((el) => getComputedStyle(el).backgroundColor);
                 const headerBorder = await page
                     .getByTestId('log-header')
                     .evaluate((el) => getComputedStyle(el).borderBottomColor);
                 await row.locator('.commit-desc').hover();
-                await expect(actions).toHaveCSS('background-color', headerBackground);
+                const rowBackground = await row.evaluate((el) => getComputedStyle(el).backgroundColor);
+                await expect(actions).toHaveCSS('background-color', rowBackground);
                 await expect(actions).toHaveCSS('border-top-color', headerBorder);
-                await actions.getByRole('button', { name: 'Edit Commit', exact: true }).hover();
+                await actions.getByRole('button', { name: 'New Child', exact: true }).hover();
                 await expect(page.getByRole('tooltip')).toBeVisible();
                 await page.screenshot({ path: path.join(ARTIFACT_DIR, `commit-actions-${theme}.png`) });
                 await capture();
@@ -89,14 +88,23 @@ test('hover controls have a clear boundary, explanatory tooltips, and no abandon
     );
 
     await actions.getByRole('button', { name: 'New Child', exact: true }).focus();
-    await expect(page.getByRole('tooltip')).toHaveText('Create a new working-copy revision after this commit.');
+    await expect(page.getByRole('tooltip')).toHaveText('add new change');
     await row.locator('.commit-desc').click({ button: 'right' });
     await expect(page.getByTestId('menu-item-jj-view.abandon')).toBeVisible();
+    await expect(page.getByTestId('menu-item-jj-view.edit')).toBeVisible();
     await page.keyboard.press('Escape');
-    await actions.click({ button: 'right' });
+    await actions.click({ button: 'right', position: { x: 1, y: 1 } });
     await expect(page.getByTestId('context-menu')).toBeVisible();
+    await expect(page.getByTestId('menu-item-jj-view.edit')).toBeVisible();
+    await expect(page.getByTestId('menu-item-jj-view.toggleCommitAction.edit.on')).toHaveCount(0);
+    await expect(page.getByTestId('menu-item-jj-view.toggleCommitAction.edit.off')).toHaveCount(0);
     await expect(page.getByTestId('menu-item-jj-view.toggleCommitAction.abandon.on')).toHaveCount(0);
     await expect(page.getByTestId('menu-item-jj-view.toggleCommitAction.abandon.off')).toHaveCount(0);
+    await page.keyboard.press('Escape');
+    await actions.getByRole('button', { name: 'New Child', exact: true }).click({ button: 'right' });
+    await page.getByTestId('menu-item-jj-view.edit').click();
+    await expect.poll(() => testRepo.getChangeId('@')).toBe(featureChange);
+    await expect(row).toHaveClass(/working-copy/);
 });
 
 for (const alignment of ['aligned', 'compact']) {

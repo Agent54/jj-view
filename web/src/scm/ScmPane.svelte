@@ -311,7 +311,7 @@ function getRepoTitleActions(entry: ScmRepositoryEntry): ResolvedMenuItem[] {
                                         type="button"
                                         class="icon-button repo-action-button"
                                         data-testid={`scm-title-action-${action.command}`}
-                                        use:tooltip={action.title}
+                                        use:tooltip={action.command === 'jj-view.new' ? 'add new change' : action.title}
                                         aria-label={action.title}
                                         onclick={(e) => {
                                             e.stopPropagation();

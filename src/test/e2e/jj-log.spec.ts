@@ -187,7 +187,7 @@ test.describe('JJ Log Pane E2E', () => {
 
         // 2. Prepare for squash: move working copy away from the new child
         const initialId = nodes.initial.changeId;
-        await clickLogAction(page, { changeId: initialId }, 'Edit Commit');
+        await rightClickAndSelect(page, await waitForLogCommitRow(page, { changeId: initialId }), 'Edit');
 
         // Tree is the same commits, just @ moved. Order: [child, wc, branch, initial, dummy]
         await waitForTree(repo, [

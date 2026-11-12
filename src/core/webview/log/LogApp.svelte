@@ -13,6 +13,7 @@ import {
 } from '../../host/ipc/log-view-schemas';
 import type { JjLogEntry } from '../../jj-types';
 import { BookmarkPill } from '../common/components';
+import { scrollFade } from '../common/scroll-fade';
 import { useRpcReceiver, useRpcSender } from '../transport/bridge.svelte';
 import CommitDragPreview from './components/CommitDragPreview.svelte';
 import CommitGraph from './components/CommitGraph.svelte';
@@ -32,6 +33,8 @@ let rawHighlightQuery = $state<string | undefined>(undefined);
 const highlightedCommit = $derived(findMatchingCommit(commits, rawHighlightQuery));
 const highlightedCommitId = $derived(highlightedCommit?.change_id);
 let hiddenActions = $state<Set<CommitAction>>(new Set());
+// Keep revealed text clear until the user moves the pointer or uses the keyboard.
+let hideHoverActions = $state(false);
 
 function scrollToCommit(changeId: string) {
     if (typeof document === 'undefined') {
@@ -317,6 +320,12 @@ function handleGraphAction(action: string, payload: ActionPayload) {
         <!-- svelte-ignore a11y_no_static_element_interactions -->
         <div
             class="scroll-container"
+            class:hide-hover-actions={hideHoverActions}
+            use:scrollFade={'vertical'}
+            onwheelcapture={() => { hideHoverActions = true; }}
+            onscrollcapture={() => { hideHoverActions = true; }}
+            onpointermove={() => { hideHoverActions = false; }}
+            onkeydowncapture={() => { hideHoverActions = false; }}
             onclick={(e) => {
                 if (e.target === e.currentTarget) {
                     selectedCommitIds = new Set();
@@ -376,10 +385,22 @@ function handleGraphAction(action: string, payload: ActionPayload) {
         color: var(--vscode-descriptionForeground);
     }
 
+    .app-container {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        min-height: 0;
+    }
+
     .scroll-container {
         flex: 1;
         overflow: auto;
-        min-height: 100vh;
+        min-height: 0;
+    }
+
+    .hide-hover-actions :global(.hover-actions) {
+        visibility: hidden;
+        pointer-events: none;
     }
 
     .drag-preview-overlay {

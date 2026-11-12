@@ -44,10 +44,18 @@ test('source control and commit details use shared tooltips instead of browser t
         if (!label) {
             throw new Error('Expected an accessible Source Control action label');
         }
-        await checkTooltip(button, label === 'Settings' ? 'Settings (Ctrl+,)' : label);
+        await checkTooltip(
+            button,
+            label === 'Settings' ? 'Settings (Ctrl+,)' : label === 'New' ? 'add new change' : label,
+        );
     }
 
     const group = page.getByTestId('scm-group-working-copy');
+    await expect(scm.getByTestId('scm-group-action-jj-view.edit')).toHaveCount(0);
+    const parentGroup = scm.locator('.scm-resource-group').filter({ hasText: 'Parent commit' });
+    await parentGroup.locator('.group-header').click({ button: 'right' });
+    await expect(page.getByTestId('menu-item-jj-view.edit')).toBeVisible();
+    await page.keyboard.press('Escape');
     await group.locator('.group-header').hover();
     for (const button of await group.getByRole('toolbar', { name: 'Group Actions' }).getByRole('button').all()) {
         const label = await button.getAttribute('aria-label');
@@ -119,16 +127,18 @@ test('tooltips stay immediate between buttons and reset after an idle interval',
 
     const row = page.locator('.commit-row', { hasText: 'Feature commit' });
     const first = row.getByRole('button', { name: 'New Child', exact: true });
-    const second = row.getByRole('button', { name: 'Edit Commit', exact: true });
+    const second = row.getByRole('button', { name: 'Generate description with AI', exact: true });
     const tooltip = page.getByRole('tooltip');
     await row.hover();
     await first.hover();
     await page.waitForTimeout(350);
     await expect(tooltip).toHaveCount(0);
-    await expect(tooltip).toHaveText('Create a new working-copy revision after this commit.');
+    await expect(tooltip).toHaveText('add new change');
 
     await second.hover();
-    await expect(tooltip).toHaveText('Make this commit the working copy so you can edit its files.', { timeout: 300 });
+    await expect(tooltip).toHaveText('Generate a description for this commit without switching the working copy.', {
+        timeout: 300,
+    });
     await page.mouse.move(900, 100);
     await expect(tooltip).toHaveCount(0);
     await page.waitForTimeout(1100);
@@ -136,7 +146,7 @@ test('tooltips stay immediate between buttons and reset after an idle interval',
     await first.hover();
     await page.waitForTimeout(350);
     await expect(tooltip).toHaveCount(0);
-    await expect(tooltip).toHaveText('Create a new working-copy revision after this commit.');
+    await expect(tooltip).toHaveText('add new change');
     await page.keyboard.press('Escape');
     await expect(tooltip).toHaveCount(0);
 });

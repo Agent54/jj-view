@@ -7,6 +7,7 @@ import type { ActionPayload, CommitAction } from '../../../host/ipc/log-view-sch
 import type { JjLogEntry } from '../../../jj-types';
 import { BasePill, BookmarkPill, IconButton, TagPill, WorkspacePill } from '../../common/components';
 import Tooltip from '../../common/components/Tooltip.svelte';
+import { scrollFade } from '../../common/scroll-fade';
 import { getCompactRelativeTimeString, getRelativeTimeString } from '../../common/utils/time-utils';
 import type { DragManager } from '../drag-manager.svelte';
 import { COMMIT_ROW_PADDING_LEFT } from '../layout-constants';
@@ -282,13 +283,12 @@ const hasActiveBookmarkAlready = $derived(
     <!-- Anchor actions at the start of the description, independently of trailing metadata. -->
     <div class="row-actions-anchor" class:has-commit-type={Boolean(compactTitle.prefix)}>
         <!-- Overlay Actions -->
-        {#if isHovered && !dragManager.isDragging && (canGenerateDescription || (selectionCount <= 1 && (visibleActions.newChild || visibleActions.edit || visibleActions.squash)))}
+        {#if isHovered && !dragManager.isDragging && (canGenerateDescription || (selectionCount <= 1 && (visibleActions.newChild || visibleActions.squash)))}
             <div
                 class="hover-actions"
                 data-vscode-context={JSON.stringify({
                     webviewSection: 'commitActions',
                     'jj.newChildVisible': visibleActions.newChild,
-                    'jj.editVisible': visibleActions.edit,
                     'jj.squashVisible': visibleActions.squash,
                     preventDefaultContextMenuItems: true,
                 })}
@@ -306,7 +306,7 @@ const hasActiveBookmarkAlready = $derived(
                 {#if selectionCount <= 1 && visibleActions.newChild}
                     <IconButton
                         title="New Child"
-                        tooltip="Create a new working-copy revision after this commit."
+                        tooltip="add new change"
                         icon="codicon-plus"
                         onClick={(e) => {
                             e.stopPropagation();
@@ -316,23 +316,6 @@ const hasActiveBookmarkAlready = $derived(
                             webviewSection: 'commitAction',
                             'jj.actionId': 'newChild',
                             actionTitle: 'New Child',
-                        }}
-                    />
-                {/if}
-
-                {#if selectionCount <= 1 && visibleActions.edit}
-                    <IconButton
-                        title="Edit Commit"
-                        tooltip="Make this commit the working copy so you can edit its files."
-                        icon="codicon-edit"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onAction('edit', { changeId: commit.change_id });
-                        }}
-                        contextData={{
-                            webviewSection: 'commitAction',
-                            'jj.actionId': 'edit',
-                            actionTitle: 'Edit',
                         }}
                     />
                 {/if}
@@ -364,46 +347,49 @@ const hasActiveBookmarkAlready = $derived(
         <div class="desc-row">
             <span
                 class="commit-desc"
+                use:scrollFade={'horizontal'}
             >
-                {#if compactTitle.prefix}
-                    <span
-                        bind:this={typeGlyphElement}
-                        class="commit-type-glyph"
-                        role="img"
-                        aria-label={compactTitle.prefix}
-                    >
-                        <svg
-                            width="14"
-                            height="14"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="1.75"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            aria-hidden="true"
-                        ><path d={compactTitle.glyphPath} /></svg>
-                    </span>
-                {/if}
-                {#if commit.is_divergent}
-                    <span class="divergent-label">(divergent) </span>
-                {/if}
-                {#if hasFileSummary}
-                    <span class="commit-file-summary">
-                        {#each fileSummary as summary (summary.status)}
-                            <span
-                                class="file-count file-count-{summary.status}"
-                                role="img"
-                                aria-label={`${summary.count} ${summary.count === 1 ? 'file' : 'files'} ${summary.status}`}
-                            >
-                                <span class="codicon codicon-{summary.icon}" aria-hidden="true"></span>
-                                <span aria-hidden="true">{summary.count}</span>
-                            </span>
-                        {/each}
-                    </span>
-                {:else}
-                    {compactTitle.text}
-                {/if}
+                <span class="commit-desc-content">
+                    {#if compactTitle.prefix}
+                        <span
+                            bind:this={typeGlyphElement}
+                            class="commit-type-glyph"
+                            role="img"
+                            aria-label={compactTitle.prefix}
+                        >
+                            <svg
+                                width="14"
+                                height="14"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="1.75"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                aria-hidden="true"
+                            ><path d={compactTitle.glyphPath} /></svg>
+                        </span>
+                    {/if}
+                    {#if commit.is_divergent}
+                        <span class="divergent-label">(divergent) </span>
+                    {/if}
+                    {#if hasFileSummary}
+                        <span class="commit-file-summary">
+                            {#each fileSummary as summary (summary.status)}
+                                <span
+                                    class="file-count file-count-{summary.status}"
+                                    role="img"
+                                    aria-label={`${summary.count} ${summary.count === 1 ? 'file' : 'files'} ${summary.status}`}
+                                >
+                                    <span class="codicon codicon-{summary.icon}" aria-hidden="true"></span>
+                                    <span aria-hidden="true">{summary.count}</span>
+                                </span>
+                            {/each}
+                        </span>
+                    {:else}
+                        {compactTitle.text}
+                    {/if}
+                </span>
             </span>
 
             <!-- Right-aligned Bookmarks & Pills -->
@@ -755,11 +741,17 @@ const hasActiveBookmarkAlready = $derived(
         font-style: normal;
         color: var(--vscode-jjView-commit-inactiveForeground);
         white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+        overflow-x: auto;
+        scrollbar-width: none;
+        overscroll-behavior-x: contain;
         margin-right: 8px;
         flex: 1 1 40px;
         min-width: 0;
+    }
+
+    .commit-desc-content {
+        display: block;
+        width: max-content;
     }
 
     .commit-row[data-immutable="true"] .commit-desc {

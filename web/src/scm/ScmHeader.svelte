@@ -72,7 +72,7 @@ const actions: ResolvedMenuItem[] = $derived.by(() => {
                     type="button"
                     class="icon-button toolbar-button"
                     data-testid={`scm-title-action-${action.command}`}
-                    use:tooltip={action.title}
+                    use:tooltip={action.command === 'jj-view.new' ? 'add new change' : action.title}
                     aria-label={action.title}
                     onclick={() => onAction(action.command)}
                 >
