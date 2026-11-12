@@ -40,6 +40,7 @@ let {
 }: Props = $props();
 
 const graphId = $props.id();
+const defaultBranchColor = 'var(--vscode-jjView-bookmark-background, var(--vscode-charts-blue))';
 
 const W = LANE_WIDTH;
 const CX = LANE_CENTER_X;
@@ -212,7 +213,9 @@ const svgHeight = $derived(height + BOTTOM_PADDING);
                 data-edge-id={edge.id}
                 stroke={sourceRow && !isElisionRow(sourceRow) && sourceRow.is_current_working_copy
                     ? `var(--vscode-jjView-graph-currentEdge, ${edgeColor})`
-                    : edgeColor}
+                    : sourceRow && !isElisionRow(sourceRow) && sourceRow.is_immutable && sourceRow.is_default_branch_tip
+                        ? defaultBranchColor
+                        : edgeColor}
                 stroke-width="2"
                 fill="none"
                 stroke-linecap="round"
@@ -263,7 +266,6 @@ const svgHeight = $derived(height + BOTTOM_PADDING);
         {@const isHighlighted = highlightedNodeId !== undefined && node.changeId === highlightedNodeId}
         {@const isHovered = hoveredNodeId !== undefined && node.changeId === hoveredNodeId}
         {@const isDefaultBranchTip = node.isImmutable && node.isDefaultBranchTip}
-        {@const defaultBranchColor = 'var(--vscode-jjView-bookmark-background, var(--vscode-charts-blue))'}
         {@const baseNodeColor = isDefaultBranchTip ? defaultBranchColor : node.isImmutable
             ? 'var(--vscode-jjView-graph-immutableForeground, var(--vscode-descriptionForeground))'
             : 'var(--vscode-jjView-graph-mutableForeground, var(--jj-node-color, var(--vscode-gitDecoration-addedResourceForeground)))'}

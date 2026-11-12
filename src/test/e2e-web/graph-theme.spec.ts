@@ -202,6 +202,8 @@ test('Cobalt badges and actions, Silver lanes, and dotted history retain theme a
     await expect(graph.locator('.graph-svg text')).toHaveCount(0);
     const currentEdge = graph.locator(`[data-edge-id="${workingChange}->${releaseChange}"]`);
     await expect(currentEdge).toHaveCSS('stroke', 'rgb(37, 177, 69)');
+    const defaultBranchEdge = graph.locator(`[data-edge-id^="${remoteChange}->"]`);
+    await expect(defaultBranchEdge).toHaveCSS('stroke', 'rgb(31, 111, 235)');
     const termination = graph.locator('.history-termination').first();
     await expect(termination).toBeVisible();
     await expect(termination.locator('.history-dot')).toHaveCount(3);
@@ -216,7 +218,7 @@ test('Cobalt badges and actions, Silver lanes, and dotted history retain theme a
     expect(Number(await current.getAttribute('r'))).toBeGreaterThan(Number(await releaseDot.getAttribute('r')));
     const connectedLines = graph.locator(`[data-edge-id^="${releaseChange}->"]`);
     const unrelatedLines = graph.locator(
-        `[data-edge-id]:not([data-edge-id^="${releaseChange}->"]):not([data-edge-id$="->${releaseChange}"])`,
+        `[data-edge-id]:not([data-edge-id^="${releaseChange}->"]):not([data-edge-id$="->${releaseChange}"]):not([data-edge-id^="${remoteChange}->"])`,
     );
     await recordGifFlow(
         page,
@@ -256,6 +258,7 @@ test('Cobalt badges and actions, Silver lanes, and dotted history retain theme a
             await expect(immutableDescription).toHaveCSS('color', hoverColor);
             await expect(immutableDiamond).toHaveCSS('stroke', 'rgb(31, 111, 235)');
             await expect(immutableDiamond).toHaveCSS('fill', 'rgb(31, 111, 235)');
+            await expect(defaultBranchEdge).toHaveCSS('stroke', 'rgb(31, 111, 235)');
             await capture();
             await immutableRow.locator('.commit-id').click();
             await expect(immutableDescription).toHaveCSS('color', activeColor);
@@ -307,6 +310,7 @@ test('Cobalt badges and actions, Silver lanes, and dotted history retain theme a
     const lightDefaultColor = await immutableDiamond.evaluate((el) => getComputedStyle(el).stroke);
     expect(lightDefaultColor).not.toBe(lightImmutableColor);
     await expect(immutableDiamond).toHaveCSS('fill', lightDefaultColor);
+    await expect(defaultBranchEdge).toHaveCSS('stroke', lightDefaultColor);
     await expect(olderDiamonds).toHaveCSS('fill', lightImmutableColor);
     await expect(page.getByTestId('log-pane')).not.toHaveCSS('background-color', 'rgb(0, 0, 0)');
     await expect(page.locator('.commit-desc').first()).toHaveCSS('font-size', '13px');
