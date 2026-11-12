@@ -105,7 +105,7 @@ export default {
         'jjView.graph.mutableForeground': '#25b145',
         'jjView.graph.currentFill': '#25b145',
         'jjView.graph.currentEdge': '#25b145',
-        'jjView.graph.insetShadow': '#00000066',
+        'jjView.graph.insetShadow': '#04120759',
         'jjView.immutable.background': '#a5d8ff',
         'jjView.immutable.foreground': canvas,
         'jjView.empty.background': activeSurface,
