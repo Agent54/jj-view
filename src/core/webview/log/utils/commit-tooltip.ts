@@ -136,9 +136,8 @@ export function formatCommitTooltip(commit: JjLogEntry): string {
         lines.push(`ᴅᴀᴛᴇ: ${relTime} (${fullTime})`);
     }
 
-    const status = [commit.is_empty ? 'Empty commit' : '', commit.is_immutable ? 'Immutable' : ''].filter(Boolean);
-    if (status.length > 0) {
-        lines.push(status.join(' · '));
+    if (commit.is_empty) {
+        lines.push('Empty commit');
     }
 
     // Bookmarks, Tags, Working Copies

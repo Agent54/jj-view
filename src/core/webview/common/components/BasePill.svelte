@@ -44,6 +44,14 @@ let { children, title, className = '', style = '' }: Props = $props();
         user-select: none;
     }
 
+    .bookmark-pill:global(.badge-immutable) {
+        border: 1px solid color-mix(in srgb, var(--vscode-gitDecoration-untrackedResourceForeground), transparent 40%) !important;
+        background-color: color-mix(in srgb, var(--vscode-gitDecoration-untrackedResourceForeground), transparent 88%) !important;
+        color: var(--vscode-gitDecoration-untrackedResourceForeground) !important;
+        text-transform: uppercase;
+        font-weight: 700;
+    }
+
     .bookmark-pill :global(.codicon) {
         font-size: 11px;
         line-height: 1;

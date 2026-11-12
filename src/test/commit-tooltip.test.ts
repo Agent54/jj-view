@@ -113,6 +113,8 @@ describe('commit-tooltip', () => {
             expect(tooltip).not.toContain('sᴛᴀᴛᴜs:');
             expect(tooltip).not.toContain('(working copy)');
             expect(tooltip).not.toContain('(immutable)');
+            expect(tooltip).not.toContain('Immutable');
+            expect(tooltip).toContain('Empty commit');
         });
 
         it('includes bookmarks, tags, and working copies', () => {

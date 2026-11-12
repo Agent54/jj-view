@@ -149,9 +149,13 @@ test('graph dot tooltips use readable theme colors and label empty and immutable
     testRepo.new();
     const emptyCommit = testRepo.getCommitId('@');
     const rootCommit = testRepo.getCommitId('root()');
+    const rootChange = testRepo.getChangeId('root()');
     await page.goto(server.serverUrl);
     await waitForScmReady(page);
 
+    await page.locator(`.commit-row[data-change-id="${rootChange}"] .commit-id`).click();
+    const detailsBadge = page.getByTestId('commit-details-view').locator('.badge-immutable');
+    await expect(detailsBadge).toBeVisible();
     const tooltip = page.getByRole('tooltip');
     async function hoverDot(commitId: string): Promise<void> {
         const box = await page.locator(`.graph-svg [data-commit-id="${commitId}"]`).boundingBox();
@@ -196,10 +200,33 @@ test('graph dot tooltips use readable theme colors and label empty and immutable
         }
         await page.screenshot({ path: path.join(ARTIFACT_DIR, `graph-tooltip-${theme}.png`) });
         await hoverDot(rootCommit);
-        await expect(tooltip).toContainText('Empty commit · Immutable');
+        await expect(tooltip).toContainText('Empty commit');
+        const immutableBadge = tooltip.locator('.badge-immutable');
+        await expect(immutableBadge).toHaveText('Immutable');
+        await expect(tooltip).toHaveText(/^\s*Immutable\s+.*Empty commit/s);
+        for (const property of [
+            'background-color',
+            'color',
+            'border-top-color',
+            'border-top-width',
+            'border-radius',
+            'font-size',
+            'font-weight',
+            'text-transform',
+            'height',
+            'padding-left',
+            'padding-right',
+        ]) {
+            const value = await detailsBadge.evaluate(
+                (el, name) => getComputedStyle(el).getPropertyValue(name),
+                property,
+            );
+            await expect(immutableBadge).toHaveCSS(property, value);
+        }
         await expect(tooltip.locator('.tooltip-heading')).toHaveCount(0);
         await expect(tooltip).toHaveCSS('background-color', background);
         await expect(tooltip).toHaveCSS('border-top-color', border);
+        await page.screenshot({ path: path.join(ARTIFACT_DIR, `graph-tooltip-immutable-${theme}.png`) });
         await hoverDot(featureCommit);
         await expect(tooltip).toContainText('Feature commit');
         await expect(tooltip.locator('.tooltip-heading')).toHaveCount(0);

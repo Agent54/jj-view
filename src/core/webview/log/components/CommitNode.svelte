@@ -5,7 +5,7 @@
 <script lang="ts">
 import type { ActionPayload, CommitAction } from '../../../host/ipc/log-view-schemas';
 import type { JjLogEntry } from '../../../jj-types';
-import { BookmarkPill, IconButton, TagPill, WorkspacePill } from '../../common/components';
+import { BasePill, BookmarkPill, IconButton, TagPill, WorkspacePill } from '../../common/components';
 import Tooltip from '../../common/components/Tooltip.svelte';
 import { getCompactRelativeTimeString, getRelativeTimeString } from '../../common/utils/time-utils';
 import type { DragManager } from '../drag-manager.svelte';
@@ -537,11 +537,18 @@ const hasActiveBookmarkAlready = $derived(
     </div>
 </div>
 
+{#snippet immutableBadge()}
+    <BasePill className="badge-immutable">
+        <span class="pill-label">Immutable</span>
+    </BasePill>
+{/snippet}
+
 <Tooltip
     anchor={rowElement}
     text={commitTooltip}
     heading={isCurrentWorkingCopy ? 'You are here' : undefined}
     accentColor={isCurrentWorkingCopy ? 'var(--vscode-gitDecoration-addedResourceForeground)' : undefined}
+    badges={isImmutable ? immutableBadge : undefined}
     multiline
     disabled={dragManager.isDragging}
     ignoreSelector=".hover-actions, .pills-group, a, button, [title]"

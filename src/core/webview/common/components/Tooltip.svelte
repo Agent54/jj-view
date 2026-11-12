@@ -3,6 +3,7 @@
   SPDX-License-Identifier: Apache-2.0
 -->
 <script lang="ts">
+import type { Snippet } from 'svelte';
 import { tooltipTiming } from '../tooltip-timing';
 
 interface Props {
@@ -10,12 +11,13 @@ interface Props {
     text: string;
     heading?: string;
     accentColor?: string;
+    badges?: Snippet;
     disabled?: boolean;
     multiline?: boolean;
     ignoreSelector?: string;
 }
 
-let { anchor, text, heading, accentColor, disabled = false, multiline = false, ignoreSelector }: Props = $props();
+let { anchor, text, heading, accentColor, badges, disabled = false, multiline = false, ignoreSelector }: Props = $props();
 const tooltipId = $props.id();
 let tooltipElement: HTMLDivElement | undefined = $state();
 // Live text updates must not detach hover listeners or cancel the pending timer.
@@ -142,6 +144,9 @@ $effect(() => {
     {#if heading}
         <strong class="tooltip-heading" class:badge={Boolean(accentColor)}>{heading}</strong>
     {/if}
+    {#if badges}
+        <div class="tooltip-badges">{@render badges()}</div>
+    {/if}
     {text}
 </div>
 
@@ -170,6 +175,12 @@ $effect(() => {
         margin-bottom: 4px;
         color: var(--tooltip-accent, inherit);
         font-weight: 600;
+    }
+
+    .tooltip-badges {
+        display: flex;
+        gap: 4px;
+        margin-bottom: 4px;
     }
 
     .tooltip-heading.badge {

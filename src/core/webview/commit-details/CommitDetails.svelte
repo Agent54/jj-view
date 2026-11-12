@@ -765,14 +765,6 @@ function getFileColor(status: string, conflicted?: boolean): string {
         font-weight: normal;
     }
 
-    :global(.badge-immutable) {
-        border: 1px solid color-mix(in srgb, var(--vscode-gitDecoration-untrackedResourceForeground), transparent 40%) !important;
-        background-color: color-mix(in srgb, var(--vscode-gitDecoration-untrackedResourceForeground), transparent 88%) !important;
-        color: var(--vscode-gitDecoration-untrackedResourceForeground) !important;
-        text-transform: uppercase;
-        font-weight: 700;
-    }
-
     :global(.badge-empty) {
         border: 1px solid color-mix(in srgb, var(--vscode-gitDecoration-ignoredResourceForeground), transparent 40%) !important;
         background-color: color-mix(in srgb, var(--vscode-gitDecoration-ignoredResourceForeground), transparent 88%) !important;
