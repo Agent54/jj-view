@@ -637,6 +637,7 @@ export class JjService {
             bookmarks: entry.bookmarks.map((b) => ({ ...b })),
             tags: entry.tags ? [...entry.tags] : undefined,
             working_copies: entry.working_copies ? [...entry.working_copies] : undefined,
+            working_copy_details: entry.working_copy_details?.map((workspace) => ({ ...workspace })),
             nearest_visible_ancestors: entry.nearest_visible_ancestors
                 ? [...entry.nearest_visible_ancestors]
                 : undefined,

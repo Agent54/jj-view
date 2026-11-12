@@ -139,6 +139,14 @@ export const LOG_ENTRY_SCHEMA: Record<string, JjTemplateField> = {
         expr: 'working_copies',
         itemExpr: 'json(item.name())',
     },
+    working_copy_details: {
+        type: 'array',
+        expr: 'working_copies',
+        itemSchema: {
+            name: { type: 'json', expr: 'item.name()' },
+            path: { type: 'json', expr: 'item.root()' },
+        },
+    },
     is_empty: { type: 'raw', expr: 'empty' },
     is_divergent: { type: 'raw', expr: 'divergent' },
     change_id_offset: { type: 'raw', expr: 'if(change_offset, change_offset, "null")' },

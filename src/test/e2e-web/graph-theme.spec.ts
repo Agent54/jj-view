@@ -28,7 +28,7 @@ test('named workspace badges omit default and use borderless theme colors', asyn
     testRepo.describe('Workspace base');
     testRepo.new();
     const workspaceName = 'design-workspace';
-    testRepo.workspaceAdd(workspaceName, '@-');
+    const secondaryWorkspace = testRepo.workspaceAdd(workspaceName, '@-');
     await page.goto(server.serverUrl);
     await waitForScmReady(page);
     await page.getByTestId('scm-collapse-toggle').click();
@@ -55,7 +55,13 @@ test('named workspace badges omit default and use borderless theme colors', asyn
             await expect(badge).not.toHaveCSS('background-color', 'rgb(158, 106, 3)');
             await expect(badge).toHaveCSS('color', 'rgb(10, 10, 10)');
         }
+        await badge.hover();
+        const workspaceTooltip = page.getByRole('tooltip').filter({ hasText: secondaryWorkspace.path });
+        await expect(workspaceTooltip).toBeVisible();
+        await expect(workspaceTooltip).toHaveText(secondaryWorkspace.path);
+        await expect(workspaceTooltip).toHaveCSS('border-radius', '6px');
         await page.screenshot({ path: path.join(ARTIFACT_DIR, `workspace-badges-${theme}.png`) });
+        await page.mouse.move(1000, 600);
     }
 });
 

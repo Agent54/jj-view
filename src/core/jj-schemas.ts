@@ -179,6 +179,8 @@ export const JjLogEntrySchema = z.object({
     tags: z.array(z.string()).optional(),
     /** Names of the working copies using this revision. */
     working_copies: z.array(z.string()).optional(),
+    /** Names and root paths of the working copies using this revision. */
+    working_copy_details: z.array(JjWorkspaceSchema).optional(),
     /** Whether this revision is the current working copy. */
     is_current_working_copy: z.boolean().optional(),
     /** Whether this commit revision is immutable. */

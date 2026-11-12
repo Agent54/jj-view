@@ -160,7 +160,7 @@ $effect(() => {
         overflow: hidden;
         padding: 6px 8px;
         border: 1px solid var(--vscode-editorHoverWidget-border, var(--vscode-editorGroupHeader-tabsBorder));
-        border-radius: 4px;
+        border-radius: 6px;
         background: var(--vscode-editorHoverWidget-background, var(--vscode-editor-background));
         color: var(--vscode-editorHoverWidget-foreground, var(--vscode-foreground));
         font: var(--vscode-font-size, 13px)/1.5 var(--vscode-font-family);
