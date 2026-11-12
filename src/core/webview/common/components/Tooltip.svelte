@@ -137,11 +137,10 @@ $effect(() => {
     popover="manual"
     class="tooltip"
     class:multiline
-    class:accented={Boolean(accentColor)}
     style:--tooltip-accent={accentColor}
 >
     {#if heading}
-        <strong class="tooltip-heading">{heading}</strong>
+        <strong class="tooltip-heading" class:badge={Boolean(accentColor)}>{heading}</strong>
     {/if}
     {text}
 </div>
@@ -166,16 +165,21 @@ $effect(() => {
         user-select: none;
     }
 
-    .tooltip.accented {
-        border-color: var(--tooltip-accent);
-        background: color-mix(in srgb, var(--tooltip-accent) 16%, var(--vscode-editorHoverWidget-background, var(--vscode-editor-background)));
-    }
-
     .tooltip-heading {
         display: block;
         margin-bottom: 4px;
         color: var(--tooltip-accent, inherit);
         font-weight: 600;
+    }
+
+    .tooltip-heading.badge {
+        width: fit-content;
+        padding: 0 6px;
+        border: 1px solid color-mix(in srgb, var(--tooltip-accent) 50%, transparent);
+        border-radius: 4px;
+        background: color-mix(in srgb, var(--tooltip-accent) 16%, transparent);
+        font-size: 12px;
+        line-height: 16px;
     }
 
     .multiline {

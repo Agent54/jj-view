@@ -171,13 +171,15 @@ test('graph dot tooltips use readable theme colors and label empty and immutable
         await expect(tooltip).toContainText('Empty commit');
         await expect(tooltip.locator('.tooltip-heading')).toHaveText('You are here');
         await expect(tooltip).toHaveText(/^You are here\s+.*Empty commit/s);
-        await expect(tooltip).toHaveClass(/accented/);
+        await expect(tooltip.locator('.tooltip-heading')).toHaveClass(/badge/);
         await expect(tooltip).not.toContainText('Immutable');
         await expect(tooltip).not.toContainText('(no description)');
         await expect(tooltip).toHaveCSS('font-size', '14px');
         const background = await tooltip.evaluate(el => getComputedStyle(el).backgroundColor);
+        const border = await tooltip.evaluate((el) => getComputedStyle(el).borderTopColor);
         if (theme === 'pierre-dark-cobalt') {
-            await expect(tooltip).toHaveCSS('border-top-color', 'rgb(7, 196, 128)');
+            await expect(tooltip.locator('.tooltip-heading')).toHaveCSS('color', 'rgb(7, 196, 128)');
+            await expect(tooltip).not.toHaveCSS('border-top-color', 'rgb(7, 196, 128)');
             darkBackground = background;
         } else {
             expect(background).not.toBe(darkBackground);
@@ -186,11 +188,13 @@ test('graph dot tooltips use readable theme colors and label empty and immutable
         await hoverDot(rootCommit);
         await expect(tooltip).toContainText('Empty commit · Immutable');
         await expect(tooltip.locator('.tooltip-heading')).toHaveCount(0);
-        await expect(tooltip).not.toHaveClass(/accented/);
+        await expect(tooltip).toHaveCSS('background-color', background);
+        await expect(tooltip).toHaveCSS('border-top-color', border);
         await hoverDot(featureCommit);
         await expect(tooltip).toContainText('Feature commit');
         await expect(tooltip.locator('.tooltip-heading')).toHaveCount(0);
-        await expect(tooltip).not.toHaveClass(/accented/);
+        await expect(tooltip).toHaveCSS('background-color', background);
+        await expect(tooltip).toHaveCSS('border-top-color', border);
         await expect(tooltip).not.toContainText('Empty commit');
         await expect(tooltip).not.toContainText('Immutable');
     }
