@@ -155,6 +155,7 @@ test('graph dot tooltips use readable theme colors and label empty and immutable
 
     await page.locator(`.commit-row[data-change-id="${rootChange}"] .commit-id`).click();
     const detailsBadge = page.getByTestId('commit-details-view').locator('.badge-immutable');
+    const detailsEmptyBadge = page.getByTestId('commit-details-view').locator('.badge-empty');
     await expect(detailsBadge).toBeVisible();
     const tooltip = page.getByRole('tooltip');
     async function hoverDot(commitId: string): Promise<void> {
@@ -203,6 +204,18 @@ test('graph dot tooltips use readable theme colors and label empty and immutable
         await expect(tooltip).toContainText('Empty commit');
         const immutableBadge = tooltip.locator('.badge-immutable');
         await expect(immutableBadge).toHaveText('Immutable');
+        await expect(immutableBadge).toHaveCSS('font-weight', '400');
+        await expect(immutableBadge).toHaveCSS('text-transform', 'none');
+        await expect(detailsEmptyBadge).toHaveCSS('font-weight', '400');
+        await expect(detailsEmptyBadge).toHaveCSS('text-transform', 'none');
+        if (theme === 'pierre-dark-cobalt') {
+            await expect(immutableBadge).toHaveCSS('background-color', 'rgb(165, 216, 255)');
+            await expect(immutableBadge).toHaveCSS('border-top-color', 'rgb(165, 216, 255)');
+            await expect(immutableBadge).toHaveCSS('color', 'rgb(0, 0, 0)');
+            await expect(detailsEmptyBadge).toHaveCSS('background-color', 'rgb(31, 31, 31)');
+            await expect(detailsEmptyBadge).toHaveCSS('border-top-color', 'rgb(31, 31, 31)');
+            await expect(detailsEmptyBadge).toHaveCSS('color', 'rgb(163, 163, 163)');
+        }
         await expect(tooltip).toHaveText(/^\s*Immutable\s+.*Empty commit/s);
         for (const property of [
             'background-color',

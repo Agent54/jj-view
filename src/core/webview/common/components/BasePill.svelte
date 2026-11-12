@@ -45,11 +45,10 @@ let { children, title, className = '', style = '' }: Props = $props();
     }
 
     .bookmark-pill:global(.badge-immutable) {
-        border: 1px solid color-mix(in srgb, var(--vscode-gitDecoration-untrackedResourceForeground), transparent 40%) !important;
-        background-color: color-mix(in srgb, var(--vscode-gitDecoration-untrackedResourceForeground), transparent 88%) !important;
-        color: var(--vscode-gitDecoration-untrackedResourceForeground) !important;
-        text-transform: uppercase;
-        font-weight: 700;
+        border: 1px solid var(--vscode-jjView-immutable-background, color-mix(in srgb, var(--vscode-charts-blue), transparent 40%)) !important;
+        background-color: var(--vscode-jjView-immutable-background, color-mix(in srgb, var(--vscode-charts-blue), transparent 88%)) !important;
+        color: var(--vscode-jjView-immutable-foreground, var(--vscode-charts-blue)) !important;
+        font-weight: normal;
     }
 
     .bookmark-pill :global(.codicon) {

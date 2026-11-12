@@ -766,11 +766,10 @@ function getFileColor(status: string, conflicted?: boolean): string {
     }
 
     :global(.badge-empty) {
-        border: 1px solid color-mix(in srgb, var(--vscode-gitDecoration-ignoredResourceForeground), transparent 40%) !important;
-        background-color: color-mix(in srgb, var(--vscode-gitDecoration-ignoredResourceForeground), transparent 88%) !important;
-        color: var(--vscode-gitDecoration-ignoredResourceForeground) !important;
-        text-transform: uppercase;
-        font-weight: 700;
+        border: 1px solid var(--vscode-jjView-empty-background, color-mix(in srgb, var(--vscode-gitDecoration-ignoredResourceForeground), transparent 40%)) !important;
+        background-color: var(--vscode-jjView-empty-background, color-mix(in srgb, var(--vscode-gitDecoration-ignoredResourceForeground), transparent 88%)) !important;
+        color: var(--vscode-jjView-empty-foreground, var(--vscode-gitDecoration-ignoredResourceForeground)) !important;
+        font-weight: normal;
     }
 
     :global(.badge-conflicted) {
