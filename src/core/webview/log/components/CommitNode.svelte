@@ -359,11 +359,6 @@ const hasActiveBookmarkAlready = $derived(
     <div class="right-column">
         <!-- Description & Bookmarks -->
         <div class="desc-row">
-            {#if isCurrentWorkingCopy}
-                <BasePill className="working-copy-badge" title="Current working copy">
-                    <span class="working-copy-symbol">@</span>
-                </BasePill>
-            {/if}
             <span
                 class="commit-desc"
             >
@@ -712,21 +707,6 @@ const hasActiveBookmarkAlready = $derived(
         height: 28px;
         line-height: 28px;
         width: 100%;
-    }
-
-    .desc-row :global(.working-copy-badge) {
-        background-color: var(--vscode-jjView-currentCommit-background, color-mix(in srgb, var(--vscode-gitDecoration-addedResourceForeground), transparent 90%));
-        border-color: var(--vscode-jjView-currentCommit-background, color-mix(in srgb, var(--vscode-gitDecoration-addedResourceForeground), transparent 50%));
-        color: var(--vscode-jjView-currentCommit-foreground, var(--vscode-gitDecoration-addedResourceForeground));
-        font-weight: normal;
-        justify-content: center;
-        flex-shrink: 0;
-        margin-right: 6px;
-    }
-
-    .working-copy-symbol {
-        line-height: 1;
-        transform: translateY(-1px);
     }
 
     .commit-desc {
