@@ -395,7 +395,9 @@ const hasActiveBookmarkAlready = $derived(
                     />
                 {/if}
                 {#each commit.working_copies || [] as workspace (workspace)}
-                    <WorkspacePill {workspace} />
+                    {#if workspace !== 'default'}
+                        <WorkspacePill {workspace} />
+                    {/if}
                 {/each}
                 {#each commit.tags || [] as tag (tag)}
                     <TagPill {tag} />

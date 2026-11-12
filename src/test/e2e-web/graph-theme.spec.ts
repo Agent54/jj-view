@@ -23,6 +23,42 @@ async function textBrightness(locator: Locator): Promise<number> {
     });
 }
 
+test('named workspace badges omit default and use borderless theme colors', async ({ page, server, testRepo }) => {
+    testRepo.writeFile('base.txt', 'base\n');
+    testRepo.describe('Workspace base');
+    testRepo.new();
+    const workspaceName = 'design-workspace';
+    testRepo.workspaceAdd(workspaceName, '@-');
+    await page.goto(server.serverUrl);
+    await waitForScmReady(page);
+    await page.getByTestId('scm-collapse-toggle').click();
+
+    const workspace = page.locator('.commit-graph .workspace-wrapper');
+    const badge = workspace.locator('.bookmark-pill');
+    for (const theme of ['pierre-dark-cobalt', 'pierre-light']) {
+        await page.evaluate(async (value) => {
+            await window.__JJ_VIEW_ENV__?.config.update?.('appearance.theme', value);
+        }, theme);
+        await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
+        await expect(workspace).toHaveCount(1);
+        await expect(badge).toHaveText(workspaceName);
+        await expect(badge).toHaveCSS('border-top-style', 'none');
+        await expect(badge).toHaveCSS('border-radius', '4px');
+        await expect(workspace).toHaveAttribute(
+            'data-vscode-context',
+            JSON.stringify({ webviewSection: 'workspace', workspaceName, preventDefaultContextMenuItems: true }),
+        );
+        if (theme === 'pierre-dark-cobalt') {
+            await expect(badge).toHaveCSS('background-color', 'rgb(158, 106, 3)');
+            await expect(badge).toHaveCSS('color', 'rgb(255, 255, 255)');
+        } else {
+            await expect(badge).not.toHaveCSS('background-color', 'rgb(158, 106, 3)');
+            await expect(badge).toHaveCSS('color', 'rgb(10, 10, 10)');
+        }
+        await page.screenshot({ path: path.join(ARTIFACT_DIR, `workspace-badges-${theme}.png`) });
+    }
+});
+
 test('current commit descriptions stay bright when selection and focus change', async ({ page, server, testRepo }) => {
     testRepo.writeFile('base.txt', 'base\n');
     testRepo.describe('Initial commit');

@@ -85,19 +85,17 @@ test.describe('Workspace Management E2E', () => {
         await focusJJLog(page);
         const webview = await getLogWebview(page);
 
-        // The default workspace label is 'default@'
-        await waitForLogPill(page, 'default@', 'workspace');
-
         // The secondary workspace label should match our workspace name
         await waitForLogPill(page, workspaceName, 'workspace');
 
-        // 'default@' should be on the 'other' commit
+        // The default workspace does not need a badge on the 'other' commit.
         const otherRow = webview.locator(`[data-change-id="${otherId}"]`);
-        await expect(otherRow.locator('.bookmark-pill', { hasText: 'default@' })).toBeVisible();
+        await expect(otherRow.locator('.workspace-wrapper')).toHaveCount(0);
 
-        // 'repo2@' should be on its own working copy (created by workspace add)
-        const repo2Pill = webview.locator('.bookmark-pill', { hasText: new RegExp(`${workspaceName}.*@`) });
+        // The named workspace badge has no @ suffix.
+        const repo2Pill = webview.locator('.workspace-wrapper .bookmark-pill');
         await expect(repo2Pill).toBeVisible();
+        await expect(repo2Pill).toHaveText(workspaceName);
     });
 
     test('Add Workspace via title bar action', async ({ vscode }) => {

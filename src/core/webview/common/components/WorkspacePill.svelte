@@ -13,8 +13,8 @@ interface Props {
 let { workspace, style = '' }: Props = $props();
 
 const accentColor = 'var(--vscode-charts-yellow)';
-const backgroundColor = `color-mix(in srgb, ${accentColor}, transparent 90%)`;
-const borderColor = `color-mix(in srgb, ${accentColor}, transparent 50%)`;
+const backgroundColor = `var(--vscode-jjView-workspace-background, color-mix(in srgb, ${accentColor}, transparent 90%))`;
+const foregroundColor = 'var(--vscode-jjView-workspace-foreground, var(--vscode-foreground))';
 
 let vscodeContext = $derived(
     JSON.stringify({
@@ -30,11 +30,11 @@ let vscodeContext = $derived(
     class="workspace-wrapper"
 >
     <BasePill
-        title="{workspace}@"
-        style="background-color: {backgroundColor}; color: {accentColor}; border: 1px solid {borderColor}; {style}"
+        title={workspace}
+        style="background-color: {backgroundColor}; color: {foregroundColor}; border: none; {style}"
     >
         <span class="pill-label">
-            <span class="isolate-dir">{workspace}@</span>
+            <span class="isolate-dir">{workspace}</span>
         </span>
     </BasePill>
 </span>
