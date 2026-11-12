@@ -48,6 +48,7 @@ let { children, title, className = '', style = '' }: Props = $props();
         border: 1px solid var(--vscode-jjView-immutable-background, color-mix(in srgb, var(--vscode-charts-blue), transparent 40%)) !important;
         background-color: var(--vscode-jjView-immutable-background, color-mix(in srgb, var(--vscode-charts-blue), transparent 88%)) !important;
         color: var(--vscode-jjView-immutable-foreground, var(--vscode-charts-blue)) !important;
+        text-transform: uppercase;
         font-weight: normal;
     }
 

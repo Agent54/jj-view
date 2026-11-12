@@ -205,7 +205,7 @@ test('graph dot tooltips use readable theme colors and label empty and immutable
         const immutableBadge = tooltip.locator('.badge-immutable');
         await expect(immutableBadge).toHaveText('Immutable');
         await expect(immutableBadge).toHaveCSS('font-weight', '400');
-        await expect(immutableBadge).toHaveCSS('text-transform', 'none');
+        await expect(immutableBadge).toHaveCSS('text-transform', 'uppercase');
         await expect(detailsEmptyBadge).toHaveCSS('font-weight', '400');
         await expect(detailsEmptyBadge).toHaveCSS('text-transform', 'none');
         if (theme === 'pierre-dark-cobalt') {
