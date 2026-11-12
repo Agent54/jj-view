@@ -3,9 +3,42 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import * as fs from 'node:fs';
 import { expect, test, waitForScmReady } from './standalone-fixture';
 
 test.describe('Standalone Web File Watcher', () => {
+    test('polling records edits in an unopened workspace outside the served repository', async ({
+        page,
+        server,
+        testRepo,
+    }) => {
+        testRepo.writeFile('base.txt', 'base\n');
+        testRepo.describe('Main baseline');
+        testRepo.new();
+        const currentChange = testRepo.getChangeId('@');
+        const agent = testRepo.workspaceAdd('agent', '@-', `${testRepo.path}-agent`);
+        try {
+            agent.describe('Agent checkout');
+            const agentChange = agent.getChangeId('@');
+            await page.goto(server.serverUrl);
+            await waitForScmReady(page);
+            const row = page.locator(`.commit-row[data-change-id="${agentChange}"]`);
+            await row.locator('.commit-id').click();
+            const details = page.getByTestId('commit-details-view');
+            await expect(details).toBeVisible();
+            await expect(details.getByText('agent-added.txt', { exact: true })).toHaveCount(0);
+
+            // No jj command runs in agent after this edit: only the app's poll
+            // can snapshot it. Its directory is outside the initial allowed root.
+            fs.writeFileSync(`${agent.path}/agent-added.txt`, 'written by the agent\n');
+            await expect(details.getByText('agent-added.txt', { exact: true })).toBeVisible({ timeout: 15000 });
+            expect(testRepo.getFileContent(agentChange, 'agent-added.txt')).toBe('written by the agent\n');
+            expect(testRepo.getChangeId('@')).toBe(currentChange);
+        } finally {
+            await agent.dispose();
+        }
+    });
+
     test('should automatically detect newly created file without page reload', async ({ page, server, testRepo }) => {
         // Start with clean working copy
         testRepo.writeFile('init.txt', 'base\n');
