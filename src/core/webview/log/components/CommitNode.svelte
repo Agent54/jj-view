@@ -10,6 +10,7 @@ import Tooltip from '../../common/components/Tooltip.svelte';
 import { getCompactRelativeTimeString, getRelativeTimeString } from '../../common/utils/time-utils';
 import type { DragManager } from '../drag-manager.svelte';
 import { COMMIT_ROW_PADDING_LEFT } from '../layout-constants';
+import { compactCommitTitle } from '../utils/commit-title';
 import { formatCommitTooltip } from '../utils/commit-tooltip';
 import { computeCommitActions } from '../utils/commit-utils';
 import DraggableBookmark from './DraggableBookmark.svelte';
@@ -52,6 +53,7 @@ let {
 
 let isHovered = $state(false);
 let rowElement: HTMLDivElement | undefined = $state();
+let typeGlyphElement: HTMLSpanElement | undefined = $state();
 let isGeneratingDescription = $state(false);
 
 async function handleGenerateDescription(e: MouseEvent): Promise<void> {
@@ -182,6 +184,7 @@ const textOpacity = $derived(isDraggingThis ? 0.5 : 1);
 
 const descriptionFull = $derived(commit.description.trim());
 const descriptionFirstLine = $derived(descriptionFull.split('\n')[0]);
+const compactTitle = $derived(compactCommitTitle(descriptionFirstLine));
 const fileSummary = $derived.by(() => {
     const counts = { added: 0, modified: 0, deleted: 0 };
     if (!descriptionFull) {
@@ -277,7 +280,7 @@ const hasActiveBookmarkAlready = $derived(
         {/if}
     {/if}
     <!-- Anchor actions at the start of the description, independently of trailing metadata. -->
-    <div class="row-actions-anchor">
+    <div class="row-actions-anchor" class:has-commit-type={Boolean(compactTitle.prefix)}>
         <!-- Overlay Actions -->
         {#if isHovered && !dragManager.isDragging && (canGenerateDescription || (selectionCount <= 1 && (visibleActions.newChild || visibleActions.edit || visibleActions.squash)))}
             <div
@@ -362,6 +365,26 @@ const hasActiveBookmarkAlready = $derived(
             <span
                 class="commit-desc"
             >
+                {#if compactTitle.prefix}
+                    <span
+                        bind:this={typeGlyphElement}
+                        class="commit-type-glyph"
+                        role="img"
+                        aria-label={compactTitle.prefix}
+                    >
+                        <svg
+                            width="14"
+                            height="14"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.75"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            aria-hidden="true"
+                        ><path d={compactTitle.glyphPath} /></svg>
+                    </span>
+                {/if}
                 {#if commit.is_divergent}
                     <span class="divergent-label">(divergent) </span>
                 {/if}
@@ -379,7 +402,7 @@ const hasActiveBookmarkAlready = $derived(
                         {/each}
                     </span>
                 {:else}
-                    {descriptionFirstLine}
+                    {compactTitle.text}
                 {/if}
             </span>
 
@@ -565,8 +588,9 @@ const hasActiveBookmarkAlready = $derived(
     badges={isImmutable ? immutableBadge : undefined}
     multiline
     disabled={dragManager.isDragging}
-    ignoreSelector=".hover-actions, .pills-group, a, button, [title]"
+    ignoreSelector=".hover-actions, .pills-group, .commit-type-glyph, a, button, [title]"
 />
+<Tooltip anchor={typeGlyphElement} text={compactTitle.prefix} disabled={dragManager.isDragging} />
 
 <style>
     .commit-row {
@@ -682,6 +706,18 @@ const hasActiveBookmarkAlready = $derived(
         border-radius: 5px;
         background: var(--vscode-jjView-commitAction-background, var(--vscode-button-secondaryBackground));
         color: var(--vscode-jjView-commitAction-foreground, var(--vscode-button-secondaryForeground));
+    }
+
+    .has-commit-type .hover-actions {
+        left: 18px;
+    }
+
+    .commit-type-glyph {
+        display: inline-flex;
+        width: 14px;
+        height: 14px;
+        margin-right: 4px;
+        vertical-align: -2px;
     }
 
     .hover-actions :global(.icon-button:hover) {

@@ -92,3 +92,22 @@ a file. The tooltip test, type checks, lint, and production build pass.
 
 ![Empty commits in Cobalt](test-artifacts/empty-commits-pierre-dark-cobalt.png)
 ![Empty commits in light mode](test-artifacts/empty-commits-pierre-light.png)
+
+## Compact commit types
+
+Graph titles replace the section before the first colon with a 14px monochrome
+glyph when it contains `feat`, `chore`, `test`, `fix`, or `hotfix` as a word.
+The glyphs are a plus, wrench, flask, bug, and flame, respectively. Hovering a
+glyph reveals the original prefix, including scope and breaking-change markers.
+The glyph inherits the title color and stays accessible beside hover actions.
+Stored descriptions and editable commit messages retain their original text.
+
+Validation: 16 parser cases, type checks, the production build, and the focused
+browser test passed. Browser coverage checks all five glyphs and tooltips in
+dark/light themes, plus external description updates that add or remove a prefix.
+
+![Compact commit types in dark mode](test-artifacts/commit-types-pierre-dark-cobalt.png)
+
+![Prefix tooltip in light mode](test-artifacts/commit-types-pierre-light-tooltip.png)
+
+![Commit type tooltip flow](test-artifacts/commit-types.gif)

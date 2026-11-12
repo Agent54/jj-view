@@ -71,7 +71,8 @@ for (const responseMode of ['text', 'queued']) {
                 expect(requestBody).toContain('older feature');
                 expect(requestBody).not.toContain('unrelated current work');
                 releaseResponse();
-                await expect(olderRow.locator('.commit-desc')).toHaveText(generated);
+                await expect(olderRow.locator('.commit-desc')).toHaveText('describe the older feature');
+                await expect(olderRow.getByRole('img', { name: 'feat:', exact: true })).toBeVisible();
                 await expect(currentRow.locator('.commit-desc')).toHaveText('Current work');
                 expect(testRepo.getChangeId('@')).toBe(currentChange);
                 if (responseMode === 'queued') {

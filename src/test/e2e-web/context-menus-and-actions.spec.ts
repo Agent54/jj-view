@@ -321,15 +321,15 @@ test.describe('Standalone Web Context Menus and Actions', () => {
             await expect(syncBtn).toHaveAttribute('title', 'Sync');
 
             const logContent = page.locator('[data-testid="log-content"]');
-            await expect(logContent.getByText('feat: local work')).toBeVisible();
-            await expect(logContent.getByText('feat: upstream remote commit')).toHaveCount(0);
+            await expect(logContent.getByText('local work', { exact: true })).toBeVisible();
+            await expect(logContent.getByText('upstream remote commit', { exact: true })).toHaveCount(0);
 
             await recordGifFlow(
                 page,
                 async (capture) => {
                     await capture();
                     await syncBtn.click();
-                    await expect(logContent.getByText('feat: upstream remote commit')).toBeVisible({
+                    await expect(logContent.getByText('upstream remote commit', { exact: true })).toBeVisible({
                         timeout: 10000,
                     });
                     await capture();

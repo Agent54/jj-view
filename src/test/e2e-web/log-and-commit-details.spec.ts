@@ -127,12 +127,12 @@ test.describe('Standalone Web Log and Commit Details', () => {
         await expect(commitRows).toHaveCount(4);
 
         // Verify descriptions in log graph
-        await expect(logContent.getByText('feat: add second file')).toBeVisible();
-        await expect(logContent.getByText('feat: initial commit')).toBeVisible();
+        await expect(logContent.getByText('add second file', { exact: true })).toBeVisible();
+        await expect(logContent.getByText('initial commit', { exact: true })).toBeVisible();
 
         // 3. Click the description of the second commit ('feat: add second file')
-        const targetRow = logContent.locator('.commit-row').filter({ hasText: 'feat: add second file' });
-        await targetRow.locator('.commit-desc').click();
+        const targetRow = logContent.locator('.commit-row').filter({ hasText: 'add second file' });
+        await targetRow.getByRole('img', { name: 'feat:', exact: true }).click();
 
         // 4. Verify Commit Details pane is mounted in main editor view
         const detailsView = page.locator('[data-testid="commit-details-view"]');
@@ -206,8 +206,8 @@ test.describe('Standalone Web Log and Commit Details', () => {
 
         await logContent
             .locator('.commit-row')
-            .filter({ hasText: 'feat: first commit' })
-            .locator('.commit-desc')
+            .filter({ hasText: 'first commit' })
+            .getByRole('img', { name: 'feat:', exact: true })
             .click();
         await expect(detailsView.locator('.commit-textarea')).toHaveValue('feat: first commit', { timeout: 10000 });
         await expect(detailsView.locator('.file-row').filter({ hasText: 'first.txt' })).toBeVisible();
@@ -218,8 +218,8 @@ test.describe('Standalone Web Log and Commit Details', () => {
         // the rendered details must both move to the new commit.
         await logContent
             .locator('.commit-row')
-            .filter({ hasText: 'feat: second commit' })
-            .locator('.commit-desc')
+            .filter({ hasText: 'second commit' })
+            .getByRole('img', { name: 'feat:', exact: true })
             .click();
         await expect(tabs).toHaveCount(1);
         await expect(tabs.first()).not.toHaveText(firstTabTitle);
@@ -249,8 +249,8 @@ test.describe('Standalone Web Log and Commit Details', () => {
 
         await logContent
             .locator('.commit-row')
-            .filter({ hasText: 'feat: first commit' })
-            .locator('.commit-desc')
+            .filter({ hasText: 'first commit' })
+            .getByRole('img', { name: 'feat:', exact: true })
             .click();
         await expect(textarea).toHaveValue('feat: first commit', { timeout: 10000 });
         await expect(tabs.first()).toHaveClass(/preview/);
@@ -264,8 +264,8 @@ test.describe('Standalone Web Log and Commit Details', () => {
         // replacing the one holding the draft.
         await logContent
             .locator('.commit-row')
-            .filter({ hasText: 'feat: second commit' })
-            .locator('.commit-desc')
+            .filter({ hasText: 'second commit' })
+            .getByRole('img', { name: 'feat:', exact: true })
             .click();
         await expect(tabs).toHaveCount(2);
         await expect(textarea).toHaveValue('feat: second commit', { timeout: 10000 });

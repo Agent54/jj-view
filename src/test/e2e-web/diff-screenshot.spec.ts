@@ -148,9 +148,7 @@ test.describe('Diff Visual Inspection & Diagnostics', () => {
 
         // 4. Inspect commit details view
         const logContent = page.locator('[data-testid="log-content"]');
-        const targetCommit = logContent
-            .locator('.commit-row')
-            .filter({ hasText: 'feat: initial calculator implementation' });
+        const targetCommit = logContent.locator('.commit-row').filter({ hasText: 'initial calculator implementation' });
         await targetCommit.locator('.commit-desc').click();
         const detailsView = page.locator('[data-testid="commit-details-view"]');
         await expect(detailsView).toBeVisible({ timeout: 5000 });
