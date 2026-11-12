@@ -41,6 +41,7 @@ interface Props {
     onSave: (description: string) => void;
     onOpenDiff: (file: JjStatusEntry, isImmutable: boolean) => void;
     onOpenMultiDiff: () => void;
+    onOpenSettings?: () => void;
     onDescriptionChange?: (description: string, selectionStart: number, selectionEnd: number) => void;
 }
 
@@ -68,6 +69,7 @@ let {
     onSave,
     onOpenDiff,
     onOpenMultiDiff,
+    onOpenSettings,
     onDescriptionChange,
 }: Props = $props();
 
@@ -274,6 +276,9 @@ function handleSave() {
 }
 
 async function handleFormat() {
+    if (isImmutable || !hasBody) {
+        return;
+    }
     const newDescription = await formatCommitDescription(draftDescription, bodyWidthRuler);
     if (newDescription !== draftDescription) {
         draftDescription = newDescription;
@@ -316,6 +321,7 @@ function handleKeydown(e: KeyboardEvent) {
 const lines = $derived(draftDescription.split('\n'));
 const title = $derived(lines[0] ?? '');
 const bodyLines = $derived(lines.slice(1));
+const hasBody = $derived(bodyLines.some((line) => line.trim().length > 0));
 
 const isTitleOver = $derived(title.length > titleWidthRuler);
 const isBodyOver = $derived(bodyLines.some((l) => l.length > bodyWidthRuler));
@@ -506,6 +512,12 @@ function getFileColor(status: string, conflicted?: boolean): string {
                 </span>
                 <a
                     href="command:workbench.action.openSettings?%5B%22jj-view.commit%22%5D"
+                    onclick={(event) => {
+                        if (onOpenSettings) {
+                            event.preventDefault();
+                            onOpenSettings();
+                        }
+                    }}
                     use:tooltip={'Configure width rulers'}
                     aria-label="Configure width rulers"
                     class="settings-icon-btn"
@@ -518,7 +530,10 @@ function getFileColor(status: string, conflicted?: boolean): string {
                     <button
                         type="button"
                         onclick={handleFormat}
-                        use:tooltip={`Format body to ${bodyWidthRuler} characters`}
+                        disabled={!hasBody}
+                        use:tooltip={hasBody
+                            ? `Format body to ${bodyWidthRuler} characters`
+                            : 'No body to format. The first line is the commit title.'}
                         class="secondary-button"
                     >
                         <span class="codicon codicon-word-wrap"></span>
@@ -926,7 +941,8 @@ function getFileColor(status: string, conflicted?: boolean): string {
         background-color: var(--vscode-button-hoverBackground);
     }
 
-    .primary-button:disabled {
+    .primary-button:disabled,
+    .secondary-button:disabled {
         opacity: 0.6;
         cursor: default;
     }
@@ -955,7 +971,7 @@ function getFileColor(status: string, conflicted?: boolean): string {
         transition: background-color 0.15s;
     }
 
-    .secondary-button:hover {
+    .secondary-button:hover:not(:disabled) {
         background-color: var(--vscode-button-secondaryHoverBackground);
     }
 

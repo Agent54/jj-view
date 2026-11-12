@@ -158,6 +158,7 @@ function resolveScmModelForUri(uri?: Uri): ScmModel | undefined {
 }
 
 let isSettingsOpen = $state(false);
+let settingsTarget = $state<string | undefined>();
 let activeTheme = $state('pierre-dark-soft');
 
 interface WorkspaceSelectionResolver {
@@ -904,7 +905,8 @@ onMount(() => {
         });
 
         webHostEnv.nav.setCallbacks({
-            onOpenSettings: async (_settingId) => {
+            onOpenSettings: async (settingId) => {
+                settingsTarget = settingId;
                 isSettingsOpen = true;
             },
             onOpenDiff: async (leftUri, rightUri, title, options) => {
@@ -1183,11 +1185,13 @@ onMount(() => {
 
 {#if isSettingsOpen}
     <SettingsModal
+        settingId={settingsTarget}
         hostSystem={host ?? webHostEnv?.system}
         hostConfig={webHostEnv?.config}
         {webHostEnv}
         onClose={() => {
             isSettingsOpen = false;
+            settingsTarget = undefined;
         }}
     />
 {/if}

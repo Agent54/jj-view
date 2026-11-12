@@ -7,17 +7,23 @@ import { onDestroy, onMount } from 'svelte';
 import type { HostConfig } from '../../../src/core/host/host-environment';
 import type { RemoteHostSystem } from '../../../src/core/host/remote-host-system';
 import type { WebHostEnvironment } from '../host/web-host-environment';
-import { loadScopedSettings, resolveSettingDisplayInfo, saveScopedSetting } from './settings-helpers';
+import {
+    loadScopedSettings,
+    normalizeSettingKey,
+    resolveSettingDisplayInfo,
+    saveScopedSetting,
+} from './settings-helpers';
 import { ALL_SETTINGS, filterSettings, getCategories, type SettingDefinition } from './settings-schema';
 
 interface Props {
+    settingId?: string;
     hostSystem?: RemoteHostSystem | null;
     hostConfig?: HostConfig | null;
     webHostEnv?: WebHostEnvironment | null;
     onClose: () => void;
 }
 
-let { hostSystem, hostConfig, webHostEnv, onClose }: Props = $props();
+let { settingId, hostSystem, hostConfig, webHostEnv, onClose }: Props = $props();
 
 const activeHostSystem = $derived(hostSystem ?? webHostEnv?.system);
 const activeHostConfig = $derived(hostConfig ?? webHostEnv?.config);
@@ -36,6 +42,15 @@ let searchInputEl: HTMLInputElement | null = $state(null);
 
 const categories = $derived(['All', ...getCategories(ALL_SETTINGS)]);
 const filteredSettings = $derived(filterSettings(ALL_SETTINGS, searchQuery, selectedCategory));
+
+$effect(() => {
+    const query = normalizeSettingKey(settingId ?? '');
+    const matchingSetting = ALL_SETTINGS.find(
+        (setting) => setting.key === query || setting.key.startsWith(`${query}.`),
+    );
+    selectedCategory = matchingSetting?.category ?? 'All';
+    searchQuery = matchingSetting && matchingSetting.key !== query ? '' : query;
+});
 
 async function loadConfigs(): Promise<void> {
     try {

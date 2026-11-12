@@ -25,6 +25,7 @@ import type { JjLogEntry, JjStatusEntry } from '../jj-types';
 
 export interface CommitDetailsControllerOptions {
     logger?: LoggerChannel;
+    saveDocument?: () => Promise<void>;
     onEditRecorded?: (edit: { undo: () => void; redo: () => void; label: string }) => void;
     openDiff?: (payload: {
         file: JjStatusEntry;
@@ -72,6 +73,17 @@ export class CommitDetailsController implements Disposable {
         this._loadQueue = new CoalescingQueue(async () => {
             await this._doLoad();
         });
+        const configSubscription = this._host.config.onDidChangeConfiguration?.((event) => {
+            if (event.affectsConfiguration('jj-view.commit')) {
+                const state = this.getState();
+                if (state) {
+                    this._receiver.sender.update(state);
+                }
+            }
+        });
+        if (configSubscription) {
+            this._disposables.push(configSubscription);
+        }
     }
 
     public get isDisposed(): boolean {
@@ -351,7 +363,15 @@ export class CommitDetailsController implements Disposable {
         this._lastPushedSelection = newSelection;
 
         if (newText === this._persistedDescription) {
-            this._host.commands.executeCommand('workbench.action.files.save');
+            void this._saveDocument();
+        }
+    }
+
+    private async _saveDocument(): Promise<void> {
+        if (this._options?.saveDocument) {
+            await this._options.saveDocument();
+        } else {
+            await this._host.commands.executeCommand('workbench.action.files.save');
         }
     }
 
@@ -478,6 +498,9 @@ export class CommitDetailsController implements Disposable {
         return createWebviewRpcReceiver<CommitDetailsToHostMessage, CommitDetailsHostToWebviewMessage>(
             CommitDetailsToHostMessageSchema,
             {
+                openSettings: async () => {
+                    await this._host.nav.openSettings('jj-view.commit');
+                },
                 descriptionChanged: async (payload) => {
                     const newText = payload.description;
                     const newSelection = {
@@ -490,7 +513,7 @@ export class CommitDetailsController implements Disposable {
                     const newText = payload.description;
                     this._draftDescription = newText;
                     this.flushDebounce();
-                    await this._host.commands.executeCommand('workbench.action.files.save');
+                    await this._saveDocument();
                 },
                 openDiff: async (payload) => {
                     const { file, changeId, isImmutable } = payload;

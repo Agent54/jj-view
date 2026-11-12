@@ -85,7 +85,7 @@ test('source control and commit details use shared tooltips instead of browser t
     await checkTooltip(details.getByRole('button', { name: 'Copy Commit ID', exact: true }), 'Copy Commit ID');
     await checkTooltip(details.getByRole('link', { name: 'Configure width rulers' }), 'Configure width rulers');
     await checkTooltip(details.locator('.ruler-indicator'), 'Configured rulers for title / body width');
-    await checkTooltip(details.getByRole('button', { name: 'Format Body' }), 'Format body to 72 characters');
+    await checkTooltip(details.getByRole('button', { name: 'Format Body' }), 'No body to format. The first line is the commit title.');
     await checkTooltip(details.getByRole('button', { name: 'Saved', exact: true }), /^\s*Save Changes \(/);
     await checkTooltip(details.getByRole('button', { name: 'Multi-file Diff' }), 'Open diffs for all changed files');
     await checkTooltip(details.locator('.file-path-container'), 'docs/changed.ts');

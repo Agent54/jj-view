@@ -95,6 +95,9 @@ $effect(() => {
         titleWidthRuler={detailsCommit.titleWidthRuler}
         bodyWidthRuler={detailsCommit.bodyWidthRuler}
         minChangeIdLength={detailsCommit.minChangeIdLength}
+        onOpenSettings={() => {
+            void sender.openSettings();
+        }}
         onSave={(description) => {
             if (detailsCommit?.changeId) {
                 void sender.saveDescription({ changeId: detailsCommit.changeId, description });

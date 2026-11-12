@@ -132,6 +132,36 @@ describe('CommitDetailsController Domain Unit Tests', () => {
         expect(controller.draftDescription).toBe('typed from webview');
     });
 
+    test('opens commit settings through the host navigation service', async () => {
+        expect(await controller.handleMessage({ type: 'openSettings' })).toBe(true);
+        expect(fakeHost.nav.settingsOpened).toEqual(['jj-view.commit']);
+    });
+
+    test('publishes ruler changes without replacing the unsaved draft and stops after disposal', async () => {
+        testRepo.describe('Saved title');
+        await controller.load();
+        controller.updateDraft('Unsaved title\n\nUnsaved body');
+        client.receivedMessages.length = 0;
+
+        fakeHost.config.set('commit.bodyWidthRuler', 40);
+        await expect
+            .poll(() => client.receivedMessages)
+            .toContainEqual({
+                type: 'update',
+                payload: expect.objectContaining({
+                    bodyWidthRuler: 40,
+                    description: 'Saved title',
+                    unsavedDraft: 'Unsaved title\n\nUnsaved body',
+                }),
+            });
+        expect(controller.draftDescription).toBe('Unsaved title\n\nUnsaved body');
+
+        controller.dispose();
+        client.receivedMessages.length = 0;
+        fakeHost.config.set('commit.titleWidthRuler', 60);
+        expect(client.receivedMessages).toHaveLength(0);
+    });
+
     test('replays initial state snapshot to newly attached messenger after load', async () => {
         testRepo.writeFile('file.txt', 'data\n');
         testRepo.describe('initial commit for replay');

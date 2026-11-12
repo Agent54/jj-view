@@ -7,6 +7,7 @@ import { JjBookmarkSchema, JjStatusEntrySchema } from '../../jj-schemas';
 
 export const CommitDetailsToHostMessageSchema = z.discriminatedUnion('type', [
     z.object({ type: z.literal('webviewLoaded') }),
+    z.object({ type: z.literal('openSettings') }),
     z.object({
         type: z.literal('descriptionChanged'),
         payload: z.object({
