@@ -144,6 +144,7 @@ test('tooltips stay immediate between buttons and reset after an idle interval',
 test('graph dot tooltips use readable theme colors and label empty and immutable commits', async ({ page, server, testRepo }) => {
     testRepo.writeFile('feature.txt', 'feature\n');
     testRepo.describe('Feature commit');
+    testRepo.bookmark('feature', '@');
     const featureCommit = testRepo.getCommitId('@');
     testRepo.new();
     const emptyCommit = testRepo.getCommitId('@');
@@ -175,14 +176,23 @@ test('graph dot tooltips use readable theme colors and label empty and immutable
         await expect(tooltip).not.toContainText('Immutable');
         await expect(tooltip).not.toContainText('(no description)');
         await expect(tooltip).toHaveCSS('font-size', '14px');
+        const badge = tooltip.locator('.tooltip-heading');
+        const bookmark = page.locator('.bookmark-wrapper .bookmark-pill', { hasText: 'feature' });
+        for (const property of ['font-size', 'font-weight', 'height', 'padding-left', 'padding-right', 'border-radius']) {
+            const value = await bookmark.evaluate((el, name) => getComputedStyle(el).getPropertyValue(name), property);
+            await expect(badge).toHaveCSS(property, value);
+        }
         const background = await tooltip.evaluate(el => getComputedStyle(el).backgroundColor);
         const border = await tooltip.evaluate((el) => getComputedStyle(el).borderTopColor);
         if (theme === 'pierre-dark-cobalt') {
-            await expect(tooltip.locator('.tooltip-heading')).toHaveCSS('color', 'rgb(7, 196, 128)');
+            await expect(badge).toHaveCSS('background-color', 'rgb(35, 134, 54)');
+            await expect(badge).toHaveCSS('border-top-color', 'rgb(35, 134, 54)');
+            await expect(badge).toHaveCSS('color', 'rgb(255, 255, 255)');
             await expect(tooltip).not.toHaveCSS('border-top-color', 'rgb(7, 196, 128)');
             darkBackground = background;
         } else {
             expect(background).not.toBe(darkBackground);
+            await expect(badge).not.toHaveCSS('background-color', 'rgb(35, 134, 54)');
         }
         await page.screenshot({ path: path.join(ARTIFACT_DIR, `graph-tooltip-${theme}.png`) });
         await hoverDot(rootCommit);

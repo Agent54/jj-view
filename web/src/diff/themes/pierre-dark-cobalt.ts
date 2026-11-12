@@ -100,6 +100,8 @@ export default {
         'jjView.remoteBookmark.foreground': '#ffffff',
         'jjView.tag.background': '#805606',
         'jjView.tag.foreground': '#ffffff',
+        'jjView.currentCommit.background': '#238636',
+        'jjView.currentCommit.foreground': '#ffffff',
         'jjView.commitAction.background': '#238636',
         'jjView.commitAction.hoverBackground': '#2da044',
         'jjView.commitAction.foreground': '#ffffff',

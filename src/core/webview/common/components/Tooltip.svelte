@@ -173,13 +173,19 @@ $effect(() => {
     }
 
     .tooltip-heading.badge {
+        display: flex;
+        align-items: center;
         width: fit-content;
-        padding: 0 6px;
-        border: 1px solid color-mix(in srgb, var(--tooltip-accent) 50%, transparent);
+        height: 18px;
+        box-sizing: border-box;
+        padding: 0 3px;
+        border: 1px solid var(--vscode-jjView-currentCommit-background, color-mix(in srgb, var(--tooltip-accent), transparent 50%));
         border-radius: 4px;
-        background: color-mix(in srgb, var(--tooltip-accent) 16%, transparent);
-        font-size: 12px;
-        line-height: 16px;
+        background: var(--vscode-jjView-currentCommit-background, color-mix(in srgb, var(--tooltip-accent), transparent 90%));
+        color: var(--vscode-jjView-currentCommit-foreground, var(--tooltip-accent));
+        font-size: calc(var(--vscode-font-size, 13px) - 2px);
+        font-weight: normal;
+        line-height: normal;
     }
 
     .multiline {
