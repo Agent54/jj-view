@@ -75,6 +75,19 @@ describe('squashRevisionIntoParentCommand', () => {
         expect(parentOther).toBe('other modified');
     });
 
+    test('squashing an empty working copy into its empty parent leaves one empty change', async () => {
+        const parent = repo.getChangeId('@');
+        repo.new();
+        const child = repo.getChangeId('@');
+
+        await squashRevisionIntoParentCommand(ctx, { revision: child });
+
+        expect(ctx.host.ui.errorMessages).toHaveLength(0);
+        expect(repo.getChangeId('@')).not.toBe(child);
+        expect(repo.getChangeId('@')).toBe(parent);
+        expect(repo.getDescription('@')).toBe('');
+    });
+
     test('handles multiple parents by prompting user', async () => {
         const fileName = 'p1_file.txt';
 

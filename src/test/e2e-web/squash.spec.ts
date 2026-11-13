@@ -4,6 +4,25 @@
  */
 import { expect, test, waitForScmReady } from './standalone-fixture';
 
+test('hover squash collapses an empty working copy into its empty parent', async ({ page, server, testRepo }) => {
+    const parent = testRepo.getChangeId('@');
+    testRepo.new();
+    const child = testRepo.getChangeId('@');
+
+    await page.goto(server.serverUrl);
+    await waitForScmReady(page);
+    const childRow = page.locator(`.commit-row[data-change-id="${child}"]`);
+    await expect(page.locator('.commit-row')).toHaveCount(3);
+    await childRow.hover();
+    await childRow.getByRole('button', { name: 'Squash', exact: true }).click();
+
+    await expect.poll(() => testRepo.getChangeId('@')).toBe(parent);
+    await expect(childRow).toHaveCount(0);
+    await expect(page.locator('.commit-row')).toHaveCount(2);
+    await expect(page.locator(`.commit-row[data-change-id="${parent}"]`)).toHaveClass(/working-copy/);
+    await expect(page.getByText('SQUASH_MSG', { exact: true })).toHaveCount(0);
+});
+
 test('squash immediately combines titles and bodies by default', async ({ page, server, testRepo }) => {
     testRepo.writeFile('parent.txt', 'parent\n');
     testRepo.describe('Parent title\n\nParent body\n\nAnother paragraph');

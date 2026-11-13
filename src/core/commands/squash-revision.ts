@@ -113,7 +113,24 @@ export async function squashRevisionIntoParentCommand(
             return;
         }
 
-        await performSquashRevision(ctx, revision, targetParent, sourceEntry.description);
+        const destination = await performSquashRevision(ctx, revision, targetParent, sourceEntry.description);
+        if (sourceEntry.is_current_working_copy && sourceEntry.is_empty && destination?.is_empty) {
+            // JJ replaces a squashed working copy with a fresh empty change. For
+            // two empty changes, finish on the destination instead of recreating
+            // the extra row. Only leave the empty replacement created here.
+            const [workingCopy] = await ctx.repo.jj.getLog({ revision: '@', omitChanges: true });
+            if (
+                workingCopy?.is_empty &&
+                workingCopy.change_id !== sourceEntry.change_id &&
+                !workingCopy.description.trim() &&
+                !workingCopy.bookmarks?.length &&
+                !workingCopy.tags?.length &&
+                workingCopy.parents?.length === 1 &&
+                workingCopy.parents[0].change_id === destination.change_id
+            ) {
+                await ctx.repo.jj.edit(destination.change_id);
+            }
+        }
         await ctx.repo.refresh({ reason: 'after squash revision into parent' });
     } catch (e: unknown) {
         await showJjError(ctx.host.ui, e, 'Error squashing revision into parent', ctx.repo.jj, ctx.log);
@@ -174,6 +191,7 @@ async function performSquashRevision(
             message: combineSquashDescriptions(parentDescription, sourceDescription || ''),
         }),
     );
+    return parentEntry;
 }
 
 function combineSquashDescriptions(parentDescription: string, sourceDescription: string): string {
