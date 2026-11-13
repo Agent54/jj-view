@@ -25,6 +25,46 @@ Every request to the daemon must carry that session token (as the `?token=` quer
 | `--allowed-origins <list>` | _(empty)_ | Comma-separated extra browser origin hosts to accept, e.g. `ui.example.com,*.proxy.example.com`. A leading `*.` matches subdomains only. Loopback, the bound host and the request `Host` are always accepted, so this is only needed when the UI is reached through a reverse proxy that rewrites `Host`. |
 | `--version` | | Print the version and exit. |
 
+## Docker Compose
+
+The root `docker-compose.yaml` builds the standalone web app and includes Git
+and jj. Like the `../darc-code` VS Code server setup, it maps the host UID/GID,
+initializes persistent volume permissions, and publishes only on localhost.
+It uses port **8087** by default so both servers can run alongside each other.
+
+From this checkout, using your intended Docker context:
+
+```bash
+HOST_UID=$(id -u) HOST_GID=$(id -g) \
+JJ_USER="Your Name" JJ_EMAIL="you@example.com" \
+docker compose up --build -d
+docker compose logs jj-view
+```
+
+Open the token-bearing URL from the logs, replacing `0.0.0.0:8080` with
+`127.0.0.1:8087` and keeping the `?token=…` query. The token changes when the
+server restarts. On installations with the standalone Compose CLI, use
+`docker-compose` in place of `docker compose`.
+
+Optional environment variables (also accepted in a local `.env` file):
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `JJ_VIEW_REPO` | `.` | Host repository mounted read/write at `/repo`. |
+| `JJ_VIEW_PORT` | `8087` | Localhost port for the web app. |
+| `HOST_UID`, `HOST_GID` | `501`, `20` | Host user/group owning repository files. |
+| `JJ_USER`, `JJ_EMAIL` | Empty | Identity for changes created by jj. |
+
+Choose a repository with its own `.jj/repo` directory. A linked jj workspace
+or Git worktree can refer to metadata outside the mounted directory and needs
+additional mounts at those paths. Host-global jj/Git configuration and SSH
+credentials are not mounted automatically; configure them inside the container
+if needed. App settings and credentials, plus any container user configuration,
+persist in the `jj-view-data` volume.
+
+Rebuild with `docker compose up --build -d` after source changes. Stop with
+`docker compose down`; this preserves the data volume.
+
 ## Antigravity
 
 To use JJ View inside Antigravity, register the binary once:
