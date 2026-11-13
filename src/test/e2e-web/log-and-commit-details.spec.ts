@@ -6,6 +6,92 @@
 import { expect, test, waitForScmReady } from './standalone-fixture';
 
 test.describe('Standalone Web Log and Commit Details', () => {
+    test('opens Commit Editor settings and applies width changes to the open draft', async ({
+        page,
+        server,
+        testRepo,
+    }) => {
+        const title = 'style: restore commit-details filename typography in shared labels';
+        testRepo.describe(title);
+        await page.goto(server.serverUrl);
+        await waitForScmReady(page);
+        await page.locator('.commit-row.working-copy .commit-id').click();
+        const details = page.getByTestId('commit-details-view');
+        const editor = details.locator('textarea');
+        const formatButton = details.getByRole('button', { name: 'Format Body' });
+        await expect(editor).toHaveValue(title);
+        await expect(formatButton).toBeDisabled();
+        await formatButton.hover();
+        await expect(page.getByRole('tooltip')).toHaveText('No body to format. The first line is the commit title.');
+
+        const body = 'This body should wrap at the configured width while preserving the title and the unsaved draft.';
+        const draft = `${title}\n\n${body}`;
+        await editor.fill(draft);
+        await expect(formatButton).toBeEnabled();
+        await details.getByRole('link', { name: 'Configure width rulers' }).click();
+        const modal = page.getByTestId('settings-modal');
+        await expect(modal).toBeVisible();
+        await expect(modal.getByTestId('category-btn-commit-editor')).toHaveClass(/active/);
+        const titleWidth = modal.getByTestId('setting-control-commit.titleWidthRuler');
+        const bodyWidth = modal.getByTestId('setting-control-commit.bodyWidthRuler');
+        await expect(titleWidth).toBeVisible();
+        await expect(bodyWidth).toBeVisible();
+        await titleWidth.fill('60');
+        await titleWidth.press('Tab');
+        await expect(details.locator('.ruler-indicator')).toHaveText('60/72 ch');
+        await bodyWidth.fill('40');
+        await bodyWidth.press('Tab');
+        await expect(details.locator('.ruler-indicator')).toHaveText('60/40 ch');
+        await modal.getByRole('button', { name: 'Close', exact: true }).click();
+        await expect(editor).toHaveValue(draft);
+        await formatButton.click();
+        await expect(editor).not.toHaveValue(draft);
+        const formattedLines = (await editor.inputValue()).split('\n');
+        expect(formattedLines[0]).toBe(title);
+        expect(formattedLines.slice(2).every((line) => line.length <= 40)).toBe(true);
+        expect(formattedLines.slice(2).join(' ')).toBe(body);
+
+        await page.getByTestId('scm-settings-button').click();
+        await expect(modal.getByTestId('category-btn-all')).toHaveClass(/active/);
+        await modal.getByTestId('category-btn-commit-editor').click();
+        await expect(bodyWidth).toHaveValue('40');
+        await expect(titleWidth).toHaveValue('60');
+    });
+
+    test('formats the body of an older commit and saves without changing the working copy', async ({
+        page,
+        server,
+        testRepo,
+    }) => {
+        const body =
+            'This is a very long text that will definitely exceed the standard seventy-two character limit that is expected of most commit bodies.';
+        const trailer = 'Change-Id: I1234567890123456789012345678901234567890';
+        const original = `Feature title\n\n${body}\n\n${trailer}`;
+        testRepo.describe(original);
+        const changeId = testRepo.getChangeId('@');
+        testRepo.new();
+        testRepo.describe('Current work');
+        const workingCopy = testRepo.getChangeId('@');
+        await page.goto(server.serverUrl);
+        await waitForScmReady(page);
+        await page.locator(`.commit-row[data-change-id="${changeId}"] .commit-id`).click();
+        const details = page.getByTestId('commit-details-view');
+        const editor = details.locator('textarea');
+        await expect(editor).toHaveValue(original);
+        await details.getByRole('button', { name: 'Format Body' }).click();
+        const formatted =
+            `Feature title\n\nThis is a very long text that will definitely exceed the standard\n` +
+            `seventy-two character limit that is expected of most commit bodies.\n\n${trailer}`;
+        await expect(editor).toHaveValue(formatted);
+        await details.getByRole('button', { name: /^Save Changes/ }).click();
+        await expect(details.getByRole('button', { name: 'Saved', exact: true })).toBeDisabled();
+        expect(testRepo.getChangeId('@')).toBe(workingCopy);
+        await page.reload();
+        await waitForScmReady(page);
+        await page.locator(`.commit-row[data-change-id="${changeId}"] .commit-id`).click();
+        await expect(editor).toHaveValue(formatted);
+    });
+
     test('should display log graph, select commit, open commit details, and click file diff', async ({
         page,
         server,
@@ -41,12 +127,12 @@ test.describe('Standalone Web Log and Commit Details', () => {
         await expect(commitRows).toHaveCount(4);
 
         // Verify descriptions in log graph
-        await expect(logContent.getByText('feat: add second file')).toBeVisible();
-        await expect(logContent.getByText('feat: initial commit')).toBeVisible();
+        await expect(logContent.getByText('add second file', { exact: true })).toBeVisible();
+        await expect(logContent.getByText('initial commit', { exact: true })).toBeVisible();
 
         // 3. Click the description of the second commit ('feat: add second file')
-        const targetRow = logContent.locator('.commit-row').filter({ hasText: 'feat: add second file' });
-        await targetRow.locator('.commit-desc').click();
+        const targetRow = logContent.locator('.commit-row').filter({ hasText: 'add second file' });
+        await targetRow.getByRole('img', { name: 'feat:', exact: true }).click();
 
         // 4. Verify Commit Details pane is mounted in main editor view
         const detailsView = page.locator('[data-testid="commit-details-view"]');
@@ -120,8 +206,8 @@ test.describe('Standalone Web Log and Commit Details', () => {
 
         await logContent
             .locator('.commit-row')
-            .filter({ hasText: 'feat: first commit' })
-            .locator('.commit-desc')
+            .filter({ hasText: 'first commit' })
+            .getByRole('img', { name: 'feat:', exact: true })
             .click();
         await expect(detailsView.locator('.commit-textarea')).toHaveValue('feat: first commit', { timeout: 10000 });
         await expect(detailsView.locator('.file-row').filter({ hasText: 'first.txt' })).toBeVisible();
@@ -132,8 +218,8 @@ test.describe('Standalone Web Log and Commit Details', () => {
         // the rendered details must both move to the new commit.
         await logContent
             .locator('.commit-row')
-            .filter({ hasText: 'feat: second commit' })
-            .locator('.commit-desc')
+            .filter({ hasText: 'second commit' })
+            .getByRole('img', { name: 'feat:', exact: true })
             .click();
         await expect(tabs).toHaveCount(1);
         await expect(tabs.first()).not.toHaveText(firstTabTitle);
@@ -163,8 +249,8 @@ test.describe('Standalone Web Log and Commit Details', () => {
 
         await logContent
             .locator('.commit-row')
-            .filter({ hasText: 'feat: first commit' })
-            .locator('.commit-desc')
+            .filter({ hasText: 'first commit' })
+            .getByRole('img', { name: 'feat:', exact: true })
             .click();
         await expect(textarea).toHaveValue('feat: first commit', { timeout: 10000 });
         await expect(tabs.first()).toHaveClass(/preview/);
@@ -178,8 +264,8 @@ test.describe('Standalone Web Log and Commit Details', () => {
         // replacing the one holding the draft.
         await logContent
             .locator('.commit-row')
-            .filter({ hasText: 'feat: second commit' })
-            .locator('.commit-desc')
+            .filter({ hasText: 'second commit' })
+            .getByRole('img', { name: 'feat:', exact: true })
             .click();
         await expect(tabs).toHaveCount(2);
         await expect(textarea).toHaveValue('feat: second commit', { timeout: 10000 });

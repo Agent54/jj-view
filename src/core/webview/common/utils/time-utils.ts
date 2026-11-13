@@ -45,3 +45,27 @@ export function getRelativeTimeString(timestamp: string | number, now: number = 
     }
     return 'just now';
 }
+
+/** Compact age for fixed-width graph columns; the full date remains in the row tooltip. */
+export function getCompactRelativeTimeString(timestamp: string | number, now: number = Date.now()): string {
+    const time = typeof timestamp === 'number' ? timestamp : new Date(timestamp).getTime();
+    if (!Number.isFinite(time) || !Number.isFinite(now)) {
+        return '—';
+    }
+
+    const seconds = Math.abs(now - time) / 1000;
+    const year = 365.25 * 24 * 60 * 60;
+    for (const [duration, unit] of [
+        [year, 'y'],
+        [year / 12, 'mo'],
+        [7 * 24 * 60 * 60, 'w'],
+        [24 * 60 * 60, 'd'],
+        [60 * 60, 'h'],
+        [60, 'm'],
+    ] satisfies Array<[number, string]>) {
+        if (seconds >= duration) {
+            return `${time > now ? '+' : ''}${Math.floor(seconds / duration)}${unit}`;
+        }
+    }
+    return 'now';
+}

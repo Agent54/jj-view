@@ -3,7 +3,7 @@
   SPDX-License-Identifier: Apache-2.0
 -->
 <script lang="ts">
-import type { GraphEdge, GraphNode, GraphPoint, GraphRow } from '../graph-model';
+import type { GraphEdge, GraphNode, GraphPoint, GraphRow, GraphTermination } from '../graph-model';
 import { isElisionRow } from '../graph-model';
 import {
     LANE_CENTER_X,
@@ -18,13 +18,13 @@ import {
 interface Props {
     nodes: GraphNode[];
     edges: GraphEdge[];
-    terminations?: { x: number; y: number }[];
+    terminations?: GraphTermination[];
     width: number;
     height: number;
     rowOffsets: number[];
     rows: GraphRow[];
-    selectedNodes?: Set<string>;
     highlightedNodeId?: string;
+    hoveredNodeId?: string;
 }
 
 let {
@@ -35,9 +35,12 @@ let {
     height,
     rowOffsets,
     rows,
-    selectedNodes = new Set(),
     highlightedNodeId,
+    hoveredNodeId,
 }: Props = $props();
+
+const graphId = $props.id();
+const defaultBranchColor = 'var(--vscode-jjView-bookmark-background, var(--vscode-charts-blue))';
 
 const W = LANE_WIDTH;
 const CX = LANE_CENTER_X;
@@ -63,6 +66,23 @@ const sortedEdges = $derived.by(() => {
     });
     return edgesWithBounds.sort((a, b) => b.minX - a.minX || b.maxX - a.maxX).map((item) => item.edge);
 });
+
+function connectsDefaultBranchTip(edge: GraphEdge): boolean {
+    return [edge.points[0], edge.points.at(-1)].some((point) => {
+        const row = point && rows[point.y];
+        return row && !isElisionRow(row) && row.is_immutable && row.is_default_branch_tip;
+    });
+}
+
+function isEdgeHovered(edge: GraphEdge): boolean {
+    if (hoveredNodeId === undefined) {
+        return false;
+    }
+    return [edge.points[0], edge.points.at(-1)].some((point) => {
+        const row = point && rows[point.y];
+        return row && !isElisionRow(row) && row.change_id === hoveredNodeId;
+    });
+}
 
 function getLayoutRowPixelY(point: GraphPoint): number {
     const commitIndex = Math.floor(point.y);
@@ -181,13 +201,28 @@ const svgHeight = $derived(height + BOTTOM_PADDING);
     aria-label="Commit graph"
     class="graph-svg"
 >
+    <defs>
+        <radialGradient id={`${graphId}-inset-shadow`}>
+            <stop offset="70%" stop-color="var(--vscode-jjView-graph-insetShadow, var(--vscode-widget-shadow))" stop-opacity="0" />
+            <stop offset="88%" stop-color="var(--vscode-jjView-graph-insetShadow, var(--vscode-widget-shadow))" />
+        </radialGradient>
+    </defs>
     <!-- Edges -->
     {#each sortedEdges as edge, i (`edge-${i}`)}
         {@const pathData = computeEdgePath(edge)}
         {#if pathData}
+            {@const sourceRow = rows[edge.points[0].y]}
+            {@const edgeColor = isEdgeHovered(edge)
+                ? `var(--vscode-jjView-graph-hoverForeground, ${edge.color})`
+                : `var(--vscode-jjView-graph-foreground, ${edge.color})`}
             <path
                 d={pathData}
-                stroke={edge.color}
+                data-edge-id={edge.id}
+                stroke={connectsDefaultBranchTip(edge)
+                    ? defaultBranchColor
+                    : sourceRow && !isElisionRow(sourceRow) && sourceRow.is_current_working_copy
+                        ? `var(--vscode-jjView-graph-currentEdge, ${edgeColor})`
+                        : edgeColor}
                 stroke-width="2"
                 fill="none"
                 stroke-linecap="round"
@@ -208,8 +243,19 @@ const svgHeight = $derived(height + BOTTOM_PADDING);
             term.y >= rows.length
                 ? (rowOffsets[rows.length - 1] || 0) + lastRowOffset
                 : getLayoutRowPixelY({ type: 'node', x: term.x, y: term.y })}
-        <g transform={`translate(${mx}, ${my})`}>
-            <rect x="-5" y="-6" width="10" height="12" fill="var(--vscode-sideBar-background)" />
+        {@const termColor = `var(--vscode-jjView-graph-foreground, ${term.color})`}
+        <g class="history-termination" transform={`translate(${mx}, ${my})`}>
+            <!-- Clear the solid edge before drawing the dotted continuation and tilde. -->
+            <rect x="-5" y="-18" width="10" height="24" fill="var(--vscode-sideBar-background)" />
+            {#each [termColor, `color-mix(in srgb, ${termColor}, var(--vscode-descriptionForeground))`, 'var(--vscode-descriptionForeground)'] as color, dot (dot)}
+                <circle
+                    class="history-dot"
+                    cx="0"
+                    cy={-16 + dot * 4}
+                    r="1"
+                    fill={color}
+                />
+            {/each}
             <path
                 d="M -4,1 C -4,-2 -1,-2 0,0 C 1,2 4,2 4,-1"
                 stroke="var(--vscode-descriptionForeground)"
@@ -224,44 +270,45 @@ const svgHeight = $derived(height + BOTTOM_PADDING);
     {#each nodes as node (node.commitId)}
         {@const cx = getPixelX(node.x)}
         {@const cy = getLayoutRowPixelY({ type: 'node', x: node.x, y: node.y })}
-        {@const isSelected = selectedNodes.has(node.changeId)}
         {@const isHighlighted = highlightedNodeId !== undefined && node.changeId === highlightedNodeId}
+        {@const isHovered = hoveredNodeId !== undefined && node.changeId === hoveredNodeId}
+        {@const isDefaultBranchTip = node.isImmutable && node.isDefaultBranchTip}
+        {@const baseNodeColor = isDefaultBranchTip ? defaultBranchColor : node.isImmutable
+            ? 'var(--vscode-jjView-graph-immutableForeground, var(--vscode-descriptionForeground))'
+            : 'var(--vscode-jjView-graph-mutableForeground, var(--jj-node-color, var(--vscode-gitDecoration-addedResourceForeground)))'}
+        {@const baseNodeFill = isDefaultBranchTip ? defaultBranchColor : node.isImmutable
+            ? 'var(--vscode-jjView-graph-immutableForeground, var(--vscode-descriptionForeground))'
+            : 'var(--vscode-jjView-graph-foreground, var(--jj-node-fill, var(--vscode-editor-foreground)))'}
+        <!-- Mutable outlines convey status independently of the neutral fill and hover colors. -->
+        {@const nodeColor = isHovered && node.isImmutable && !isDefaultBranchTip ? `var(--vscode-jjView-graph-hoverForeground, ${baseNodeColor})` : baseNodeColor}
+        {@const nodeFill = isHovered && !isDefaultBranchTip ? `var(--vscode-jjView-graph-hoverForeground, ${baseNodeFill})` : baseNodeFill}
+        {@const currentColor = node.conflict ? 'var(--vscode-charts-red)' : nodeColor}
         <g data-commit-id={node.commitId}>
-            {#if isSelected}
+            {#if isHighlighted}
                 <circle
                     {cx}
                     {cy}
-                    r="9"
+                    r={node.isCurrentWorkingCopy ? 10 : 9}
                     fill="none"
-                    stroke="var(--vscode-list-activeSelectionForeground)"
-                    stroke-width="2"
-                    style:opacity="0.6"
-                />
-            {:else if isHighlighted}
-                <circle
-                    {cx}
-                    {cy}
-                    r="9"
-                    fill="none"
-                    stroke="var(--vscode-list-activeSelectionForeground)"
+                    stroke={node.isCurrentWorkingCopy ? currentColor : 'var(--vscode-list-activeSelectionForeground)'}
                     stroke-width="2"
                     stroke-dasharray="2 2"
-                    style:opacity="0.8"
+                    style:opacity={node.isCurrentWorkingCopy ? 1 : 0.8}
                 />
             {/if}
 
             {#if node.isCurrentWorkingCopy}
-                <circle {cx} {cy} r="8" fill="var(--vscode-sideBar-background)" />
-                <text
-                    x={cx}
-                    y={cy}
-                    dy="0.3em"
-                    text-anchor="middle"
-                    fill={node.conflict ? 'var(--vscode-charts-red)' : 'var(--vscode-editor-foreground)'}
-                    class="node-working-copy-text"
-                >
-                    @
-                </text>
+                <circle
+                    {cx}
+                    {cy}
+                    r="8"
+                    class="node-working-copy"
+                    class:empty={node.isEmpty}
+                    fill={node.isEmpty ? 'var(--vscode-sideBar-background)' : node.conflict ? nodeFill : `var(--vscode-jjView-graph-currentFill, ${nodeFill})`}
+                    stroke={currentColor}
+                    stroke-width="2"
+                    style:color={currentColor}
+                />
             {:else if node.isHidden}
                 <g transform={`translate(${cx}, ${cy})`}>
                     <circle cx="0" cy="0" r="8" fill="var(--vscode-sideBar-background)" />
@@ -298,12 +345,12 @@ const svgHeight = $derived(height + BOTTOM_PADDING);
                     stroke-width="2"
                     stroke-linecap="round"
                 />
-            {:else if node.isEmpty}
+            {:else if node.isEmpty && !isDefaultBranchTip}
                 {#if node.isImmutable}
                     <polygon
                         points={`${cx},${cy - 6} ${cx + 6},${cy} ${cx},${cy + 6} ${cx - 6},${cy}`}
                         fill="var(--vscode-sideBar-background)"
-                        stroke={node.color}
+                        stroke={nodeColor}
                         stroke-width="2"
                         stroke-linejoin="round"
                     />
@@ -313,20 +360,22 @@ const svgHeight = $derived(height + BOTTOM_PADDING);
                         {cy}
                         r="5"
                         fill="var(--vscode-sideBar-background)"
-                        stroke={node.color}
+                        stroke={nodeColor}
                         stroke-width="2"
                     />
                 {/if}
             {:else if node.isImmutable}
                 <polygon
                     points={`${cx},${cy - 6} ${cx + 6},${cy} ${cx},${cy + 6} ${cx - 6},${cy}`}
-                    fill={node.color}
-                    stroke={node.color}
+                    fill={nodeFill}
+                    stroke={nodeColor}
                     stroke-width="2"
                     stroke-linejoin="round"
                 />
             {:else}
-                <circle {cx} {cy} r="5" fill={node.color} stroke={node.color} stroke-width="2" />
+                <circle class="node-mutable" {cx} {cy} r="5" fill={nodeFill} stroke={nodeColor} stroke-width="2" />
+                <!-- Shade only the inside edge of the fill, preserving the green status outline. -->
+                <circle class="node-inset-shadow" {cx} {cy} r="4" fill={`url(#${graphId}-inset-shadow)`} />
             {/if}
         </g>
     {/each}
@@ -338,14 +387,11 @@ const svgHeight = $derived(height + BOTTOM_PADDING);
         top: 0;
         left: 0;
         pointer-events: none;
-        z-index: 0;
+        z-index: 2;
     }
 
-    .node-working-copy-text {
-        font-family: var(--vscode-editor-font-family);
-        font-weight: bold;
-        font-size: 14px;
-        pointer-events: none;
-        user-select: none;
+    .node-working-copy {
+        filter: drop-shadow(0 0 4px color-mix(in srgb, currentColor 65%, transparent))
+            drop-shadow(0 0 9px color-mix(in srgb, currentColor 35%, transparent));
     }
 </style>

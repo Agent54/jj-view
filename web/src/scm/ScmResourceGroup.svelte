@@ -3,8 +3,10 @@
   SPDX-License-Identifier: Apache-2.0
 -->
 <script lang="ts">
+import type { JjStatusEntry } from '../../../src/core/jj-types';
 import type { JjResourceState } from '../../../src/core/scm-resource-state';
 import { Uri } from '../../../src/core/uri-utils';
+import { tooltip } from '../../../src/core/webview/common/tooltip.svelte';
 import type { IContextKeyService } from '../menu/context-key-service';
 import type { MenuRegistry } from '../menu/menu-registry';
 import type { ResolvedMenuItem } from '../menu/menu-types';
@@ -15,6 +17,7 @@ interface Props {
     label: string;
     contextValue?: string;
     items: JjResourceState[];
+    changes?: JjStatusEntry[];
     workspaceRoot?: string;
     revision?: string;
     changeId?: string;
@@ -34,6 +37,7 @@ let {
     label,
     contextValue = '',
     items,
+    changes,
     workspaceRoot,
     revision,
     changeId,
@@ -50,6 +54,8 @@ let {
 
 // svelte-ignore state_referenced_locally
 let isExpanded = $state(expanded);
+const totalAdditions = $derived((changes ?? items).reduce((sum, file) => sum + (file.additions ?? 0), 0));
+const totalDeletions = $derived((changes ?? items).reduce((sum, file) => sum + (file.deletions ?? 0), 0));
 const groupContext = $derived(
     rootContext.createScoped({
         scmResourceGroupState: contextValue,
@@ -113,7 +119,7 @@ const groupVsCodeContext = $derived(
             <span class="chevron-icon">
                 <i class={`codicon codicon-chevron-${isExpanded ? 'down' : 'right'}`} aria-hidden="true"></i>
             </span>
-            <span class="group-label" title={label}>{label}</span>
+            <span class="group-label" use:tooltip={label}>{label}</span>
         </div>
 
         <div class="group-actions-row">
@@ -123,7 +129,7 @@ const groupVsCodeContext = $derived(
                         type="button"
                         class="icon-button group-action-button"
                         data-testid={`scm-group-action-${action.command}`}
-                        title={action.title}
+                        use:tooltip={action.title}
                         aria-label={action.title}
                         onclick={(e) => {
                             e.stopPropagation();
@@ -139,7 +145,18 @@ const groupVsCodeContext = $derived(
                 {/each}
             </div>
 
-            <span class="count-badge" title={`${items.length} files`}>
+            {#if !isExpanded && (totalAdditions > 0 || totalDeletions > 0)}
+                <span class="diff-summary-badges">
+                    {#if totalAdditions > 0}
+                        <span class="stat-pill stat-added" use:tooltip={`Lines added: ${totalAdditions}`}>+{totalAdditions}</span>
+                    {/if}
+                    {#if totalDeletions > 0}
+                        <span class="stat-pill stat-deleted" use:tooltip={`Lines removed: ${totalDeletions}`}>-{totalDeletions}</span>
+                    {/if}
+                </span>
+            {/if}
+
+            <span class="count-badge" use:tooltip={`${items.length} files`}>
                 {items.length}
             </span>
         </div>
@@ -274,6 +291,36 @@ const groupVsCodeContext = $derived(
 .group-action-button:hover {
     background-color: var(--vscode-toolbar-hoverBackground, rgba(31, 62, 94, 0.45));
     color: var(--vscode-foreground);
+}
+
+.diff-summary-badges {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-family: var(--vscode-editor-font-family), monospace;
+}
+
+.stat-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+    padding: 1px 6px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 14px;
+    user-select: none;
+}
+
+.stat-added {
+    color: var(--vscode-gitDecoration-addedResourceForeground, #23d18b);
+    background: color-mix(in srgb, var(--vscode-gitDecoration-addedResourceForeground, #23d18b) 14%, transparent);
+}
+
+.stat-deleted {
+    color: var(--vscode-gitDecoration-deletedResourceForeground, #f14c4c);
+    background: color-mix(in srgb, var(--vscode-gitDecoration-deletedResourceForeground, #f14c4c) 14%, transparent);
 }
 
 .count-badge {

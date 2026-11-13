@@ -57,6 +57,10 @@ describe('ScmModel Domain Unit Tests', () => {
         const lastSnapshot = snapshots[snapshots.length - 1];
         expect(lastSnapshot.workingCopyChanges.length).toBeGreaterThanOrEqual(1);
         expect(lastSnapshot.workingCopyChanges.some((c) => c.path.includes('test.txt'))).toBe(true);
+        expect(lastSnapshot.workingCopyChanges.find((c) => c.path === 'test.txt')).toMatchObject({
+            additions: 1,
+            deletions: 0,
+        });
         expect(lastSnapshot.workingCopyCount).toBeGreaterThanOrEqual(1);
     });
 
@@ -81,6 +85,10 @@ describe('ScmModel Domain Unit Tests', () => {
         expect(snapshot?.ancestors[0].isMutable).toBe(true);
         expect(snapshot?.ancestors[0].changes.length).toBeGreaterThan(0);
         expect(snapshot?.ancestors[0].changes.some((c) => c.path.includes('file2.txt'))).toBe(true);
+        expect(snapshot?.ancestors[0].changes.find((c) => c.path === 'file2.txt')).toMatchObject({
+            additions: 1,
+            deletions: 0,
+        });
         expect(snapshot?.parentMutable).toBe(true);
     });
 

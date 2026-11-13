@@ -1,0 +1,48 @@
+name: seedling
+
+services:
+  jj-view-permissions:
+    image: seedling-jj-view
+    pull_policy: never
+    user: "0:0"
+    restart: "no"
+    environment:
+      HOST_UID: "${HOST_UID:-501}"
+      HOST_GID: "${HOST_GID:-20}"
+    entrypoint: ["/bin/sh", "-ec"]
+    command: ['chown -R "$$HOST_UID:$$HOST_GID" /home/jj-view']
+    volumes:
+      - jj-view-data:/home/jj-view
+
+  jj-view:
+    image: seedling-jj-view
+    build:
+      context: .
+      dockerfile: Dockerfile
+    user: "${HOST_UID:-501}:${HOST_GID:-20}"
+    restart: unless-stopped
+    init: true
+    depends_on:
+      jj-view-permissions:
+        condition: service_completed_successfully
+    ports:
+      - "127.0.0.1:${JJ_VIEW_PORT:-8087}:8080"
+    environment:
+      JJ_USER: "${JJ_USER:-}"
+      JJ_EMAIL: "${JJ_EMAIL:-}"
+    volumes:
+      - type: bind
+        source: ${JJ_VIEW_REPO:-.}
+        target: /repo
+        bind:
+          create_host_path: false
+      - jj-view-data:/home/jj-view
+    command:
+      - --repo=/repo
+      - --host=0.0.0.0
+      - --port=8080
+      - --no-open
+      - --user-data-dir=/home/jj-view/.config/jj-view
+
+volumes:
+  jj-view-data: {}

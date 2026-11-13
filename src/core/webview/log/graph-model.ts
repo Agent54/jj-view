@@ -16,6 +16,7 @@ export interface GraphNode {
     conflict?: boolean;
     isEmpty?: boolean;
     isImmutable?: boolean;
+    isDefaultBranchTip?: boolean;
     isHidden?: boolean;
 }
 
@@ -55,10 +56,16 @@ export function isElisionRow(row: GraphRow): row is ElisionRow {
         .otherwise(() => false);
 }
 
+export interface GraphTermination {
+    x: number;
+    y: number;
+    color: string;
+}
+
 export interface GraphLayout {
     nodes: GraphNode[];
     edges: GraphEdge[];
-    terminations?: { x: number; y: number }[];
+    terminations?: GraphTermination[];
     width: number;
     height: number;
     rows: GraphRow[]; // The commits and spacer rows in display order

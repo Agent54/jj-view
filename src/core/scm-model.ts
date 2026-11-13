@@ -208,6 +208,31 @@ export class ScmModel implements Disposable {
                 minChangeIdLength,
             );
 
+            const displayedEntries = ancestors.map((ancestor) => ancestor.entry);
+            if (currentEntry) {
+                displayedEntries.push(currentEntry);
+            }
+            await Promise.all(
+                displayedEntries.map(async (entry) => {
+                    if (!entry.changes?.length) {
+                        return;
+                    }
+                    try {
+                        entry.changes = await jj.getChanges(entry.commit_id);
+                    } catch (error: unknown) {
+                        this.outputChannel.warn(
+                            `Failed to load line counts for ${entry.commit_id}: ${toError(error).message}`,
+                        );
+                    }
+                }),
+            );
+            if (this._disposed || this._repo.rootUri.fsPath !== targetRepoPath) {
+                return;
+            }
+            for (const ancestor of ancestors) {
+                ancestor.changes = ancestor.entry.changes || [];
+            }
+
             const workingCopyChanges = currentEntry?.changes || [];
             this._workingCopyStatuses = this.buildWorkingCopyStatusMap(workingCopyChanges, conflictedPaths);
 
@@ -307,9 +332,9 @@ export class ScmModel implements Disposable {
             !parentEntry.parents[0].is_immutable;
 
         const shortId = formatDisplayChangeId(parentEntry.change_id, parentEntry.change_id_shortest, minChangeIdLength);
-        const desc = parentEntry.description?.trim() || '(no description)';
+        const desc = parentEntry.description?.trim() || '';
         const subject = desc.split('\n', 1)[0].trim();
-        const label = `${prefix}: ${shortId} - ${subject}`;
+        const label = `${prefix}: ${shortId}${subject ? ` - ${subject}` : ''}`;
 
         const groupFlags: string[] = [
             ScmContextValue.GroupAllowShowMultiFileDiff,

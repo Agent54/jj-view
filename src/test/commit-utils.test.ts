@@ -39,7 +39,6 @@ describe('computeCommitActions', () => {
             newChild: true,
             edit: true,
             squash: true,
-            abandon: true,
         });
         expect(result.vscodeContext['jj.canEdit']).toBe(true);
         expect(result.vscodeContext['jj.canAbandon']).toBe(true);
@@ -52,7 +51,6 @@ describe('computeCommitActions', () => {
         const result = computeCommitActions(commit, hiddenActions, false, 0, false);
 
         expect(result.visibleActions.edit).toBe(false);
-        expect(result.visibleActions.abandon).toBe(false);
         expect(result.vscodeContext['jj.canEdit']).toBe(false);
         expect(result.vscodeContext['jj.canAbandon']).toBe(false);
     });
@@ -71,7 +69,7 @@ describe('computeCommitActions', () => {
         expect(result.visibleActions.newChild).toBe(false);
         expect(result.visibleActions.squash).toBe(false);
         expect(result.visibleActions.edit).toBe(true);
-        expect(result.visibleActions.abandon).toBe(true);
+        expect(result.vscodeContext['jj.canAbandon']).toBe(true);
     });
 
     it('should only allow squash if there is exactly one mutable parent', async () => {

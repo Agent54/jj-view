@@ -131,6 +131,18 @@ describe('LogViewController Domain Unit Tests', () => {
         expect(controller.minChangeIdLength).toBe(8);
     });
 
+    test('routes squash-into through the shared description workflow', async () => {
+        const execute = vi.spyOn(fakeHost.commands, 'executeCommand');
+        await controller.handleMessage({
+            type: 'squashCommit',
+            payload: { sourceChangeId: 'source', targetChangeId: 'target', mode: 'into' },
+        });
+        expect(execute).toHaveBeenCalledWith('jj-view.squashRevisionIntoAncestor', {
+            revision: 'source',
+            ancestorRevision: 'target',
+        });
+    });
+
     test('handles RPC messages via handleMessage', async () => {
         testRepo.writeFile('file.txt', 'hello\n');
         testRepo.describe('initial commit');
@@ -167,6 +179,30 @@ describe('LogViewController Domain Unit Tests', () => {
         await controller.refresh('test');
         expect(controller.commits.length).toBeGreaterThan(0);
         expect(controller.commits[0].description).toContain('feature: add example');
+    });
+
+    test('loads file changes only for undescribed nonempty commits', async () => {
+        testRepo.writeFile('baseline.txt', 'baseline\n');
+        testRepo.describe('Named baseline');
+        const namedChange = testRepo.getChangeId('@');
+        testRepo.new();
+        testRepo.writeFile('first.txt', 'first\n');
+        const firstChange = testRepo.getChangeId('@');
+        testRepo.new();
+        testRepo.writeFile('second.txt', 'second\n');
+        const secondChange = testRepo.getChangeId('@');
+        testRepo.new();
+        const emptyChange = testRepo.getChangeId('@');
+
+        await controller.refresh('file summaries');
+        expect(controller.commits.find((commit) => commit.change_id === firstChange)?.changes).toMatchObject([
+            { path: 'first.txt', status: 'added' },
+        ]);
+        expect(controller.commits.find((commit) => commit.change_id === secondChange)?.changes).toMatchObject([
+            { path: 'second.txt', status: 'added' },
+        ]);
+        expect(controller.commits.find((commit) => commit.change_id === namedChange)?.changes).toBeUndefined();
+        expect(controller.commits.find((commit) => commit.change_id === emptyChange)?.changes).toBeUndefined();
     });
 
     test('replays initial snapshot on setMessenger and updates context keys on setCommits', async () => {

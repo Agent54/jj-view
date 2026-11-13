@@ -1,5 +1,6 @@
 # JJ View
 
+
 **JJ View** brings the power of [Jujutsu (jj)](https://github.com/martinvonz/jj) version control directly into VS Code. Visualize your revision graph, manage changes, and streamline your workflow without leaving the editor.
 
 ![JJ View Overview](media/screenshots/scm-view.png)
@@ -141,7 +142,9 @@ The extension automatically refreshes the view when:
 - `JJ View: Upload`: Upload the current change (runs configured upload command).
 - `JJ View: Upload Stack`: Upload the current stack of changes (chains PRs/MRs on GitHub/GitLab).
 - `JJ View: Sync`: Sync the repository with remotes (runs configured sync command).
-- `JJ View: Set Bookmark`: Create or move a bookmark to a specific revision.
+- `JJ View: Create Bookmark...`: Create or move a bookmark to a specific revision.
+- `JJ View: Create Tag...`: Create a local lightweight Git tag on a revision from its context menu, or on the working copy from the command palette. Existing tags are not moved, and tags are not pushed automatically.
+- `JJ View: Delete Tag`: Delete a local tag from its badge's context menu, or select a tag to delete from the command palette.
 - `JJ View: Delete Bookmark`: Delete a bookmark.
 - `JJ View: Commit`: Commit the current changes in the working copy (Ctrl+Enter in SCM input).
 - `JJ View: Commit (Prompt)`: Commit the current changes in the working copy, prompting for a description message first.

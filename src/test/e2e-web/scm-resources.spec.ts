@@ -6,7 +6,11 @@ import * as path from 'node:path';
 import { ARTIFACT_DIR, expect, recordGifFlow, test, waitForScmReady } from './standalone-fixture';
 
 test.describe('Standalone Web SCM Resources', () => {
-    test('should list modified and added files with correct status badges', async ({ page, server, testRepo }) => {
+    test('should show matching file icons and status glyphs in SCM and commit details', async ({
+        page,
+        server,
+        testRepo,
+    }) => {
         // Create initial commit
         testRepo.writeFile('committed.txt', 'hello world\n');
         testRepo.describe('initial commit');
@@ -14,28 +18,92 @@ test.describe('Standalone Web SCM Resources', () => {
 
         // Create working copy changes: 1 modified, 1 added
         testRepo.writeFile('committed.txt', 'hello world modified\n');
-        testRepo.writeFile('untracked.txt', 'new untracked file\n');
+        testRepo.writeFile('src/components/untracked.ts', 'export const added = true;\n');
 
         await page.goto(server.serverUrl);
         await waitForScmReady(page);
+        await page.evaluate(async () => {
+            await window.__JJ_VIEW_ENV__?.config.update?.('appearance.theme', 'pierre-dark-cobalt');
+        });
 
         // Find working copy resource group
         const workingCopyGroup = page.locator('[data-testid="scm-group-working-copy"]');
         await expect(workingCopyGroup).toBeVisible();
+        const workingCopyHeader = workingCopyGroup.locator('.group-header');
+        await expect(workingCopyHeader.locator('.diff-summary-badges')).toHaveCount(0);
+        const ancestorGroup = page.getByTestId('scm-group-ancestor-0');
+        await expect(ancestorGroup.locator('.group-header .diff-summary-badges')).toHaveCount(0);
+        await expect(ancestorGroup.locator('.file-diff-stats .stat-added')).toHaveText('+1');
+        await ancestorGroup.locator('.group-header .chevron-icon').click();
+        await expect(ancestorGroup.locator('.group-header .stat-added')).toHaveText('+1');
+        await ancestorGroup.locator('.group-header .chevron-icon').click();
+        await expect(ancestorGroup.locator('.group-header .diff-summary-badges')).toHaveCount(0);
 
-        // Verify committed.txt has 'M' badge
+        // Verify modified files use the change glyph.
         const modifiedItem = workingCopyGroup
             .locator('[data-testid="scm-resource-item"]')
             .filter({ hasText: 'committed.txt' });
         await expect(modifiedItem).toBeVisible();
-        await expect(modifiedItem.locator('.status-badge')).toHaveText('M');
+        await expect(modifiedItem.getByRole('img', { name: 'Modified' })).toHaveClass(/codicon-diff-modified/);
+        await expect(modifiedItem.locator('.stat-added')).toHaveText('+1');
+        await expect(modifiedItem.locator('.stat-deleted')).toHaveText('-1');
 
-        // Verify untracked.txt has 'A' badge
+        // Verify added files use the addition glyph.
         const addedItem = workingCopyGroup
             .locator('[data-testid="scm-resource-item"]')
-            .filter({ hasText: 'untracked.txt' });
+            .filter({ hasText: 'untracked.ts' });
         await expect(addedItem).toBeVisible();
-        await expect(addedItem.locator('.status-badge')).toHaveText('A');
+        await expect(addedItem.getByRole('img', { name: 'Added' })).toHaveClass(/codicon-diff-added/);
+        await expect(addedItem.locator('.stat-added')).toHaveText('+1');
+        await expect(addedItem.locator('.stat-deleted')).toHaveCount(0);
+
+        await workingCopyHeader.locator('.chevron-icon').click();
+        await expect(modifiedItem).toBeHidden();
+        await expect(workingCopyHeader.locator('.stat-added')).toHaveText('+2');
+        await expect(workingCopyHeader.locator('.stat-deleted')).toHaveText('-1');
+        await workingCopyHeader.locator('.chevron-icon').click();
+        await expect(workingCopyHeader.locator('.diff-summary-badges')).toHaveCount(0);
+
+        await page.locator('.commit-row.working-copy .commit-id').click();
+        const details = page.getByTestId('commit-details-view');
+        for (const [filename, label, glyph] of [
+            ['committed.txt', 'Modified', 'diff-modified'],
+            ['untracked.ts', 'Added', 'diff-added'],
+        ]) {
+            const sourceRow = workingCopyGroup.getByTestId('scm-resource-item').filter({ hasText: filename });
+            const detailRow = details.locator('.file-row').filter({ hasText: filename });
+            const sourceIcon = sourceRow.getByTestId(`file-icon-${filename}`);
+            const detailIcon = detailRow.getByTestId(`file-icon-${filename}`);
+            await expect(detailIcon).toBeVisible();
+            expect(await detailIcon.innerHTML()).toBe(await sourceIcon.innerHTML());
+            await expect(detailRow).toHaveCSS('height', await sourceRow.evaluate((el) => getComputedStyle(el).height));
+            await expect(detailRow.locator('.file-meta-group').getByRole('img', { name: label })).toHaveClass(
+                new RegExp(`codicon-${glyph}`),
+            );
+            await expect(detailRow.locator(':scope > .file-icon-wrapper')).toHaveCount(1);
+            await expect(detailRow.locator('.file-status-badge')).toHaveText('');
+            await expect(sourceRow.locator('.file-diff-stats')).toHaveText(
+                await detailRow.locator('.file-diff-stats').innerText(),
+            );
+            await expect(detailRow.locator('.file-name')).toHaveText(filename);
+            await expect(detailRow.locator('.file-name')).toHaveCSS(
+                'font-size',
+                await sourceRow.locator('.file-name').evaluate((el) => getComputedStyle(el).fontSize),
+            );
+            if (filename === 'untracked.ts') {
+                for (const row of [sourceRow, detailRow]) {
+                    await expect(row.locator('.dir-name')).toHaveText('src/components');
+                    const nameBox = await row.locator('.file-name').boundingBox();
+                    const dirBox = await row.locator('.dir-name').boundingBox();
+                    expect(nameBox).not.toBeNull();
+                    expect(dirBox).not.toBeNull();
+                    expect(dirBox?.x).toBeGreaterThan((nameBox?.x ?? 0) + (nameBox?.width ?? 0));
+                }
+            } else {
+                await expect(detailRow.locator('.dir-name')).toHaveCount(0);
+            }
+        }
+        await page.screenshot({ path: path.join(ARTIFACT_DIR, 'file-status-glyphs.png') });
     });
 
     test('should display clean working copy when there are no changes', async ({ page, server, testRepo }) => {
@@ -53,7 +121,7 @@ test.describe('Standalone Web SCM Resources', () => {
         await expect(workingCopyItems).toHaveCount(0);
     });
 
-    test('should list deleted files with D status badge and strikethrough styling', async ({
+    test('should list deleted files with a removal glyph and strikethrough styling', async ({
         page,
         server,
         testRepo,
@@ -74,8 +142,11 @@ test.describe('Standalone Web SCM Resources', () => {
             .filter({ hasText: 'remove-me.txt' });
 
         await expect(deletedItem).toBeVisible();
-        await expect(deletedItem.locator('.status-badge')).toHaveText('D');
+        await expect(deletedItem.getByRole('img', { name: 'Deleted' })).toHaveClass(/codicon-diff-removed/);
         await expect(deletedItem.locator('.file-name')).toHaveClass(/deleted/);
+        await expect(deletedItem.locator('.stat-deleted')).toHaveText('-1');
+        await expect(deletedItem.locator('.stat-added')).toHaveCount(0);
+        await expect(workingCopyGroup.locator('.group-header .diff-summary-badges')).toHaveCount(0);
     });
 
     test('should maintain strict 22px row height and prevent layout shift on hover with baseline alignment', async ({
@@ -115,9 +186,9 @@ test.describe('Standalone Web SCM Resources', () => {
         await expect(fileName).toHaveText('button.ts');
         await expect(dirName).toHaveText('src/components');
 
-        // Check font styling: normal weight (400), not bold/semi-bold
+        // Match Commit Details' medium filename weight.
         const fileNameWeight = await fileName.evaluate((el) => window.getComputedStyle(el).fontWeight);
-        expect(fileNameWeight).toBe('400');
+        expect(fileNameWeight).toBe('500');
 
         // Check baseline alignment container style
         const containerAlign = await nestedItem
@@ -226,6 +297,9 @@ test.describe('Standalone Web SCM Resources', () => {
         testRepo.writeFile('package.json', '{\n  "name": "app"\n}\n');
         testRepo.writeFile('src/styles/app.css', 'body { color: red; }\n');
         testRepo.writeFile('.github/workflows/ci.yml', 'name: CI\n');
+        testRepo.writeFile('src/main.go', 'package main\n');
+        testRepo.writeFile('src/Component.tsx', 'export const Component = () => null;\n');
+        testRepo.writeFile('config.toml', 'enabled = true\n');
 
         await page.goto(server.serverUrl);
         await waitForScmReady(page);
@@ -239,6 +313,9 @@ test.describe('Standalone Web SCM Resources', () => {
             .filter({ hasText: 'App.svelte' });
         await expect(svelteItem).toBeVisible();
         await expect(svelteItem.locator('[data-testid="file-icon-App.svelte"] svg')).toBeVisible();
+        const svelteArtwork = await svelteItem.locator('svg path').boundingBox();
+        expect(svelteArtwork?.height).toBeGreaterThanOrEqual(12);
+        expect(svelteArtwork?.height).toBeLessThanOrEqual(16);
 
         const testItem = workingCopyGroup
             .locator('[data-testid="scm-resource-item"]')
@@ -253,6 +330,8 @@ test.describe('Standalone Web SCM Resources', () => {
         });
 
         // Capture screenshot of full view
+        await page.locator('.commit-row.working-copy .commit-id').click();
+        await expect(page.getByTestId('commit-details-view').getByTestId('file-icon-App.svelte')).toBeVisible();
         await page.screenshot({
             path: path.join(ARTIFACT_DIR, 'jj-view-full-view.png'),
         });

@@ -13,6 +13,7 @@ import {
     focusJJLog,
     getLogWebview,
     pickQuickPickItem,
+    rightClickAndSelect,
     test,
     triggerRefresh,
     waitForLogCommitRow,
@@ -54,9 +55,9 @@ test.describe('JJ Log Pane E2E', () => {
         await expect(await waitForLogCommitRow(page, 'side branch commit')).toBeVisible();
         await expect(await waitForLogCommitRow(page, 'working tree')).toBeVisible();
 
-        // Assert Working Copy row is styled bold
+        // The working copy uses the same medium description weight as other commits.
         const wcDesc = webview.locator('.working-copy .commit-desc');
-        await expect(wcDesc).toHaveCSS('font-weight', '700' /* bold */);
+        await expect(wcDesc).toHaveCSS('font-weight', '500');
 
         // Assert Bookmark pill is present inside the working copy row
         await waitForLogPill(page, 'main', 'bookmark');
@@ -138,7 +139,7 @@ test.describe('JJ Log Pane E2E', () => {
         ]);
     });
 
-    test('Hover Actions: New Child, Squash, Abandon', async ({ vscode }) => {
+    test('Hover Actions: New Child, Squash, and Abandon from context menu', async ({ vscode }) => {
         const repo = new TestRepo();
         repo.init();
         const dummyId = repo.getChangeId('@');
@@ -186,7 +187,7 @@ test.describe('JJ Log Pane E2E', () => {
 
         // 2. Prepare for squash: move working copy away from the new child
         const initialId = nodes.initial.changeId;
-        await clickLogAction(page, { changeId: initialId }, 'Edit Commit');
+        await rightClickAndSelect(page, await waitForLogCommitRow(page, { changeId: initialId }), 'Edit');
 
         // Tree is the same commits, just @ moved. Order: [child, wc, branch, initial, dummy]
         await waitForTree(repo, [
@@ -210,8 +211,8 @@ test.describe('JJ Log Pane E2E', () => {
         ]);
         await waitForWebviewCommitRemoved(page, childId);
 
-        // 4. Abandon the branch commit
-        await clickLogAction(page, { changeId: branchId }, 'Abandon');
+        // 4. Abandon the branch commit from its context menu
+        await rightClickAndSelect(page, await waitForLogCommitRow(page, { changeId: branchId }), 'Abandon');
 
         // After abandon branch: branch is gone. wc (child of branch) becomes child of initial.
         // Tree: [wc, initial(@)]
@@ -547,7 +548,7 @@ test.describe('JJ Log Pane E2E', () => {
         await expect(featureRow).toHaveAttribute('data-selected', 'false');
     });
 
-    test('Commit description title tooltip displays relative timestamps and details', async ({ vscode }) => {
+    test('Commit tooltip displays relative timestamps and details', async ({ vscode }) => {
         const repo = new TestRepo();
         repo.init();
         const nodes = await buildGraph(repo, [
@@ -564,9 +565,8 @@ test.describe('JJ Log Pane E2E', () => {
         await focusJJLog(page);
 
         const featureRow = await waitForLogCommitRow(page, { changeId: nodes.feature.changeId });
-        const featureDesc = featureRow.locator('.commit-desc');
 
-        // Verify the title tooltip format. Use a regex pattern for relative time to prevent
+        // Verify the tooltip format. Use a regex pattern for relative time to prevent
         // race conditions where the webview and test runner evaluate Date.now() on different
         // second boundaries (e.g. "just now" vs "1 second ago").
         const shortest = repo.getLog(nodes.feature.commitId, 'change_id.shortest()');
@@ -592,6 +592,7 @@ test.describe('JJ Log Pane E2E', () => {
                 `$`,
         );
 
-        await expect(featureDesc).toHaveAttribute('title', expectedPattern);
+        await featureRow.locator('.commit-id').hover();
+        await expect(featureRow.locator('..').getByRole('tooltip')).toHaveText(expectedPattern);
     });
 });

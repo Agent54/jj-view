@@ -4,7 +4,7 @@
 -->
 <script lang="ts">
 import { onMount } from 'svelte';
-import type { ResolvedMenuItemGroup } from './menu-types';
+import type { ContextMenuPointerGesture, ResolvedMenuItemGroup } from './menu-types';
 
 interface Props {
     x: number;
@@ -12,15 +12,26 @@ interface Props {
     groups: readonly ResolvedMenuItemGroup[];
     onSelect: (command: string) => void;
     onClose: () => void;
+    openingPointer?: ContextMenuPointerGesture;
 }
 
-let { x, y, groups, onSelect, onClose }: Props = $props();
+let { x, y, groups, onSelect, onClose, openingPointer }: Props = $props();
 
 let menuEl: HTMLDivElement | null = $state(null);
 // svelte-ignore state_referenced_locally
 let posX = $state(x);
 // svelte-ignore state_referenced_locally
 let posY = $state(y);
+let selected = false;
+
+function selectCommand(command: string): void {
+    if (selected) {
+        return;
+    }
+    selected = true;
+    onSelect(command);
+    onClose();
+}
 
 $effect(() => {
     posX = x;
@@ -68,8 +79,48 @@ function handleDismiss(e: Event): void {
 }
 
 onMount(() => {
+    const gesture = openingPointer;
+    let tracking = gesture !== undefined;
+    let moved = false;
+
+    function handlePointerMove(e: PointerEvent): void {
+        if (tracking && gesture && e.pointerId === gesture.pointerId) {
+            moved ||= Math.hypot(e.clientX - gesture.x, e.clientY - gesture.y) >= 4;
+        }
+    }
+
+    function handlePointerUp(e: PointerEvent): void {
+        if (!tracking || !gesture || e.pointerId !== gesture.pointerId || e.button !== gesture.button) {
+            return;
+        }
+        tracking = false;
+        // A simple right-click leaves the menu open, even if viewport clamping
+        // placed an item underneath the original press location.
+        if (!moved) {
+            return;
+        }
+        e.preventDefault();
+        e.stopPropagation();
+        const target = document.elementFromPoint(e.clientX, e.clientY)?.closest<HTMLButtonElement>('button.menu-item');
+        const command = target?.dataset.command;
+        if (target && command && menuEl?.contains(target)) {
+            selectCommand(command);
+        } else {
+            onClose();
+        }
+    }
+
+    function handlePointerCancel(e: PointerEvent): void {
+        if (tracking && gesture && e.pointerId === gesture.pointerId) {
+            tracking = false;
+            onClose();
+        }
+    }
+
     window.addEventListener('pointerdown', handleDismiss, { capture: true });
-    window.addEventListener('contextmenu', handleDismiss, { capture: true });
+    window.addEventListener('pointermove', handlePointerMove, { capture: true });
+    window.addEventListener('pointerup', handlePointerUp, { capture: true });
+    window.addEventListener('pointercancel', handlePointerCancel, { capture: true });
     window.addEventListener('keydown', handleKeyDown);
 
     // Auto-focus the menu container
@@ -77,7 +128,9 @@ onMount(() => {
 
     return () => {
         window.removeEventListener('pointerdown', handleDismiss, { capture: true });
-        window.removeEventListener('contextmenu', handleDismiss, { capture: true });
+        window.removeEventListener('pointermove', handlePointerMove, { capture: true });
+        window.removeEventListener('pointerup', handlePointerUp, { capture: true });
+        window.removeEventListener('pointercancel', handlePointerCancel, { capture: true });
         window.removeEventListener('keydown', handleKeyDown);
     };
 });
@@ -90,7 +143,10 @@ onMount(() => {
     role="menu"
     tabindex="-1"
     style={`left: ${posX}px; top: ${posY}px;`}
-    oncontextmenu={(e) => e.preventDefault()}
+    oncontextmenu={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+    }}
 >
     {#each groups as group, groupIdx (group.groupName)}
         {#if groupIdx > 0}
@@ -102,10 +158,8 @@ onMount(() => {
                 class="menu-item"
                 role="menuitem"
                 data-testid={`menu-item-${item.command}`}
-                onclick={() => {
-                    onSelect(item.command);
-                    onClose();
-                }}
+                data-command={item.command}
+                onclick={() => selectCommand(item.command)}
             >
                 <span class="item-icon">
                     {#if item.iconClass}
@@ -124,11 +178,11 @@ onMount(() => {
     z-index: 2500;
     min-width: 180px;
     max-width: 320px;
-    background-color: var(--vscode-menu-background, var(--vscode-editor-background, #171717));
-    color: var(--vscode-menu-foreground, var(--vscode-foreground, #d4d4d4));
-    border: 1px solid var(--vscode-menu-border, var(--vscode-widget-border, #333333));
+    background-color: var(--vscode-menu-background, var(--vscode-editor-background));
+    color: var(--vscode-menu-foreground, var(--vscode-foreground));
+    border: 1px solid var(--vscode-menu-border, var(--vscode-widget-border, var(--vscode-editorGroupHeader-tabsBorder)));
     border-radius: 6px;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+    box-shadow: 0 4px 16px var(--vscode-widget-shadow, color-mix(in srgb, var(--vscode-foreground) 20%, transparent));
     padding: 4px 0;
     font-family: var(--vscode-font-family, -apple-system, BlinkMacSystemFont, 'Segoe WPC', 'Segoe UI', system-ui, sans-serif);
     font-size: var(--vscode-font-size, 13px);
@@ -138,7 +192,7 @@ onMount(() => {
 
 .menu-separator {
     height: 1px;
-    background-color: var(--vscode-menu-separatorBackground, var(--vscode-widget-border, #333333));
+    background-color: var(--vscode-menu-separatorBackground, var(--vscode-editorGroupHeader-tabsBorder));
     margin: 4px 0;
 }
 
@@ -161,8 +215,8 @@ onMount(() => {
 
 .menu-item:hover,
 .menu-item:focus {
-    background-color: var(--vscode-menu-selectionBackground, var(--vscode-list-activeSelectionBackground, #2a2d2e));
-    color: var(--vscode-menu-selectionForeground, var(--vscode-list-activeSelectionForeground, #ffffff));
+    background-color: var(--vscode-menu-selectionBackground, var(--vscode-list-activeSelectionBackground));
+    color: var(--vscode-menu-selectionForeground, var(--vscode-list-activeSelectionForeground));
 }
 
 .item-icon {

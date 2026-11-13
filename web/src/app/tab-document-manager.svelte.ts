@@ -86,6 +86,10 @@ export class TabDocumentManager {
                 : undefined;
             const controller = new CommitDetailsController(changeId, model.repo, hostEnv, {
                 logger,
+                saveDocument: async () => {
+                    await controller.save();
+                    syncDirty();
+                },
                 openDiff: async ({ file, changeId: cId, isImmutable, isWorkingCopy }) => {
                     await this.deps.openFileDiffForChange(
                         file,

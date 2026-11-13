@@ -110,5 +110,27 @@ describe('context-menu-controller', () => {
         controller.closeContextMenu();
         expect(controller.state.visible).toBe(false);
         expect(controller.state.groups.length).toBe(0);
+
+        const press = createMock<PointerEvent>({
+            target: mockTarget,
+            clientX: 150,
+            clientY: 220,
+            pointerId: 7,
+            button: 2,
+            preventDefault: () => {},
+            stopPropagation: () => {},
+        });
+        controller.handleWindowPointerDown(press);
+        const firstMenuId = controller.state.id;
+        expect(controller.state.openingPointer).toEqual({ pointerId: 7, button: 2, x: 150, y: 220 });
+
+        // A trailing native contextmenu must not reopen a menu after release selected an item.
+        controller.closeContextMenu();
+        controller.handleWindowContextMenu(press);
+        expect(controller.state.visible).toBe(false);
+
+        controller.handleWindowPointerDown(press);
+        expect(controller.state.visible).toBe(true);
+        expect(controller.state.id).toBeGreaterThan(firstMenuId);
     });
 });

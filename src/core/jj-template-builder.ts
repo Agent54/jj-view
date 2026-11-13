@@ -132,11 +132,20 @@ export const LOG_ENTRY_SCHEMA: Record<string, JjTemplateField> = {
         itemExpr: 'item.name()',
     },
     is_immutable: { type: 'raw', expr: 'immutable' },
+    is_default_branch_tip: { type: 'raw', expr: 'self.contained_in("trunk() ~ root()")' },
     is_current_working_copy: { type: 'raw', expr: 'current_working_copy' },
     working_copies: {
         type: 'rawArray',
         expr: 'working_copies',
         itemExpr: 'json(item.name())',
+    },
+    working_copy_details: {
+        type: 'array',
+        expr: 'working_copies',
+        itemSchema: {
+            name: { type: 'json', expr: 'item.name()' },
+            path: { type: 'json', expr: 'item.root()' },
+        },
     },
     is_empty: { type: 'raw', expr: 'empty' },
     is_divergent: { type: 'raw', expr: 'divergent' },

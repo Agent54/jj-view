@@ -24,6 +24,7 @@ import { commitCommand } from '../../../src/core/commands/commit';
 import { commitPromptCommand } from '../../../src/core/commands/commit-prompt';
 import { compareAllFilesWithRevisionCommand } from '../../../src/core/commands/compare-all-files-with-revision';
 import { compareFileWithRevisionCommand } from '../../../src/core/commands/compare-file-with-revision';
+import { copyChangeIdCommand } from '../../../src/core/commands/copy-change-id';
 import { setDescriptionCommand } from '../../../src/core/commands/describe';
 import { describePromptCommand } from '../../../src/core/commands/describe-prompt';
 import { showDetailsCommand } from '../../../src/core/commands/details';
@@ -58,6 +59,8 @@ import {
     squashSelectionIntoParentCommand,
 } from '../../../src/core/commands/squash-selection';
 import { syncCommand } from '../../../src/core/commands/sync';
+import { createTagCommand } from '../../../src/core/commands/tag';
+import { deleteTagCommand } from '../../../src/core/commands/tag-delete';
 import { undoCommand } from '../../../src/core/commands/undo';
 import { uploadCommand } from '../../../src/core/commands/upload';
 import { uploadStackCommand } from '../../../src/core/commands/upload-stack';
@@ -99,6 +102,7 @@ import { createCommitPayload, createCommitPromptPayload } from './payloads/commi
 import { createCompareAllFilesWithRevisionPayload } from './payloads/compare-all-files-with-revision.payload';
 import { createCompareFileWithRevisionPayload } from './payloads/compare-file-with-revision.payload';
 import { createCompleteSquashRevisionPayload } from './payloads/complete-squash-revision.payload';
+import { createCopyChangeIdPayload } from './payloads/copy-change-id.payload';
 import { createDescribePromptPayload, createSetDescriptionPayload } from './payloads/describe.payload';
 import { createShowDetailsPayload } from './payloads/details.payload';
 import { createDiscardChangePayload } from './payloads/discard-change.payload';
@@ -126,6 +130,8 @@ import {
     createSquashHunkIntoParentPayload,
     createSquashSelectionIntoParentPayload,
 } from './payloads/squash-selection.payload';
+import { createTagPayload } from './payloads/tag.payload';
+import { createDeleteTagPayload } from './payloads/tag-delete.payload';
 import { createUploadPayload, createUploadStackPayload } from './payloads/upload.payload';
 import { createViewFileAtRevisionPayload } from './payloads/view-file-at-revision.payload';
 import {
@@ -331,6 +337,7 @@ export function registerWebCommands(options: RegisterWebCommandsOptions): void {
 
     // 7. Bookmarks & Remote Upload
     registerWithPayload('jj-view.setBookmark', createSetBookmarkPayload, setBookmarkCommand);
+    registerWithPayload('jj-view.createTag', createTagPayload, createTagCommand);
     registerWithPayload('jj-view.advanceBookmark', createAdvanceBookmarkPayload, advanceBookmarkCommand);
     registerWithPayload(
         'jj-view.advanceBookmarkAndUpload',
@@ -338,12 +345,14 @@ export function registerWebCommands(options: RegisterWebCommandsOptions): void {
         advanceBookmarkAndUploadCommand,
     );
     registerWithPayload('jj-view.deleteBookmark', createDeleteBookmarkPayload, deleteBookmarkCommand);
+    registerWithPayload('jj-view.deleteTag', createDeleteTagPayload, deleteTagCommand);
     registerWithPayload('jj-view.upload', createUploadPayload, uploadCommand);
     registerWithPayload('jj-view.uploadStack', createUploadStackPayload, uploadStackCommand);
     registerDirect('jj-view.sync', syncCommand);
 
     // 8. Details & Multi-Diff
     registerWithPayload('jj-view.showDetails', createShowDetailsPayload, showDetailsCommand);
+    registerWithPayload('jj-view.copyChangeId', createCopyChangeIdPayload, copyChangeIdCommand);
     registerWithPayload('jj-view.showMultiFileDiff', createShowMultiFileDiffPayload, showMultiFileDiffCommand);
     registerWithPayload(
         'jj-view.compareWithWorkingCopy',

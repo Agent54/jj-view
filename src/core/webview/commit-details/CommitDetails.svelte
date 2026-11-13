@@ -3,7 +3,7 @@
   SPDX-License-Identifier: Apache-2.0
 -->
 <script lang="ts">
-import { tick, untrack } from 'svelte';
+import { type Snippet, tick, untrack } from 'svelte';
 import { writeClipboardText } from '../../../utils/clipboard';
 import { formatCommitDescription } from '../../../utils/format-utils';
 import {
@@ -12,6 +12,8 @@ import {
 } from '../../host/ipc/commit-details-schemas';
 import type { JjBookmark, JjStatusEntry } from '../../jj-types';
 import { BasePill, BookmarkPill, PersonInfo, TagPill } from '../common/components';
+import FileLabel from '../common/components/FileLabel.svelte';
+import { tooltip } from '../common/tooltip.svelte';
 import { useRpcReceiver } from '../transport/bridge.svelte';
 
 interface Props {
@@ -24,6 +26,7 @@ interface Props {
     /** In-progress edit held by the host; seeds the editor on mount. */
     unsavedDraft?: string;
     files: JjStatusEntry[];
+    fileIcon?: Snippet<[filename: string]>;
     isLoadingFiles?: boolean;
     isImmutable: boolean;
     isEmpty?: boolean;
@@ -38,6 +41,7 @@ interface Props {
     onSave: (description: string) => void;
     onOpenDiff: (file: JjStatusEntry, isImmutable: boolean) => void;
     onOpenMultiDiff: () => void;
+    onOpenSettings?: () => void;
     onDescriptionChange?: (description: string, selectionStart: number, selectionEnd: number) => void;
 }
 
@@ -50,6 +54,7 @@ let {
     description,
     unsavedDraft,
     files,
+    fileIcon,
     isLoadingFiles = false,
     isImmutable,
     isEmpty = false,
@@ -64,6 +69,7 @@ let {
     onSave,
     onOpenDiff,
     onOpenMultiDiff,
+    onOpenSettings,
     onDescriptionChange,
 }: Props = $props();
 
@@ -170,7 +176,7 @@ function splitFilePath(filePath: string): { dir: string; name: string } {
         return { dir: '', name: filePath };
     }
     return {
-        dir: filePath.slice(0, lastSlash + 1),
+        dir: filePath.slice(0, lastSlash),
         name: filePath.slice(lastSlash + 1),
     };
 }
@@ -270,6 +276,9 @@ function handleSave() {
 }
 
 async function handleFormat() {
+    if (isImmutable || !hasBody) {
+        return;
+    }
     const newDescription = await formatCommitDescription(draftDescription, bodyWidthRuler);
     if (newDescription !== draftDescription) {
         draftDescription = newDescription;
@@ -312,6 +321,7 @@ function handleKeydown(e: KeyboardEvent) {
 const lines = $derived(draftDescription.split('\n'));
 const title = $derived(lines[0] ?? '');
 const bodyLines = $derived(lines.slice(1));
+const hasBody = $derived(bodyLines.some((line) => line.trim().length > 0));
 
 const isTitleOver = $derived(title.length > titleWidthRuler);
 const isBodyOver = $derived(bodyLines.some((l) => l.length > bodyWidthRuler));
@@ -449,27 +459,29 @@ function getFileColor(status: string, conflicted?: boolean): string {
                         style:color={isImmutable
                             ? 'var(--vscode-descriptionForeground)'
                             : 'var(--vscode-gitDecoration-addedResourceForeground)'}
-                        title={changeId}
+                        use:tooltip={changeId}
                     >{#if hasShortId && shortId}<span class="change-id-prefix">{shortId}</span>{#if idPart.length > shortId.length}<span class="change-id-rest">{idPart.substring(shortId.length)}</span>{/if}{:else}{idPart}{/if}{#if displayOffset}<span class="change-id-offset">/{displayOffset}</span>{/if}</span>
                     <button
                         type="button"
                         class="copy-button"
                         onclick={() => copyToClipboard(changeId, 'change')}
-                        title="Copy Change ID"
+                        use:tooltip={'Copy Change ID'}
+                        aria-label="Copy Change ID"
                     >
                         <span class="codicon {copiedId === 'change' ? 'codicon-check copied-icon' : 'codicon-copy'}"></span>
                     </button>
                 </div>
                 <div class="id-row">
                     <span class="id-label">Commit:</span>
-                    <span class="id-value" title={commitId}>
+                    <span class="id-value" use:tooltip={commitId}>
                         {commitId.substring(0, 12)}
                     </span>
                     <button
                         type="button"
                         class="copy-button"
                         onclick={() => copyToClipboard(commitId, 'commit')}
-                        title="Copy Commit ID"
+                        use:tooltip={'Copy Commit ID'}
+                        aria-label="Copy Commit ID"
                     >
                         <span class="codicon {copiedId === 'commit' ? 'codicon-check copied-icon' : 'codicon-copy'}"></span>
                     </button>
@@ -495,12 +507,19 @@ function getFileColor(status: string, conflicted?: boolean): string {
                 <label for="commit-message" class="section-title">
                     Message
                 </label>
-                <span class="ruler-indicator" title="Configured rulers for title / body width">
+                <span class="ruler-indicator" use:tooltip={'Configured rulers for title / body width'}>
                     {titleWidthRuler}/{bodyWidthRuler} ch
                 </span>
                 <a
                     href="command:workbench.action.openSettings?%5B%22jj-view.commit%22%5D"
-                    title="Configure width rulers"
+                    onclick={(event) => {
+                        if (onOpenSettings) {
+                            event.preventDefault();
+                            onOpenSettings();
+                        }
+                    }}
+                    use:tooltip={'Configure width rulers'}
+                    aria-label="Configure width rulers"
                     class="settings-icon-btn"
                 >
                     <span class="codicon codicon-settings-gear"></span>
@@ -511,7 +530,10 @@ function getFileColor(status: string, conflicted?: boolean): string {
                     <button
                         type="button"
                         onclick={handleFormat}
-                        title={`Format body to ${bodyWidthRuler} characters`}
+                        disabled={!hasBody}
+                        use:tooltip={hasBody
+                            ? `Format body to ${bodyWidthRuler} characters`
+                            : 'No body to format. The first line is the commit title.'}
                         class="secondary-button"
                     >
                         <span class="codicon codicon-word-wrap"></span>
@@ -519,7 +541,7 @@ function getFileColor(status: string, conflicted?: boolean): string {
                     </button>
                     <button
                         type="button"
-                        title={`Save Changes (${saveShortcutHint})`}
+                        use:tooltip={`Save Changes (${saveShortcutHint})`}
                         onclick={handleSave}
                         disabled={isSaving || !isDirty}
                         class="primary-button"
@@ -577,8 +599,11 @@ function getFileColor(status: string, conflicted?: boolean): string {
         <div class="section-header files-header" bind:clientHeight={filesHeaderHeight}>
             <div class="section-title-group">
                 <h3 class="section-title">
-                    Changed Files {isLoadingFiles && files.length === 0 ? '' : `(${files.length})`}
+                    Changed Files
                 </h3>
+                {#if !isLoadingFiles || files.length > 0}
+                    <span class="count-badge" use:tooltip={`${files.length} files`}>{files.length}</span>
+                {/if}
                 {#if totalAdditions > 0 || totalDeletions > 0}
                     <div class="diff-summary-badges">
                         {#if totalAdditions > 0}
@@ -594,6 +619,7 @@ function getFileColor(status: string, conflicted?: boolean): string {
                 type="button"
                 onclick={onOpenMultiDiff}
                 class="secondary-button"
+                use:tooltip={'Open diffs for all changed files'}
             >
                 <span class="codicon codicon-diff"></span>
                 Multi-file Diff
@@ -626,14 +652,18 @@ function getFileColor(status: string, conflicted?: boolean): string {
                                 }
                             }}
                         >
-                            <span
-                                class="codicon codicon-{getFileIcon(file.status, file.conflicted)} file-icon"
-                                style:color={getFileColor(file.status, file.conflicted)}
-                                title={file.conflicted ? conflictLabel : undefined}
-                                aria-label={file.conflicted ? conflictLabel : undefined}
-                            ></span>
-                            <span class="file-path-container" title={file.path}>
-                                {#if dir}<span class="file-dir">{dir}</span>{/if}<span class="file-name" style:color={file.conflicted ? 'var(--vscode-gitDecoration-conflictingResourceForeground, #e51400)' : undefined}>{name}</span>
+                            {#if fileIcon}
+                                {@render fileIcon(name)}
+                            {:else}
+                                <span class="codicon codicon-file file-icon" aria-hidden="true"></span>
+                            {/if}
+                            <span class="file-path-container" use:tooltip={file.path}>
+                                <FileLabel
+                                    fileName={name}
+                                    dirName={dir}
+                                    deleted={file.status === 'deleted'}
+                                    conflicted={file.conflicted}
+                                />
                             </span>
                             <span class="file-meta-group">
                                 {#if file.additions !== undefined || file.deletions !== undefined}
@@ -646,11 +676,13 @@ function getFileColor(status: string, conflicted?: boolean): string {
                                         {/if}
                                     </span>
                                 {/if}
-                                {#if file.conflicted}
-                                    <span class="file-status-badge status-conflicted" title={conflictLabel}>{file.conflictSides ? `${file.conflictSides}-way conflict` : 'conflicted'}</span>
-                                {:else}
-                                    <span class="file-status-badge status-{file.status}">{file.status}</span>
-                                {/if}
+                                <span
+                                    class="file-status-badge codicon codicon-{getFileIcon(file.status, file.conflicted)}"
+                                    role="img"
+                                    style:color={getFileColor(file.status, file.conflicted)}
+                                    use:tooltip={file.conflicted ? conflictLabel : file.status}
+                                    aria-label={file.conflicted ? conflictLabel : file.status.charAt(0).toUpperCase() + file.status.slice(1)}
+                                ></span>
                             </span>
                         </button>
                     {/each}
@@ -733,20 +765,11 @@ function getFileColor(status: string, conflicted?: boolean): string {
         font-weight: normal;
     }
 
-    :global(.badge-immutable) {
-        border: 1px solid color-mix(in srgb, var(--vscode-gitDecoration-untrackedResourceForeground), transparent 40%) !important;
-        background-color: color-mix(in srgb, var(--vscode-gitDecoration-untrackedResourceForeground), transparent 88%) !important;
-        color: var(--vscode-gitDecoration-untrackedResourceForeground) !important;
-        text-transform: uppercase;
-        font-weight: 700;
-    }
-
     :global(.badge-empty) {
-        border: 1px solid color-mix(in srgb, var(--vscode-gitDecoration-ignoredResourceForeground), transparent 40%) !important;
-        background-color: color-mix(in srgb, var(--vscode-gitDecoration-ignoredResourceForeground), transparent 88%) !important;
-        color: var(--vscode-gitDecoration-ignoredResourceForeground) !important;
-        text-transform: uppercase;
-        font-weight: 700;
+        border: 1px solid var(--vscode-jjView-empty-background, color-mix(in srgb, var(--vscode-gitDecoration-ignoredResourceForeground), transparent 40%)) !important;
+        background-color: var(--vscode-jjView-empty-background, color-mix(in srgb, var(--vscode-gitDecoration-ignoredResourceForeground), transparent 88%)) !important;
+        color: var(--vscode-jjView-empty-foreground, var(--vscode-gitDecoration-ignoredResourceForeground)) !important;
+        font-weight: normal;
     }
 
     :global(.badge-conflicted) {
@@ -909,7 +932,8 @@ function getFileColor(status: string, conflicted?: boolean): string {
         background-color: var(--vscode-button-hoverBackground);
     }
 
-    .primary-button:disabled {
+    .primary-button:disabled,
+    .secondary-button:disabled {
         opacity: 0.6;
         cursor: default;
     }
@@ -938,7 +962,7 @@ function getFileColor(status: string, conflicted?: boolean): string {
         transition: background-color 0.15s;
     }
 
-    .secondary-button:hover {
+    .secondary-button:hover:not(:disabled) {
         background-color: var(--vscode-button-secondaryHoverBackground);
     }
 
@@ -970,17 +994,16 @@ function getFileColor(status: string, conflicted?: boolean): string {
         display: flex;
         background-color: var(--vscode-input-background);
         border: 1px solid var(--vscode-input-border, color-mix(in srgb, var(--vscode-editor-foreground), transparent 82%));
-        border-radius: 8px;
+        border-radius: 14px;
         font-family: var(--vscode-editor-font-family), monospace;
         font-size: var(--vscode-editor-font-size, 13px);
         line-height: 1.5em;
         overflow: hidden;
-        transition: border-color 0.15s, box-shadow 0.15s;
+        transition: border-color 0.15s;
     }
 
     .editor-wrapper:focus-within {
         border-color: var(--vscode-focusBorder, #007fd4);
-        box-shadow: 0 0 0 1px var(--vscode-focusBorder, #007fd4);
     }
 
     .editor-wrapper.is-immutable {
@@ -1093,6 +1116,24 @@ function getFileColor(status: string, conflicted?: boolean): string {
         font-family: var(--vscode-editor-font-family), monospace;
     }
 
+    .count-badge {
+        background-color: var(--vscode-badge-background);
+        color: var(--vscode-badge-foreground);
+        border-radius: 11px;
+        padding: 0 6px;
+        font-size: 11px;
+        font-weight: 600;
+        min-width: 18px;
+        height: 18px;
+        line-height: 18px;
+        text-align: center;
+        user-select: none;
+        box-sizing: border-box;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
     .stat-pill {
         display: inline-flex;
         align-items: center;
@@ -1126,15 +1167,16 @@ function getFileColor(status: string, conflicted?: boolean): string {
     .files-items {
         display: flex;
         flex-direction: column;
-        gap: 2px;
+        gap: 0;
     }
 
     .file-row {
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 6px;
         width: 100%;
-        padding: 5px 8px;
+        height: 22px;
+        padding: 0 8px;
         border-radius: 4px;
         border: none;
         background: transparent;
@@ -1160,7 +1202,7 @@ function getFileColor(status: string, conflicted?: boolean): string {
     }
 
     .file-icon {
-        font-size: 15px;
+        font-size: 16px;
         width: 16px;
         height: 16px;
         display: inline-flex;
@@ -1177,16 +1219,6 @@ function getFileColor(status: string, conflicted?: boolean): string {
         white-space: nowrap;
         display: flex;
         align-items: baseline;
-    }
-
-    .file-dir {
-        color: var(--vscode-descriptionForeground);
-        font-size: 12px;
-    }
-
-    .file-name {
-        color: var(--vscode-foreground);
-        font-weight: 500;
     }
 
     .file-meta-group {
@@ -1209,43 +1241,12 @@ function getFileColor(status: string, conflicted?: boolean): string {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        white-space: nowrap;
-        font-size: 10px;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        padding: 1px 6px;
-        border-radius: 10px;
-        line-height: 14px;
+        width: 16px;
+        height: 16px;
+        font-size: 14px;
+        line-height: 1;
         user-select: none;
     }
-
-    .file-status-badge.status-conflicted {
-        color: var(--vscode-gitDecoration-conflictingResourceForeground, #e51400);
-        background: color-mix(in srgb, var(--vscode-gitDecoration-conflictingResourceForeground, #e51400) 12%, transparent);
-    }
-
-    .file-status-badge.status-added,
-    .file-status-badge.status-copied {
-        color: var(--vscode-gitDecoration-addedResourceForeground, #23d18b);
-        background: color-mix(in srgb, var(--vscode-gitDecoration-addedResourceForeground, #23d18b) 12%, transparent);
-    }
-
-    .file-status-badge.status-modified {
-        color: var(--vscode-gitDecoration-modifiedResourceForeground, #e2c08d);
-        background: color-mix(in srgb, var(--vscode-gitDecoration-modifiedResourceForeground, #e2c08d) 12%, transparent);
-    }
-
-    .file-status-badge.status-deleted {
-        color: var(--vscode-gitDecoration-deletedResourceForeground, #f14c4c);
-        background: color-mix(in srgb, var(--vscode-gitDecoration-deletedResourceForeground, #f14c4c) 12%, transparent);
-    }
-
-    .file-status-badge.status-renamed {
-        color: var(--vscode-gitDecoration-renamedResourceForeground, #73c991);
-        background: color-mix(in srgb, var(--vscode-gitDecoration-renamedResourceForeground, #73c991) 12%, transparent);
-    }
-
 
     .no-files-message {
         display: flex;

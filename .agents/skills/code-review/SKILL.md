@@ -173,6 +173,7 @@ categories:
     assertions (`await expect(locator).toBeVisible()`,
     `await expect(locator).toHaveCount(0)`) instead of
     `page.waitForTimeout(...)`.
+-   **Disambiguate Labels from Hidden Tooltips**: Scope text assertions to the visible label or use exact matching; broad `getByText` queries can also match hidden tooltip copies of that text.
 -   **Deterministic Frame Capture**: Avoid wall-clock CSS transitions on virtual
     cursor overlays during frame-by-frame screenshot recording
     (`recordInteractionFlow`) so `page.screenshot()` captures exact

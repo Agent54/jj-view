@@ -23,6 +23,7 @@ import CommitNode from './CommitNode.svelte';
 import GraphRail from './GraphRail.svelte';
 
 interface Props {
+    onGenerateDescription?: (commit: JjLogEntry) => Promise<void>;
     commits: JjLogEntry[];
     onAction: (action: string, payload: ActionPayload) => void;
     selectedCommitIds?: Set<string>;
@@ -35,6 +36,7 @@ interface Props {
 }
 
 let {
+    onGenerateDescription,
     commits,
     onAction,
     selectedCommitIds = new Set(),
@@ -47,6 +49,15 @@ let {
 }: Props = $props();
 
 let fontSize = $state(13);
+let hoveredCommitId = $state<string>();
+let now = $state(Date.now());
+$effect(() => {
+    const timer = setInterval(() => {
+        now = Date.now();
+    }, 60_000);
+    return () => clearInterval(timer);
+});
+
 $effect(() => {
     if (typeof document !== 'undefined') {
         const size = parseInt(getComputedStyle(document.body).fontSize, 10);
@@ -115,8 +126,8 @@ const graphAreaWidth = $derived(computeGraphAreaWidth(layout.width, LANE_WIDTH, 
         height={rowOffsetsData.totalHeight}
         rowOffsets={rowOffsetsData.rowOffsets}
         rows={displayRows}
-        selectedNodes={selectedCommitIds}
         highlightedNodeId={highlightedCommitId}
+        hoveredNodeId={hoveredCommitId}
     />
 
     <!-- Commit List (Text) -->
@@ -129,6 +140,7 @@ const graphAreaWidth = $derived(computeGraphAreaWidth(layout.width, LANE_WIDTH, 
                 <div
                     role="presentation"
                     class="elision-row"
+                    style:height={`${ROW_HEIGHT_ELISION}px`}
                     style:padding-left={`${paddingLeft}px`}
                 >
                     {#if !isLastRow}
@@ -144,10 +156,11 @@ const graphAreaWidth = $derived(computeGraphAreaWidth(layout.width, LANE_WIDTH, 
                     role="presentation"
                     class="commit-row-container"
                     style:height={`${height}px`}
-                    style:padding-left={`${paddingLeft}px`}
                 >
                     <CommitNode
                         commit={row}
+                        {now}
+                        {onGenerateDescription}
                         onClick={(modifiers) =>
                             onAction('select', {
                                 changeId: row.change_id,
@@ -160,12 +173,14 @@ const graphAreaWidth = $derived(computeGraphAreaWidth(layout.width, LANE_WIDTH, 
                         {onAction}
                         {isSelected}
                         {isHighlighted}
+                        onHoverChange={(hovered) => (hoveredCommitId = hovered ? row.change_id : undefined)}
                         selectionCount={selectedCommitIds.size}
                         hasImmutableSelection={hasImmutable}
                         idDisplayLength={maxShortestIdLength}
                         {hiddenActions}
                         {dragManager}
                         descendantCount={descendantCounts.get(row.change_id) ?? 0}
+                        graphPaddingLeft={paddingLeft}
                     />
                 </div>
             {/if}
@@ -175,8 +190,14 @@ const graphAreaWidth = $derived(computeGraphAreaWidth(layout.width, LANE_WIDTH, 
 
 <style>
     .commit-graph {
+        --vscode-jjView-commit-activeForeground: var(--vscode-jjView-commitDescription-foreground, var(--vscode-list-activeSelectionForeground));
+        --vscode-jjView-commit-inactiveForeground: color-mix(in srgb, var(--vscode-jjView-commitDescription-foreground, var(--vscode-foreground)) 80%, var(--vscode-sideBar-background));
+        --vscode-jjView-commit-immutableForeground: color-mix(in srgb, var(--vscode-jjView-commit-inactiveForeground) 75%, var(--vscode-sideBar-background));
+        --vscode-jjView-commit-hoverForeground: color-mix(in srgb, var(--vscode-jjView-commit-inactiveForeground), var(--vscode-jjView-commit-activeForeground));
         position: relative;
         padding-bottom: 20px;
+        user-select: none;
+        -webkit-user-select: none;
     }
 
     .commit-list {
@@ -185,7 +206,6 @@ const graphAreaWidth = $derived(computeGraphAreaWidth(layout.width, LANE_WIDTH, 
     }
 
     .elision-row {
-        height: 10px;
         display: flex;
         align-items: center;
     }

@@ -103,11 +103,11 @@ export function fromUnicodeSansRegular(text: string): string {
 export const DIVIDER = '────────────────';
 
 /**
- * Formats a rich, multi-line native title tooltip for a JJ commit revision.
+ * Formats the metadata in a rich, multi-line tooltip for a JJ commit revision.
  * Uses small caps labels, Mathematical Sans-Serif bold shortest change ID prefix,
- * Mathematical Sans-Serif regular hashes, relative timestamps, and short divider.
+ * Mathematical Sans-Serif regular hashes and relative timestamps.
  */
-export function formatCommitTooltip(commit: JjLogEntry): string {
+export function formatCommitTooltipMetadata(commit: JjLogEntry): string {
     const lines: string[] = [];
     const HASH_DISPLAY_LENGTH = 10;
 
@@ -136,6 +136,10 @@ export function formatCommitTooltip(commit: JjLogEntry): string {
         lines.push(`ᴅᴀᴛᴇ: ${relTime} (${fullTime})`);
     }
 
+    if (commit.is_empty) {
+        lines.push('Empty commit');
+    }
+
     // Bookmarks, Tags, Working Copies
     if (commit.bookmarks && commit.bookmarks.length > 0) {
         const bms = commit.bookmarks.map((b) => (b.remote ? `${b.name}@${b.remote}` : b.name)).join(', ');
@@ -148,12 +152,16 @@ export function formatCommitTooltip(commit: JjLogEntry): string {
         lines.push(`ᴡᴏʀᴋsᴘᴀᴄᴇs: ${commit.working_copies.join(', ')}`);
     }
 
-    // Divider
-    lines.push(DIVIDER);
+    return lines.join('\n');
+}
 
-    // Description
-    const desc = commit.description.trim() || '(no description)';
-    lines.push(desc);
+export function formatCommitTooltip(commit: JjLogEntry): string {
+    const lines = [formatCommitTooltipMetadata(commit)];
+    const desc = commit.description.trim();
+    if (desc) {
+        // Divider and description
+        lines.push(DIVIDER, desc);
+    }
 
     return lines.join('\n');
 }

@@ -135,7 +135,22 @@ async function main() {
         banner: webBanner,
     });
 
-    const webContexts = [standaloneAppCtx, preloadCtx];
+    // The worker runs from a classic Blob URL, so its lazy WASM import must
+    // be bundled too: relative imports cannot resolve against a Blob URL.
+    const pierreWorkerCtx = await esbuild.context({
+        entryPoints: ['web/node_modules/@pierre/diffs/dist/worker/worker-portable.js'],
+        bundle: true,
+        format: 'iife',
+        minify: production,
+        sourcemap: !production,
+        sourcesContent: false,
+        platform: 'browser',
+        outfile: 'web/dist/pierre-worker.js',
+        logLevel: 'silent',
+        plugins: [esbuildProblemMatcherPlugin],
+    });
+
+    const webContexts = [standaloneAppCtx, preloadCtx, pierreWorkerCtx];
 
     if (webOnly) {
         if (watch) {
@@ -242,10 +257,6 @@ async function copyAssets() {
         {
             src: 'media/custom-icons/jj-view-icons.woff2',
             dest: 'web/dist/custom-icons/jj-view-icons.woff2',
-        },
-        {
-            src: 'web/node_modules/@pierre/diffs/dist/worker/worker-portable.js',
-            dest: 'web/dist/pierre-worker.js',
         },
     ];
 
@@ -357,8 +368,15 @@ async function generateVersion() {
     });
 }
 
+async function generateThemes() {
+    execFileSync(process.execPath, [path.join(__dirname, 'tooling/generate-themes.ts')], {
+        stdio: 'inherit',
+    });
+}
+
 // Run prerequisite tasks before main build
 Promise.all([
+    generateThemes(),
     generateSettingsSchema(),
     generateVersion(),
     buildIcons(),

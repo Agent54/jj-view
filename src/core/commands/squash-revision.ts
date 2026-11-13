@@ -113,7 +113,24 @@ export async function squashRevisionIntoParentCommand(
             return;
         }
 
-        await performSquashRevision(ctx, revision, targetParent, sourceEntry.description);
+        const destination = await performSquashRevision(ctx, revision, targetParent, sourceEntry.description);
+        if (sourceEntry.is_current_working_copy && sourceEntry.is_empty && destination?.is_empty) {
+            // JJ replaces a squashed working copy with a fresh empty change. For
+            // two empty changes, finish on the destination instead of recreating
+            // the extra row. Only leave the empty replacement created here.
+            const [workingCopy] = await ctx.repo.jj.getLog({ revision: '@', omitChanges: true });
+            if (
+                workingCopy?.is_empty &&
+                workingCopy.change_id !== sourceEntry.change_id &&
+                !workingCopy.description.trim() &&
+                !workingCopy.bookmarks?.length &&
+                !workingCopy.tags?.length &&
+                workingCopy.parents?.length === 1 &&
+                workingCopy.parents[0].change_id === destination.change_id
+            ) {
+                await ctx.repo.jj.edit(destination.change_id);
+            }
+        }
         await ctx.repo.refresh({ reason: 'after squash revision into parent' });
     } catch (e: unknown) {
         await showJjError(ctx.host.ui, e, 'Error squashing revision into parent', ctx.repo.jj, ctx.log);
@@ -162,14 +179,31 @@ async function performSquashRevision(
     const parentDescription = parentEntry.description || '';
     const hasParentDesc = parentDescription.trim().length > 0;
 
-    if (hasSourceDesc && hasParentDesc) {
+    if (hasSourceDesc && hasParentDesc && ctx.host.config.get<boolean>('commit.editDescriptionOnSquash', false)) {
         await openSquashDescriptionEditor(ctx, revision, sourceDescription || '', intoRevision, parentDescription);
         return;
     }
 
     await ctx.host.ui.withProgress('Squashing revision...', () =>
-        ctx.repo.jj.squashRevision({ revision, intoRevision }),
+        ctx.repo.jj.squashRevision({
+            revision,
+            intoRevision,
+            message: combineSquashDescriptions(parentDescription, sourceDescription || ''),
+        }),
     );
+    return parentEntry;
+}
+
+function combineSquashDescriptions(parentDescription: string, sourceDescription: string): string {
+    const descriptions = [parentDescription, sourceDescription].map((description) => {
+        const [title, ...body] = description.trim().split(/\r?\n/);
+        return { title: title.trim(), body: body.join('\n').trim() };
+    });
+    const title = descriptions
+        .map((description) => description.title)
+        .filter(Boolean)
+        .join(', ');
+    return [title, ...descriptions.map((description) => description.body)].filter(Boolean).join('\n\n');
 }
 
 async function openSquashDescriptionEditor(
@@ -179,7 +213,7 @@ async function openSquashDescriptionEditor(
     parentRev: string,
     parentDesc: string,
 ) {
-    const combined = `${parentDesc.trim()}\n\n${sourceDesc.trim()}`;
+    const combined = combineSquashDescriptions(parentDesc, sourceDesc);
     const hostFs = ctx.host.system?.fs;
     if (!hostFs) {
         throw new Error('Host filesystem not available');

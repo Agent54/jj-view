@@ -194,6 +194,17 @@ export function extractBookmarkName(args: unknown[]): string | undefined {
     return undefined;
 }
 
+export function extractTagName(args: unknown[]): string | undefined {
+    const firstArg = args[0];
+    if (typeof firstArg === 'string') {
+        return firstArg.trim() || undefined;
+    }
+    if (typeof firstArg === 'object' && firstArg !== null && 'tagName' in firstArg) {
+        return typeof firstArg.tagName === 'string' ? firstArg.tagName.trim() || undefined : undefined;
+    }
+    return undefined;
+}
+
 export interface ScmResourceGroup {
     id: string;
     label?: string;

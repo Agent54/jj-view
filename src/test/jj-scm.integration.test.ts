@@ -577,6 +577,7 @@ suite('JJ SCM Provider Integration Test', () => {
     });
 
     test('Squash opens editor only when conditions are met', async () => {
+        stubConfig(sandbox, { 'commit.editDescriptionOnSquash': true });
         // Condition 1: Full squash + Both descriptions -> Opens Editor
         await buildGraph(repo, [
             {

@@ -569,6 +569,28 @@ export class JjService {
         return this._parseJsonLines(output, JjBookmarkSchema, 'getBookmarks');
     }
 
+    async createTag(name: string, toRevision: string): Promise<string> {
+        return this.run('tag', ['set', '-r', toRevision, '--', name], {
+            isMutation: true,
+            label: 'createTag',
+        });
+    }
+
+    async getTagNames(): Promise<string[]> {
+        const output = await this.run('tag', ['list', '-T', 'name ++ "\\n"'], {
+            useCachedSnapshot: true,
+            label: 'getTagNames',
+        });
+        return output.split('\n').filter((name) => name.length > 0);
+    }
+
+    async deleteTag(name: string): Promise<string> {
+        return this.run('tag', ['delete', '--', name], {
+            isMutation: true,
+            label: 'deleteTag',
+        });
+    }
+
     async moveBookmark(name: string, toRevision: string): Promise<string> {
         return this.run('bookmark', ['set', name, '-r', toRevision, '--allow-backwards'], {
             isMutation: true,
@@ -615,6 +637,7 @@ export class JjService {
             bookmarks: entry.bookmarks.map((b) => ({ ...b })),
             tags: entry.tags ? [...entry.tags] : undefined,
             working_copies: entry.working_copies ? [...entry.working_copies] : undefined,
+            working_copy_details: entry.working_copy_details?.map((workspace) => ({ ...workspace })),
             nearest_visible_ancestors: entry.nearest_visible_ancestors
                 ? [...entry.nearest_visible_ancestors]
                 : undefined,
@@ -1223,7 +1246,7 @@ export class JjService {
         if (useDestinationMessage) {
             args.push('-u');
         }
-        if (message) {
+        if (message !== undefined) {
             args.push('-m', message);
         }
         if (relativePaths.length > 0) {
@@ -1565,6 +1588,46 @@ export class JjService {
         await this.run('status', [], { useCachedSnapshot: false, label: 'snapshot' });
     }
 
+    /** Snapshot each registered workspace before readers inspect the shared operation heads. */
+    async snapshotWorkingCopies(): Promise<void> {
+        const currentRoot = await this.system.fs.realpath(await this.getRepoRoot());
+        const workspaces = await this.getWorkspaces().catch((err: unknown) => {
+            this.logger.warn(`Unable to list workspaces for snapshot: ${getErrorMessage(err)}`);
+            return [];
+        });
+        const visited = new Set([currentRoot]);
+        // Serialize snapshots: all workspaces write to the same operation store.
+        for (const workspace of workspaces) {
+            try {
+                if (path.normalize(workspace.path) === path.normalize(currentRoot)) {
+                    continue;
+                }
+                await this.system.addAllowedRoot?.(workspace.path);
+                const root = await this.system.fs.realpath(workspace.path);
+                if (visited.has(root)) {
+                    continue;
+                }
+                visited.add(root);
+                // A removed workspace's directory may still exist inside another repo.
+                // Do not let jj search its parents and snapshot the wrong checkout.
+                if (!(await this.system.fs.exists(path.join(root, '.jj', 'working_copy', 'type')))) {
+                    this.logger.warn(`Skipping workspace "${workspace.name}": no working copy at ${root}`);
+                    continue;
+                }
+                await this.run('status', [], {
+                    cwd: root,
+                    useCachedSnapshot: false,
+                    label: `snapshot:${workspace.name}`,
+                });
+            } catch (err: unknown) {
+                this.logger.warn(`Unable to snapshot workspace "${workspace.name}": ${getErrorMessage(err)}`);
+            }
+        }
+        // Other workspaces may rewrite an ancestor of this checkout. Refresh it
+        // last so its files are up to date as well as its recorded commit.
+        await this.snapshotWorkingCopy();
+    }
+
     /**
      * Returns the current operation head IDs, sorted. Reads the op heads store
      * directly (a single directory listing) rather than spawning `jj`, so it is
@@ -1725,6 +1788,10 @@ export class JjService {
 
     async showDetails(revision: string): Promise<string> {
         return this.run('show', ['-r', revision, '--stat', '--color', 'always'], { useCachedSnapshot: true });
+    }
+
+    async getRevisionDiff(revision: string): Promise<string> {
+        return this.run('diff', ['--git', '-r', revision], { useCachedSnapshot: true });
     }
 
     async getDiff(revision: string, file: string): Promise<string> {

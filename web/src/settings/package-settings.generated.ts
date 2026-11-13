@@ -174,6 +174,7 @@ export const PACKAGE_SETTINGS: readonly SettingDefinition[] = [
             'neon',
             'pastel',
             'monochrome',
+            'silver',
             'nord',
             'dracula',
             'forest',
@@ -215,6 +216,15 @@ export const PACKAGE_SETTINGS: readonly SettingDefinition[] = [
         key: 'commit.formatDescriptionOnSave',
         title: 'Commit Format Description On Save',
         description: 'Automatically format and wrap the commit description body when saving.',
+        category: 'Commit Editor',
+        type: 'boolean',
+        default: false,
+    },
+    {
+        key: 'commit.editDescriptionOnSquash',
+        title: 'Commit Edit Description On Squash',
+        description:
+            'Edit the combined description before squashing when both commits have descriptions. When disabled, squash immediately, joining titles with commas and bodies with blank lines.',
         category: 'Commit Editor',
         type: 'boolean',
         default: false,

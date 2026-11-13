@@ -36,3 +36,9 @@ export interface ResolvedMenuItemGroup {
     readonly groupName: string;
     readonly items: readonly ResolvedMenuItem[];
 }
+export interface ContextMenuPointerGesture {
+    pointerId: number;
+    button: number;
+    x: number;
+    y: number;
+}

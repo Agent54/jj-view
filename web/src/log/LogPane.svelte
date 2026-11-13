@@ -3,6 +3,7 @@
   SPDX-License-Identifier: Apache-2.0
 -->
 <script lang="ts">
+import type { JjLogEntry } from '../../../src/core/jj-types';
 import LogApp from '../../../src/core/webview/log/LogApp.svelte';
 import { initBridge } from '../../../src/core/webview/transport/bridge.svelte';
 import type { WebviewTransport } from '../../../src/core/webview/transport/types';
@@ -11,6 +12,7 @@ import type { MenuRegistry } from '../menu/menu-registry';
 import type { ResolvedMenuItem } from '../menu/menu-types';
 
 interface Props {
+    onGenerateDescription?: (commit: JjLogEntry) => Promise<void>;
     transport: WebviewTransport;
     menuRegistry?: MenuRegistry;
     rootContext?: IContextKeyService;
@@ -24,6 +26,7 @@ interface Props {
 }
 
 let {
+    onGenerateDescription,
     transport,
     menuRegistry,
     rootContext,
@@ -169,7 +172,7 @@ function handleHeaderClick(e: MouseEvent): void {
     </header>
 
     <div class="log-content" data-testid="log-content" bind:this={logContentEl}>
-        <LogApp />
+        <LogApp {onGenerateDescription} />
     </div>
 </div>
 
@@ -296,12 +299,11 @@ function handleHeaderClick(e: MouseEvent): void {
 
 :global(.log-content .commit-id) {
     font-family: var(--vscode-editor-font-family, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace) !important;
-    font-size: 12px !important;
+    font-size: var(--vscode-editor-font-size, 12px) !important;
 }
 
 :global(.log-content .commit-desc) {
     font-family: var(--vscode-font-family, -apple-system, BlinkMacSystemFont, 'Segoe WPC', 'Segoe UI', system-ui, 'Ubuntu', 'Droid Sans', sans-serif);
     font-size: var(--vscode-font-size, 13px);
-    color: var(--vscode-foreground, #d4d4d4);
 }
 </style>

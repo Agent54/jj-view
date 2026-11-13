@@ -65,7 +65,7 @@ describe('file-icons', () => {
         const svelte = getFileIcon('App.svelte');
         expect(svelte.type).toBe('svg');
         expect(svelte.color).toBe('#cc3e44');
-        expect(svelte.svg).toContain('viewBox="0 0 32 32"');
+        expect(svelte.svg).toContain('viewBox="7 6 18 20"');
     });
 
     it('resolves Go file icons', () => {

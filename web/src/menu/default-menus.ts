@@ -219,9 +219,21 @@ export const DEFAULT_PACKAGE_JSON_CONTRIBUTES: PackageJsonContributes = {
         },
         {
             command: 'jj-view.setBookmark',
-            title: 'Set Bookmark',
+            title: 'Create Bookmark...',
             category: 'JJ View',
             icon: '$(bookmark)',
+        },
+        {
+            command: 'jj-view.createTag',
+            title: 'Create Tag...',
+            category: 'JJ View',
+            icon: '$(tag)',
+        },
+        {
+            command: 'jj-view.copyChangeId',
+            title: 'Copy Change ID',
+            category: 'JJ View',
+            icon: '$(copy)',
         },
         {
             command: 'jj-view.advanceBookmark',
@@ -256,6 +268,12 @@ export const DEFAULT_PACKAGE_JSON_CONTRIBUTES: PackageJsonContributes = {
         {
             command: 'jj-view.deleteBookmark',
             title: 'Delete Bookmark',
+            category: 'JJ View',
+            icon: '$(trash)',
+        },
+        {
+            command: 'jj-view.deleteTag',
+            title: 'Delete Tag',
             category: 'JJ View',
             icon: '$(trash)',
         },
@@ -337,11 +355,6 @@ export const DEFAULT_PACKAGE_JSON_CONTRIBUTES: PackageJsonContributes = {
             category: 'JJ View',
         },
         {
-            command: 'jj-view.hideCommitAction.abandon',
-            title: "Hide 'Abandon'",
-            category: 'JJ View',
-        },
-        {
             command: 'jj-view.toggleCommitAction.newChild.on',
             title: '● New Child',
             category: 'JJ View',
@@ -369,16 +382,6 @@ export const DEFAULT_PACKAGE_JSON_CONTRIBUTES: PackageJsonContributes = {
         {
             command: 'jj-view.toggleCommitAction.squash.off',
             title: '○ Squash',
-            category: 'JJ View',
-        },
-        {
-            command: 'jj-view.toggleCommitAction.abandon.on',
-            title: '● Abandon',
-            category: 'JJ View',
-        },
-        {
-            command: 'jj-view.toggleCommitAction.abandon.off',
-            title: '○ Abandon',
             category: 'JJ View',
         },
         {
@@ -544,10 +547,6 @@ export const DEFAULT_PACKAGE_JSON_CONTRIBUTES: PackageJsonContributes = {
                 when: 'false',
             },
             {
-                command: 'jj-view.hideCommitAction.abandon',
-                when: 'false',
-            },
-            {
                 command: 'jj-view.toggleCommitAction.newChild.on',
                 when: 'false',
             },
@@ -569,14 +568,6 @@ export const DEFAULT_PACKAGE_JSON_CONTRIBUTES: PackageJsonContributes = {
             },
             {
                 command: 'jj-view.toggleCommitAction.squash.off',
-                when: 'false',
-            },
-            {
-                command: 'jj-view.toggleCommitAction.abandon.on',
-                when: 'false',
-            },
-            {
-                command: 'jj-view.toggleCommitAction.abandon.off',
                 when: 'false',
             },
             {
@@ -687,7 +678,7 @@ export const DEFAULT_PACKAGE_JSON_CONTRIBUTES: PackageJsonContributes = {
             },
             {
                 command: 'jj-view.edit',
-                group: 'inline@6',
+                group: '2_edit',
                 when: 'scmResourceGroupState =~ /\\bjj\\.group\\.allowEdit\\b/',
             },
         ],
@@ -771,7 +762,7 @@ export const DEFAULT_PACKAGE_JSON_CONTRIBUTES: PackageJsonContributes = {
             },
             {
                 command: 'jj-view.edit',
-                when: "webviewSection == 'commit' && jj.canEdit",
+                when: "(webviewSection == 'commit' || webviewSection == 'commitAction' || webviewSection == 'commitActions') && jj.canEdit",
                 group: '2_edit@4',
             },
             {
@@ -815,6 +806,16 @@ export const DEFAULT_PACKAGE_JSON_CONTRIBUTES: PackageJsonContributes = {
                 group: '3_bookmark@1',
             },
             {
+                command: 'jj-view.createTag',
+                when: "webviewSection == 'commit'",
+                group: '3_bookmark@1.1',
+            },
+            {
+                command: 'jj-view.copyChangeId',
+                when: "webviewSection == 'commit'",
+                group: '6_copy@1',
+            },
+            {
                 command: 'jj-view.advanceBookmark',
                 when: "webviewSection == 'commit'",
                 group: '3_bookmark@1.5',
@@ -830,23 +831,18 @@ export const DEFAULT_PACKAGE_JSON_CONTRIBUTES: PackageJsonContributes = {
                 group: '3_bookmark@2',
             },
             {
+                command: 'jj-view.deleteTag',
+                when: "webviewSection == 'jj.tag'",
+                group: '3_bookmark@2',
+            },
+            {
                 command: 'jj-view.hideCommitAction.newChild',
                 when: "webviewSection == 'commitAction' && jj.actionId == 'newChild' && jj.newChildVisible",
                 group: '9_visibility_1_hide',
             },
             {
-                command: 'jj-view.hideCommitAction.edit',
-                when: "webviewSection == 'commitAction' && jj.actionId == 'edit' && jj.editVisible",
-                group: '9_visibility_1_hide',
-            },
-            {
                 command: 'jj-view.hideCommitAction.squash',
                 when: "webviewSection == 'commitAction' && jj.actionId == 'squash' && jj.squashVisible",
-                group: '9_visibility_1_hide',
-            },
-            {
-                command: 'jj-view.hideCommitAction.abandon',
-                when: "webviewSection == 'commitAction' && jj.actionId == 'abandon' && jj.abandonVisible",
                 group: '9_visibility_1_hide',
             },
             {
@@ -860,16 +856,6 @@ export const DEFAULT_PACKAGE_JSON_CONTRIBUTES: PackageJsonContributes = {
                 group: '9_visibility_2_toggle@1',
             },
             {
-                command: 'jj-view.toggleCommitAction.edit.on',
-                when: "(webviewSection == 'commitAction' || webviewSection == 'commitActions') && jj.commitActionVisible.edit",
-                group: '9_visibility_2_toggle@2',
-            },
-            {
-                command: 'jj-view.toggleCommitAction.edit.off',
-                when: "(webviewSection == 'commitAction' || webviewSection == 'commitActions') && !jj.commitActionVisible.edit",
-                group: '9_visibility_2_toggle@2',
-            },
-            {
                 command: 'jj-view.toggleCommitAction.squash.on',
                 when: "(webviewSection == 'commitAction' || webviewSection == 'commitActions') && jj.commitActionVisible.squash",
                 group: '9_visibility_2_toggle@3',
@@ -879,18 +865,13 @@ export const DEFAULT_PACKAGE_JSON_CONTRIBUTES: PackageJsonContributes = {
                 when: "(webviewSection == 'commitAction' || webviewSection == 'commitActions') && !jj.commitActionVisible.squash",
                 group: '9_visibility_2_toggle@3',
             },
-            {
-                command: 'jj-view.toggleCommitAction.abandon.on',
-                when: "(webviewSection == 'commitAction' || webviewSection == 'commitActions') && jj.commitActionVisible.abandon",
-                group: '9_visibility_2_toggle@4',
-            },
-            {
-                command: 'jj-view.toggleCommitAction.abandon.off',
-                when: "(webviewSection == 'commitAction' || webviewSection == 'commitActions') && !jj.commitActionVisible.abandon",
-                group: '9_visibility_2_toggle@4',
-            },
         ],
         'editor/title/context': [
+            {
+                command: 'jj-view.completeSquashRevision',
+                when: "resourceFilename == 'SQUASH_MSG'",
+                group: '0_squash@1',
+            },
             {
                 command: 'workbench.action.closeActiveEditor',
                 group: '1_close@1',
@@ -924,6 +905,11 @@ export const DEFAULT_PACKAGE_JSON_CONTRIBUTES: PackageJsonContributes = {
             },
         ],
         'editor/context': [
+            {
+                command: 'jj-view.completeSquashRevision',
+                when: "resourceFilename == 'SQUASH_MSG'",
+                group: '0_squash@1',
+            },
             {
                 command: 'jj-view.addSelectionToChat',
                 group: 'jj-view@0',

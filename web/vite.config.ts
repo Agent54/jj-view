@@ -40,8 +40,9 @@ const htmlDevTransformPlugin: Plugin = {
         const injectedConfig = `<script>window.__JJ_VIEW_CONFIG__ = { port: ${backendPort} };</script>`;
         return html
             .replace('<link rel="stylesheet" href="/dist/app.css">', '')
+            .replace('<script src="/preload.js"></script>', '<script src="/dist/preload.js"></script>')
             .replace(
-                '<script src="/dist/app.js"></script>',
+                '<script type="module" src="/dist/app.js"></script>',
                 `${injectedConfig}\n    <script type="module" src="/src/main.ts"></script>`,
             );
     },
@@ -121,9 +122,18 @@ export default defineConfig({
             allow: [rootDir],
         },
         proxy: {
+            '/_sidecar': {
+                target: `http://127.0.0.1:${backendPort}`,
+                changeOrigin: true,
+            },
             '/api': {
                 target: `http://127.0.0.1:${backendPort}`,
                 changeOrigin: true,
+            },
+            '/ws': {
+                target: `http://127.0.0.1:${backendPort}`,
+                changeOrigin: true,
+                ws: true,
             },
         },
     },

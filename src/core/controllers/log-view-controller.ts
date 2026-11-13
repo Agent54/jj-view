@@ -239,6 +239,21 @@ export class LogViewController implements Disposable {
                 includeNearestVisibleAncestors: true,
             });
 
+            const undescribedCommits = commits.filter((commit) => !commit.description.trim() && !commit.is_empty);
+            if (undescribedCommits.length > 0) {
+                try {
+                    const changes = await jj.getLog({
+                        revision: undescribedCommits.map((commit) => commit.commit_id).join(' | '),
+                    });
+                    const changesByCommit = new Map(changes.map((commit) => [commit.commit_id, commit.changes]));
+                    for (const commit of undescribedCommits) {
+                        commit.changes = changesByCommit.get(commit.commit_id);
+                    }
+                } catch (error: unknown) {
+                    this._logger?.error('[LogViewController] Failed to fetch file summaries', toError(error));
+                }
+            }
+
             if (this._repo?.rootUri.fsPath !== targetRepoPath || this._disposed) {
                 this._logger?.info?.(
                     `[LogViewController] Repository changed during fetch (was ${targetRepoPath}). Discarding stale log.`,
@@ -665,12 +680,15 @@ export class LogViewController implements Disposable {
                     if (!msg.sourceChangeId || !msg.targetChangeId || msg.sourceChangeId === msg.targetChangeId) {
                         return;
                     }
-                    const options =
-                        msg.mode === 'onto'
-                            ? { ontoRevision: msg.targetChangeId }
-                            : { intoRevision: msg.targetChangeId };
+                    if (msg.mode !== 'onto') {
+                        await this._host.commands.executeCommand('jj-view.squashRevisionIntoAncestor', {
+                            revision: msg.sourceChangeId,
+                            ancestorRevision: msg.targetChangeId,
+                        });
+                        return;
+                    }
                     await this.executeJjMutation('Squashing...', 'Failed to squash', (jj) =>
-                        jj.squashRevision({ revision: msg.sourceChangeId, ...options }),
+                        jj.squashRevision({ revision: msg.sourceChangeId, ontoRevision: msg.targetChangeId }),
                     );
                 },
                 duplicateCommit: async (msg) => {

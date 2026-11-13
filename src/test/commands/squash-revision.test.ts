@@ -75,6 +75,19 @@ describe('squashRevisionIntoParentCommand', () => {
         expect(parentOther).toBe('other modified');
     });
 
+    test('squashing an empty working copy into its empty parent leaves one empty change', async () => {
+        const parent = repo.getChangeId('@');
+        repo.new();
+        const child = repo.getChangeId('@');
+
+        await squashRevisionIntoParentCommand(ctx, { revision: child });
+
+        expect(ctx.host.ui.errorMessages).toHaveLength(0);
+        expect(repo.getChangeId('@')).not.toBe(child);
+        expect(repo.getChangeId('@')).toBe(parent);
+        expect(repo.getDescription('@')).toBe('');
+    });
+
     test('handles multiple parents by prompting user', async () => {
         const fileName = 'p1_file.txt';
 
@@ -114,7 +127,35 @@ describe('squashRevisionIntoParentCommand', () => {
         expect(p1Content).toBe('child modified');
     });
 
-    test('triggers description editor when both have descriptions', async () => {
+    test.each([
+        ['Parent title', 'Child title', 'Parent title, Child title'],
+        [
+            'Parent title\n\nParent body\n\nAnother paragraph',
+            'Child title\n\nChild body',
+            'Parent title, Child title\n\nParent body\n\nAnother paragraph\n\nChild body',
+        ],
+        ['Parent title', 'Child title\n\nChild body', 'Parent title, Child title\n\nChild body'],
+        ['', 'Child title\n\nChild body', 'Child title\n\nChild body'],
+        ['Parent title\n\nParent body', '', 'Parent title\n\nParent body'],
+        ['', '', ''],
+    ])('squashes immediately by default and combines %j with %j', async (parent, child, expected) => {
+        const ids = await buildGraph(repo, [
+            { label: 'parent', description: parent, files: { 'parent.txt': 'parent' } },
+            { label: 'child', parents: ['parent'], description: child, files: { 'child.txt': 'child' } },
+            { label: 'tip', parents: ['child'], isCurrentWorkingCopy: true },
+        ]);
+
+        await squashRevisionIntoParentCommand(ctx, { revision: ids.child.changeId });
+
+        expect(ctx.host.nav.filesOpened).toHaveLength(0);
+        expect(repo.getDescription(ids.parent.changeId)).toBe(expected);
+        expect(repo.getFileContent(ids.parent.changeId, 'child.txt')).toBe('child');
+        expect(repo.getChangeId('@')).toBe(ids.tip.changeId);
+        expect(repo.getParents('@')).toEqual([ids.parent.changeId]);
+    });
+
+    test('triggers description editor when enabled and both have descriptions', async () => {
+        ctx.host.config.set('commit.editDescriptionOnSquash', true);
         const fileName = 'file.txt';
         await buildGraph(repo, [
             { label: 'parent', description: 'Parent Description', files: { [fileName]: 'parent content' } },
@@ -136,9 +177,14 @@ describe('squashRevisionIntoParentCommand', () => {
         expect(fs.existsSync(metaPath)).toBe(true);
         const meta = JSON.parse(fs.readFileSync(metaPath, 'utf-8'));
         expect(meta.revision).toBe('@');
+        expect(fs.readFileSync(path.join(storageDir, 'SQUASH_MSG'), 'utf-8')).toMatch(
+            /^Parent Description, Child Description\n\nJJ:/,
+        );
+        expect(repo.getDescription('@')).toBe('Child Description');
     });
 
     test('handles multiple parents for non-working copy revision', async () => {
+        ctx.host.config.set('commit.editDescriptionOnSquash', true);
         const fileName = 'p1_file.txt';
         const ids = await buildGraph(repo, [
             { label: 'p1', description: 'parent 1', files: { [fileName]: 'p1 content' } },
@@ -236,6 +282,7 @@ describe('squashRevisionIntoParentCommand', () => {
     });
 
     test('squashes into non-empty parent (triggers editor)', async () => {
+        ctx.host.config.set('commit.editDescriptionOnSquash', true);
         const ids = await buildGraph(repo, [
             { label: 'p1', description: '', files: { 'p1.txt': 'p1' } },
             { label: 'p2', description: 'Parent 2', files: { 'p2.txt': 'p2' } },
@@ -291,6 +338,31 @@ describe('squashRevisionIntoParentCommand', () => {
         expect(values).toContain(ids.p.changeId);
         expect(values).not.toContain(ids.base.changeId);
         expect(values).not.toContain(ids.child.changeId);
+    });
+
+    test('squashes into a chosen ancestor with combined titles and bodies by default', async () => {
+        const ids = await buildGraph(repo, [
+            { label: 'base', description: 'Base\n\nBase body', files: { 'base.txt': 'base' } },
+            { label: 'middle', parents: ['base'], description: 'Middle', files: { 'middle.txt': 'middle' } },
+            {
+                label: 'child',
+                parents: ['middle'],
+                description: 'Child\n\nChild body',
+                files: { 'child.txt': 'child' },
+            },
+            { label: 'tip', parents: ['child'], isCurrentWorkingCopy: true },
+        ]);
+
+        await squashRevisionIntoAncestorCommand(ctx, {
+            revision: ids.child.changeId,
+            ancestorRevision: ids.base.changeId,
+        });
+
+        expect(ctx.host.nav.filesOpened).toHaveLength(0);
+        expect(repo.getDescription(ids.base.changeId)).toBe('Base, Child\n\nBase body\n\nChild body');
+        expect(repo.getDescription(ids.middle.changeId)).toBe('Middle');
+        expect(repo.getFileContent(ids.base.changeId, 'child.txt')).toBe('child');
+        expect(repo.getChangeId('@')).toBe(ids.tip.changeId);
     });
 
     test('completeSquashRevisionCommand completes squash and closes editor', async () => {

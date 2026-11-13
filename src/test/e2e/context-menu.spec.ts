@@ -330,13 +330,13 @@ test.describe('JJ Log Context Menu E2E', () => {
         }).toPass({ timeout: 30000 });
     });
 
-    test('Set Bookmark', async () => {
+    test('Create Bookmark...', async () => {
         const webview = await getLogWebview(page);
         const commit1Row = webview.locator('.commit-row', { hasText: 'commit1' });
 
         // Set bookmark on commit 1 (retry the whole sequence)
         await expect(async () => {
-            await rightClickAndSelect(page, commit1Row, 'Set Bookmark');
+            await rightClickAndSelect(page, commit1Row, 'Create Bookmark...');
 
             // Wait for QuickPick/InputBox to appear. The InputBox has an input.input element.
             const quickInput = page.locator('.quick-input-widget').filter({ visible: true });

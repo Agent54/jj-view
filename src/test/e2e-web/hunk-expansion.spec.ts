@@ -686,7 +686,7 @@ test.describe('Hidden Line (Unchanged Context) Expansion', () => {
         // 1. In Log Graph, click the commit row for 'feat: update controller'
         const logContent = page.locator('[data-testid="log-content"]');
         await expect(logContent).toBeVisible();
-        const targetRow = logContent.locator('.commit-row').filter({ hasText: 'feat: update controller' });
+        const targetRow = logContent.locator('.commit-row').filter({ hasText: 'update controller' });
         await targetRow.locator('.commit-desc').click();
 
         // 2. In Commit Details view, click "Multi-file Diff" button

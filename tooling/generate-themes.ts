@@ -13,6 +13,8 @@ export interface ThemeJsonConfig {
     strategy: 'cycle' | 'clamp';
     colors: string[];
     lightColors?: string[];
+    nodeColor?: string;
+    nodeFill?: string;
 }
 
 /**
@@ -33,6 +35,8 @@ function normalizeThemeConfig(config: ThemeJsonConfig): ThemeJsonConfig {
         strategy: config.strategy,
         colors: config.colors.map(resolveColor),
         lightColors: config.lightColors ? config.lightColors.map(resolveColor) : undefined,
+        nodeColor: config.nodeColor ? resolveColor(config.nodeColor) : undefined,
+        nodeFill: config.nodeFill ? resolveColor(config.nodeFill) : undefined,
     };
 }
 
@@ -93,6 +97,12 @@ const CSS_TEMPLATE = `/**
 {{#each colors}}
     --jj-lane-{{@index}}: {{this}};
 {{/each}}
+{{#if nodeColor}}
+    --jj-node-color: {{nodeColor}};
+{{/if}}
+{{#if nodeFill}}
+    --jj-node-fill: {{nodeFill}};
+{{/if}}
 }
 
 {{#if lightColors}}

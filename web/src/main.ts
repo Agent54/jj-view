@@ -30,6 +30,7 @@ import { WebHostEnvironment } from './host/web-host-environment';
 import { LAYOUT_STORAGE_KEY, parsePersistedLayout } from './layout/layout-state';
 import { WebOutputChannel } from './output/web-output-channel';
 import './styles/vscode-theme.css';
+import './styles/pierre-dark-cobalt.css';
 import '../../media/themes.generated.css';
 import '../../media/main.css';
 

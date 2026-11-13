@@ -12,7 +12,7 @@
 export const LANE_WIDTH = 16;
 export const ROW_HEIGHT_NORMAL = 28;
 export const ROW_HEIGHT_EXPANDED = 48;
-export const ROW_HEIGHT_ELISION = 10;
+export const ROW_HEIGHT_ELISION = 22;
 export const LEFT_MARGIN = 12;
 export const COMMIT_ROW_PADDING_LEFT = 6;
 

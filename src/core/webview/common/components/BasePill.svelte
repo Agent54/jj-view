@@ -4,6 +4,7 @@
 -->
 <script lang="ts">
 import type { Snippet } from 'svelte';
+import { tooltip } from '../tooltip.svelte';
 
 interface Props {
     children?: Snippet;
@@ -16,7 +17,7 @@ let { children, title, className = '', style = '' }: Props = $props();
 </script>
 
 <span
-    {title}
+    use:tooltip={title}
     class="bookmark-pill {className}"
     {style}
 >
@@ -25,11 +26,11 @@ let { children, title, className = '', style = '' }: Props = $props();
 
 <style>
     .bookmark-pill {
-        border-radius: 11px;
-        padding: 0 6px;
-        font-size: inherit;
+        border-radius: 4px;
+        padding: 0 3px;
+        font-size: calc(var(--vscode-font-size, 13px) - 2px);
         line-height: normal;
-        height: 22px;
+        height: 18px;
         display: inline-flex;
         align-items: center;
         justify-content: flex-start;
@@ -37,10 +38,18 @@ let { children, title, className = '', style = '' }: Props = $props();
         vertical-align: middle;
         box-sizing: border-box;
         border: 1px solid transparent;
-        min-width: 22px;
+        min-width: 18px;
         overflow: hidden;
-        gap: 4px;
+        gap: 2px;
         user-select: none;
+    }
+
+    .bookmark-pill:global(.badge-immutable) {
+        border: 1px solid var(--vscode-jjView-immutable-background, color-mix(in srgb, var(--vscode-charts-blue), transparent 40%)) !important;
+        background-color: var(--vscode-jjView-immutable-background, color-mix(in srgb, var(--vscode-charts-blue), transparent 88%)) !important;
+        color: var(--vscode-jjView-immutable-foreground, var(--vscode-charts-blue)) !important;
+        text-transform: uppercase;
+        font-weight: normal;
     }
 
     .bookmark-pill :global(.codicon) {
@@ -58,7 +67,6 @@ let { children, title, className = '', style = '' }: Props = $props();
         white-space: nowrap;
         line-height: normal;
         display: inline-block;
-        transform: translateY(-1px);
     }
 </style>
 

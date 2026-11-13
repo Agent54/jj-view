@@ -49,7 +49,7 @@ test.describe('Squash E2E', () => {
             { label: 'wc', parents: ['child'], isCurrentWorkingCopy: true },
         ]);
 
-        const setup = await vscode.openWorkspace(repo, {}, {}, true);
+        const setup = await vscode.openWorkspace(repo, { 'jj-view.commit.editDescriptionOnSquash': true }, {}, true);
         page = setup.page;
     });
 
@@ -138,7 +138,7 @@ test.describe('Squash E2E', () => {
             const log = repo.log();
             expect(log).not.toContain(ids.child.changeId.substring(0, 8));
             const desc = repo.getDescription(ids.parent.changeId);
-            expect(desc).toBe('parent description\n\nchild description');
+            expect(desc).toBe('parent description, child description');
         }).toPass({ timeout: 10000 });
 
         // Verify the tab is closed

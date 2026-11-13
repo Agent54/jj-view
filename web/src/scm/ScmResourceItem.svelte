@@ -4,6 +4,8 @@
 -->
 <script lang="ts">
 import type { JjResourceState } from '../../../src/core/scm-resource-state';
+import FileLabel from '../../../src/core/webview/common/components/FileLabel.svelte';
+import { tooltip } from '../../../src/core/webview/common/tooltip.svelte';
 import type { IContextKeyService } from '../menu/context-key-service';
 import type { MenuRegistry } from '../menu/menu-registry';
 import type { ResolvedMenuItem } from '../menu/menu-types';
@@ -56,18 +58,25 @@ const dirName = $derived(segments.slice(0, -1).filter(Boolean).join('/'));
 
 const isDeleted = $derived(resourceState.decorations?.strikeThrough ?? false);
 
-function getStatusBadge(): { letter: string; title: string; className: string } {
+function getStatusBadge(): { icon: string; title: string; className: string } {
     const val = resourceState.contextValue || '';
     if (val.includes('allowOpenMergeEditor')) {
-        return { letter: '!', title: 'Conflicted', className: 'status-conflicted' };
+        return { icon: 'warning', title: 'Conflicted', className: 'status-conflicted' };
     }
     if (isDeleted || resourceState.status === 'deleted') {
-        return { letter: 'D', title: 'Deleted', className: 'status-deleted' };
+        return { icon: 'diff-removed', title: 'Deleted', className: 'status-deleted' };
     }
-    if (resourceState.status === 'added') {
-        return { letter: 'A', title: 'Added', className: 'status-added' };
+    if (resourceState.status === 'added' || resourceState.status === 'copied') {
+        return {
+            icon: 'diff-added',
+            title: resourceState.status === 'copied' ? 'Copied' : 'Added',
+            className: 'status-added',
+        };
     }
-    return { letter: 'M', title: 'Modified', className: 'status-modified' };
+    if (resourceState.status === 'renamed') {
+        return { icon: 'diff-renamed', title: 'Renamed', className: 'status-renamed' };
+    }
+    return { icon: 'diff-modified', title: 'Modified', className: 'status-modified' };
 }
 
 const statusBadge = $derived(getStatusBadge());
@@ -116,10 +125,7 @@ function handleDblClick(): void {
 >
     <div class="resource-label-container">
         <FileIcon filename={fileName} />
-        <span class="file-name" class:deleted={isDeleted}>{fileName}</span>
-        {#if dirName}
-            <span class="dir-name">{dirName}</span>
-        {/if}
+        <FileLabel {fileName} {dirName} deleted={isDeleted} />
     </div>
 
     <div class="resource-actions-container">
@@ -129,7 +135,7 @@ function handleDblClick(): void {
                     type="button"
                     class="icon-button item-action-button"
                     data-testid={`scm-resource-action-${action.command}`}
-                    title={action.title}
+                    use:tooltip={action.title}
                     aria-label={action.title}
                     onclick={(e) => {
                         e.stopPropagation();
@@ -145,13 +151,23 @@ function handleDblClick(): void {
             {/each}
         </div>
 
+        {#if (resourceState.additions ?? 0) > 0 || (resourceState.deletions ?? 0) > 0}
+            <span class="file-diff-stats">
+                {#if (resourceState.additions ?? 0) > 0}
+                    <span class="stat-added" use:tooltip={`Lines added: ${resourceState.additions}`}>+{resourceState.additions}</span>
+                {/if}
+                {#if (resourceState.deletions ?? 0) > 0}
+                    <span class="stat-deleted" use:tooltip={`Lines removed: ${resourceState.deletions}`}>-{resourceState.deletions}</span>
+                {/if}
+            </span>
+        {/if}
+
         <span
-            class={`status-badge ${statusBadge.className}`}
-            title={statusBadge.title}
+            class={`status-badge codicon codicon-${statusBadge.icon} ${statusBadge.className}`}
+            role="img"
+            use:tooltip={statusBadge.title}
             aria-label={statusBadge.title}
-        >
-            {statusBadge.letter}
-        </span>
+        ></span>
     </div>
 </div>
 
@@ -198,29 +214,6 @@ function handleDblClick(): void {
     line-height: 22px;
 }
 
-.file-name {
-    font-weight: normal;
-    color: var(--vscode-foreground, #d4d4d4);
-    font-size: var(--vscode-font-size, 13px);
-    flex-shrink: 0;
-    line-height: 22px;
-}
-
-.file-name.deleted {
-    text-decoration: line-through;
-    opacity: 0.75;
-}
-
-.dir-name {
-    font-size: 11px;
-    color: var(--vscode-descriptionForeground, #8a8a8a);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    line-height: 22px;
-    opacity: 0.85;
-}
-
 .resource-actions-container {
     display: flex;
     align-items: center;
@@ -264,41 +257,54 @@ function handleDblClick(): void {
     color: var(--vscode-foreground);
 }
 
+.file-diff-stats {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    line-height: 14px;
+    font-family: var(--vscode-editor-font-family), monospace;
+}
+
+.stat-added {
+    color: var(--vscode-gitDecoration-addedResourceForeground, #23d18b);
+    background: color-mix(in srgb, var(--vscode-gitDecoration-addedResourceForeground, #23d18b) 14%, transparent);
+}
+
+.stat-deleted {
+    color: var(--vscode-gitDecoration-deletedResourceForeground, #f14c4c);
+    background: color-mix(in srgb, var(--vscode-gitDecoration-deletedResourceForeground, #f14c4c) 14%, transparent);
+}
+
 .status-badge {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    white-space: nowrap;
-    font-size: 10px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    padding: 0 5px;
-    border-radius: 8px;
+    font-size: 14px;
+    width: 16px;
     height: 16px;
-    line-height: 16px;
-    min-width: 14px;
+    line-height: 1;
     user-select: none;
     box-sizing: border-box;
 }
 
 .status-modified {
     color: var(--vscode-gitDecoration-modifiedResourceForeground, #69b1ff);
-    background: color-mix(in srgb, var(--vscode-gitDecoration-modifiedResourceForeground, #69b1ff) 14%, transparent);
 }
 
 .status-added {
     color: var(--vscode-gitDecoration-addedResourceForeground, #60d199);
-    background: color-mix(in srgb, var(--vscode-gitDecoration-addedResourceForeground, #60d199) 14%, transparent);
 }
 
 .status-deleted {
     color: var(--vscode-gitDecoration-deletedResourceForeground, #ff6762);
-    background: color-mix(in srgb, var(--vscode-gitDecoration-deletedResourceForeground, #ff6762) 14%, transparent);
 }
 
 .status-conflicted {
     color: var(--vscode-gitDecoration-conflictingResourceForeground, #9d6afb);
-    background: color-mix(in srgb, var(--vscode-gitDecoration-conflictingResourceForeground, #9d6afb) 12%, transparent);
+}
+
+.status-renamed {
+    color: var(--vscode-gitDecoration-renamedResourceForeground);
 }
 </style>

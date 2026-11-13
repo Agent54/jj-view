@@ -64,7 +64,7 @@ export class JjRepository implements Disposable {
                 this._isValid = undefined;
                 try {
                     if (options?.forceSnapshot) {
-                        await this._jj.snapshotWorkingCopy();
+                        await this._jj.snapshotWorkingCopies();
                     }
 
                     // Only invalidate caches when the operation log actually advanced

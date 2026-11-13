@@ -1024,7 +1024,7 @@ export async function clickLogAction(page: Page, rowCriteria: LogRowCriteria, ac
             await page.mouse.move(0, 0);
             await row.hover();
 
-            const button = row.locator(`[title="${actionTitle}"]`);
+            const button = row.getByRole('button', { name: actionTitle, exact: true });
             await expect(button).toBeVisible({ timeout: 1000 });
             await button.click({ force: true });
         },

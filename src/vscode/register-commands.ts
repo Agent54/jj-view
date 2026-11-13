@@ -23,6 +23,7 @@ import { commitCommand } from '../core/commands/commit';
 import { commitPromptCommand } from '../core/commands/commit-prompt';
 import { compareAllFilesWithRevisionCommand } from '../core/commands/compare-all-files-with-revision';
 import { compareFileWithRevisionCommand } from '../core/commands/compare-file-with-revision';
+import { copyChangeIdCommand } from '../core/commands/copy-change-id';
 import { setDescriptionCommand } from '../core/commands/describe';
 import { describePromptCommand } from '../core/commands/describe-prompt';
 import { showDetailsCommand } from '../core/commands/details';
@@ -54,6 +55,8 @@ import {
 } from '../core/commands/squash-revision';
 import { squashHunkIntoParentCommand, squashSelectionIntoParentCommand } from '../core/commands/squash-selection';
 import { syncCommand } from '../core/commands/sync';
+import { createTagCommand } from '../core/commands/tag';
+import { deleteTagCommand } from '../core/commands/tag-delete';
 import { undoCommand } from '../core/commands/undo';
 import { uploadCommand } from '../core/commands/upload';
 import { uploadStackCommand } from '../core/commands/upload-stack';
@@ -88,6 +91,7 @@ import { createCommitPayload, createCommitPromptPayload } from './payloads/commi
 import { createCompareAllFilesWithRevisionPayload } from './payloads/compare-all-files-with-revision.payload';
 import { createCompareFileWithRevisionPayload } from './payloads/compare-file-with-revision.payload';
 import { createCompleteSquashRevisionPayload } from './payloads/complete-squash-revision.payload';
+import { createCopyChangeIdPayload } from './payloads/copy-change-id.payload';
 import { createDescribePromptPayload, createSetDescriptionPayload } from './payloads/describe.payload';
 import { createShowDetailsPayload } from './payloads/details.payload';
 import { createDiscardChangePayload } from './payloads/discard-change.payload';
@@ -116,6 +120,8 @@ import {
     createSquashHunkIntoParentPayload,
     createSquashSelectionIntoParentPayload,
 } from './payloads/squash-selection.payload';
+import { createTagPayload } from './payloads/tag.payload';
+import { createDeleteTagPayload } from './payloads/tag-delete.payload';
 import { createUploadPayload, createUploadStackPayload } from './payloads/upload.payload';
 import { createViewFileAtRevisionPayload } from './payloads/view-file-at-revision.payload';
 import { createWorkspaceDeletePayload } from './payloads/workspace-delete.payload';
@@ -284,6 +290,7 @@ export function registerCommands(options: RegisterCommandsOptions): void {
         registerCommandWithPayload('jj-view.uploadStack', createUploadStackPayload, uploadStackCommand),
         registerCommand('jj-view.sync', syncCommand),
         registerCommandWithPayload('jj-view.setBookmark', createSetBookmarkPayload, setBookmarkCommand),
+        registerCommandWithPayload('jj-view.createTag', createTagPayload, createTagCommand),
         registerCommandWithPayload('jj-view.advanceBookmark', createAdvanceBookmarkPayload, advanceBookmarkCommand),
         registerCommandWithPayload(
             'jj-view.advanceBookmarkAndUpload',
@@ -291,7 +298,9 @@ export function registerCommands(options: RegisterCommandsOptions): void {
             advanceBookmarkAndUploadCommand,
         ),
         registerCommandWithPayload('jj-view.deleteBookmark', createDeleteBookmarkPayload, deleteBookmarkCommand),
+        registerCommandWithPayload('jj-view.deleteTag', createDeleteTagPayload, deleteTagCommand),
         registerCommandWithPayload('jj-view.showDetails', createShowDetailsPayload, showDetailsCommand),
+        registerCommandWithPayload('jj-view.copyChangeId', createCopyChangeIdPayload, copyChangeIdCommand),
         registerCommandWithPayload('jj-view.openMergeEditor', createOpenMergeEditorPayload, openMergeEditorCommand),
         registerCommandWithPayload('jj-view.absorb', createAbsorbPayload, absorbCommand),
         registerCommandWithPayload(

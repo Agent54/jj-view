@@ -72,6 +72,29 @@ describe('Highlighter and Theming Setup', () => {
         expect(theme.colors?.['sideBar.background']).toBeDefined();
     });
 
+    it('loads Cobalt with T3 black surfaces while preserving Pierre syntax and badge accents', async () => {
+        const base = await loadTheme('pierre-dark');
+        const cobalt = await loadTheme('pierre-dark-cobalt');
+        expect(cobalt.name).toBe('pierre-dark-cobalt');
+        expect(cobalt.type).toBe('dark');
+        expect(cobalt.settings?.filter((rule) => rule.scope !== undefined)).toEqual(
+            base.settings?.filter((rule) => rule.scope !== undefined),
+        );
+        expect(cobalt.colors?.['editor.background']).toBe('#000000');
+        expect(cobalt.colors?.['sideBar.background']).toBe('#000000');
+        expect(cobalt.colors?.['panel.background']).toBe('#000000');
+        expect(cobalt.colors?.['editorHoverWidget.background']).toBe('#111111');
+        expect(cobalt.colors?.['input.background']).toBe('#111111');
+        expect(cobalt.colors?.['sideBar.foreground']).toBe('#f1f3f7');
+        expect(cobalt.colors?.['diffEditor.insertedTextBackground']).toBe(
+            base.colors?.['diffEditor.insertedTextBackground'],
+        );
+        expect(base.colors?.['editor.background']).toBe('#0a0a0a');
+        expect(base.colors?.['sideBar.background']).toBe('#171717');
+        expect(cobalt.colors?.['jjView.bookmark.background']).toBe('#1f70eb');
+        expect(base.colors?.['jjView.bookmark.background']).toBeUndefined();
+    });
+
     it('falls back to default Pierre theme for unknown themes', async () => {
         const theme = await loadTheme('non-existent-theme-xyz');
         expect(theme.name).toBe('pierre-dark-soft');

@@ -58,7 +58,7 @@ const showDescendantsBadge = $derived(includesDescendants && descendantCount > 0
         <!-- Content Area -->
         <div class="content-area">
             <!-- Row 1: Description -->
-            <div class="description-row">{commit.description || '(no description)'}</div>
+            <div class="description-row">{commit.description}</div>
 
             <!-- Row 2: ID + Status -->
             <div class="id-status-row">
@@ -179,7 +179,7 @@ const showDescendantsBadge = $derived(includesDescendants && descendantCount > 0
     }
 
     .short-id {
-        color: var(--vscode-gitDecoration-addedResourceForeground);
+        color: var(--vscode-descriptionForeground);
         font-weight: bold;
     }
 

@@ -96,7 +96,7 @@ test.describe('Commit Details E2E', () => {
                 .locator('div')
                 .filter({ has: details.getByText('Change:', { exact: true }) })
                 .last();
-            const changeIdSpan = changeIdDiv.locator('span[title]').first();
+            const changeIdSpan = changeIdDiv.locator('.id-value').first();
             const idText = await changeIdSpan.textContent();
             expect(idText).toContain(nodes.initial.changeId);
             expect(nodes.initial.changeId.length).toBe(32);
@@ -111,7 +111,8 @@ test.describe('Commit Details E2E', () => {
             await expect(details.locator('text=g.txt')).toBeVisible();
 
             // Verify the "Changed Files" count label
-            await expect(details.locator('text=Changed Files (2)')).toBeVisible();
+            await expect(details.getByRole('heading', { name: 'Changed Files', exact: true })).toBeVisible();
+            await expect(details.locator('.files-header .count-badge')).toHaveText('2');
         });
 
         test('Marks the conflicted file in the file list with conflict sides and warning icon', async () => {
@@ -129,14 +130,14 @@ test.describe('Commit Details E2E', () => {
             await expect(conflictedFileRow).toBeVisible();
 
             // Verify the warning icon with tooltip inside the specific file row
-            const conflictIcon = conflictedFileRow.locator('.file-icon.codicon-warning');
+            const conflictIcon = conflictedFileRow.getByRole('img', { name: '2-way conflict' });
             await expect(conflictIcon).toBeVisible();
-            await expect(conflictIcon).toHaveAttribute('title', '2-way conflict');
+            await expect(conflictIcon).toHaveClass(/codicon-warning/);
+            await conflictIcon.hover();
+            await expect(details.getByRole('tooltip')).toHaveText('2-way conflict');
 
-            // Verify the conflicted status badge inside the specific file row
-            const conflictBadge = conflictedFileRow.locator('.file-status-badge.status-conflicted');
-            await expect(conflictBadge).toBeVisible();
-            await expect(conflictBadge).toHaveText('2-way conflict');
+            // The leading file-type icon is independent of its conflict status.
+            await expect(conflictedFileRow.locator('.file-icon.codicon-file')).toBeVisible();
         });
 
         test('Save description via button', async () => {
@@ -420,7 +421,7 @@ test.describe('Commit Details E2E', () => {
             const details = await getDetailsWebview(page);
 
             // Click the gear icon link, retrying if the Settings editor does not open
-            const settingsLink = details.locator('a[title="Configure width rulers"]');
+            const settingsLink = details.getByRole('link', { name: 'Configure width rulers' });
             await expect(async () => {
                 const box = await settingsLink.boundingBox();
                 expect(box).not.toBeNull();
@@ -481,7 +482,7 @@ test.describe('Commit Details E2E', () => {
                 // Fetch the details frame dynamically because it may detach and recreate if the extension
                 // reloads the webview during a background refresh
                 const frame = await getDetailsWebview(page);
-                await expect(frame.getByTitle('This commit cannot be modified')).toBeVisible({ timeout: 1000 });
+                await expect(frame.locator('.badge-immutable')).toBeVisible({ timeout: 1000 });
             }).toPass({ timeout: 20000 });
         });
 

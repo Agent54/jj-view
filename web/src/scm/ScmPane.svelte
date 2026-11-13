@@ -6,6 +6,7 @@
 import type { ScmSnapshot } from '../../../src/core/scm-model';
 import { createJjResourceState, type JjResourceState } from '../../../src/core/scm-resource-state';
 import { Uri } from '../../../src/core/uri-utils';
+import { tooltip } from '../../../src/core/webview/common/tooltip.svelte';
 import type { IContextKeyService } from '../menu/context-key-service';
 import type { MenuRegistry } from '../menu/menu-registry';
 import type { ResolvedMenuItem } from '../menu/menu-types';
@@ -29,6 +30,8 @@ interface Props {
     onFocusRepository?: (workspaceRoot: string) => void;
     isSidecarAvailable?: boolean;
     onDraftWithAgent?: (workspaceRoot?: string) => Promise<string | undefined>;
+    collapsed?: boolean;
+    onToggleCollapsed?: () => void;
 }
 
 let {
@@ -46,6 +49,8 @@ let {
     onFocusRepository,
     isSidecarAvailable = false,
     onDraftWithAgent,
+    collapsed = false,
+    onToggleCollapsed,
 }: Props = $props();
 
 const isMultiRepo = $derived((repositories?.length ?? 0) > 1);
@@ -80,11 +85,21 @@ function buildConflictItems(snap: ScmSnapshot | undefined, root: string): JjReso
     const changeId = snap?.currentEntry?.change_id || '@';
     return (
         snap?.conflictedPaths.map((cPath) =>
-            createJjResourceState({ path: cPath, status: 'modified', conflicted: true }, '@', root, {
-                openDiffOnClick,
-                inConflictGroup: true,
-                workingCopyChangeId: changeId,
-            }),
+            createJjResourceState(
+                {
+                    ...snap.workingCopyChanges.find((file) => file.path === cPath),
+                    path: cPath,
+                    status: 'modified',
+                    conflicted: true,
+                },
+                '@',
+                root,
+                {
+                    openDiffOnClick,
+                    inConflictGroup: true,
+                    workingCopyChangeId: changeId,
+                },
+            ),
         ) ?? []
     );
 }
@@ -197,8 +212,10 @@ function getRepoTitleActions(entry: ScmRepositoryEntry): ResolvedMenuItem[] {
 }
 </script>
 
-<div class="scm-pane" data-testid="scm-pane">
+<div class="scm-pane" class:collapsed data-testid="scm-pane" data-collapsed={collapsed}>
     <ScmHeader
+        {collapsed}
+        {onToggleCollapsed}
         {menuRegistry}
         context={rootContext}
         showActions={!isMultiRepo}
@@ -262,7 +279,7 @@ function getRepoTitleActions(entry: ScmRepositoryEntry): ResolvedMenuItem[] {
                             }
                         }}
                     >
-                        <div class="repo-header-title" title={root}>
+                        <div class="repo-header-title">
                             <span class="chevron-icon">
                                 <i
                                     class={`codicon codicon-chevron-${expanded ? 'down' : 'right'}`}
@@ -270,7 +287,7 @@ function getRepoTitleActions(entry: ScmRepositoryEntry): ResolvedMenuItem[] {
                                 ></i>
                             </span>
                             <i class="codicon codicon-repo repo-icon" aria-hidden="true"></i>
-                            <span class="repo-name" data-testid="scm-repository-name">{displayLabel}</span>
+                            <span class="repo-name" data-testid="scm-repository-name" use:tooltip={root}>{displayLabel}</span>
                             {#if shortChangeId}
                                 <span class="repo-revision-summary">
                                     {shortChangeId}{bookmarkName ? ` (${bookmarkName})` : ''}
@@ -280,7 +297,7 @@ function getRepoTitleActions(entry: ScmRepositoryEntry): ResolvedMenuItem[] {
                                 <span
                                     class="repo-focused-indicator"
                                     data-testid="scm-repository-focused-badge"
-                                    title="Active in Commit Graph"
+                                    use:tooltip={'Active in Commit Graph'}
                                 >
                                     Active
                                 </span>
@@ -294,7 +311,7 @@ function getRepoTitleActions(entry: ScmRepositoryEntry): ResolvedMenuItem[] {
                                         type="button"
                                         class="icon-button repo-action-button"
                                         data-testid={`scm-title-action-${action.command}`}
-                                        title={action.title}
+                                        use:tooltip={action.command === 'jj-view.new' ? 'add new change' : action.title}
                                         aria-label={action.title}
                                         onclick={(e) => {
                                             e.stopPropagation();
@@ -319,7 +336,7 @@ function getRepoTitleActions(entry: ScmRepositoryEntry): ResolvedMenuItem[] {
                                 {/each}
                             </div>
                             {#if !expanded && totalChanges > 0}
-                                <span class="repo-count-badge" title={`${totalChanges} working copy changes`}>
+                                <span class="repo-count-badge" use:tooltip={`${totalChanges} working copy changes`}>
                                     {totalChanges}
                                 </span>
                             {/if}
@@ -378,6 +395,7 @@ function getRepoTitleActions(entry: ScmRepositoryEntry): ResolvedMenuItem[] {
                                     label={snap?.workingCopyLabel || 'Working Copy'}
                                     contextValue={snap?.workingCopyContextValue || 'jj.group.workingCopy'}
                                     items={repoWorkingCopy}
+                                    changes={snap?.workingCopyChanges}
                                     workspaceRoot={root}
                                     expanded={true}
                                     {rootContext}
@@ -486,6 +504,7 @@ function getRepoTitleActions(entry: ScmRepositoryEntry): ResolvedMenuItem[] {
                 label={snapshot?.workingCopyLabel || 'Working Copy'}
                 contextValue={snapshot?.workingCopyContextValue || 'jj.group.workingCopy'}
                 items={workingCopyItems}
+                changes={snapshot?.workingCopyChanges}
                 {workspaceRoot}
                 expanded={true}
                 {rootContext}
@@ -537,6 +556,15 @@ function getRepoTitleActions(entry: ScmRepositoryEntry): ResolvedMenuItem[] {
 </div>
 
 <style>
+.scm-pane.collapsed {
+    overflow: hidden;
+}
+
+/* Keep the contents mounted so collapsing the pane preserves unsaved drafts. */
+.scm-pane.collapsed > :global(:not(.scm-header)) {
+    display: none;
+}
+
 .scm-pane {
     display: flex;
     flex-direction: column;

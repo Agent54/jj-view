@@ -38,7 +38,7 @@ test.describe('Standalone Web Commit Highlighting', () => {
         await expect(commitRows.first()).toBeVisible({ timeout: 10000 });
         await expect(commitRows).toHaveCount(4);
 
-        const targetRow = logContent.locator('.commit-row').filter({ hasText: 'feat: target commit to highlight' });
+        const targetRow = logContent.locator('.commit-row').filter({ hasText: 'target commit to highlight' });
         await expect(targetRow).toBeVisible();
 
         const changeId = await targetRow.getAttribute('data-change-id');
@@ -98,12 +98,12 @@ test.describe('Standalone Web Commit Highlighting', () => {
         const commitRows = logContent.locator('.commit-row');
         await expect(commitRows.first()).toBeVisible({ timeout: 10000 });
 
-        const targetRow = logContent.locator('.commit-row').filter({ hasText: 'feat: implement commit highlighting' });
+        const targetRow = logContent.locator('.commit-row').filter({ hasText: 'implement commit highlighting' });
         await expect(targetRow).toBeVisible();
         const targetChangeId = (await targetRow.getAttribute('data-change-id')) ?? '';
         expect(targetChangeId).not.toBe('');
 
-        const baseRow = logContent.locator('.commit-row').filter({ hasText: 'feat: add core protocol service' });
+        const baseRow = logContent.locator('.commit-row').filter({ hasText: 'add core protocol service' });
         await expect(baseRow).toBeVisible();
         const baseChangeId = (await baseRow.getAttribute('data-change-id')) ?? '';
         expect(baseChangeId).not.toBe('');

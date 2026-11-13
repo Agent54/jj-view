@@ -8,6 +8,28 @@ import { TestRepo } from '../test-repo';
 import { ARTIFACT_DIR, expect, recordGifFlow, test, waitForScmReady } from './standalone-fixture';
 
 test.describe('Standalone Web Context Menus and Actions', () => {
+    test('copies the clicked commit change ID rather than the selected commit or Git hash', async ({
+        page,
+        server,
+        testRepo,
+    }) => {
+        testRepo.writeFile('base.txt', 'base\n');
+        testRepo.describe('Copy target');
+        const changeId = testRepo.getChangeId('@');
+        testRepo.new();
+        await page.context().grantPermissions(['clipboard-read', 'clipboard-write'], { origin: server.baseUrl });
+        await page.goto(server.serverUrl);
+        await waitForScmReady(page);
+        await page.locator('.commit-row.working-copy .commit-id').click();
+        const target = page.locator('.commit-row', { hasText: 'Copy target' });
+        await target.locator('.commit-id').click({ button: 'right' });
+        const copy = page.getByTestId('menu-item-jj-view.copyChangeId');
+        await expect(copy).toHaveText('Copy Change ID');
+        await copy.click();
+        await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toBe(changeId);
+        await expect(page.getByTestId('context-menu')).toHaveCount(0);
+    });
+
     test('should create a new revision when clicking the New header button', async ({ page, server, testRepo }) => {
         testRepo.writeFile('base.txt', 'base content\n');
         testRepo.describe('first commit');
@@ -299,15 +321,15 @@ test.describe('Standalone Web Context Menus and Actions', () => {
             await expect(syncBtn).toHaveAttribute('title', 'Sync');
 
             const logContent = page.locator('[data-testid="log-content"]');
-            await expect(logContent.getByText('feat: local work')).toBeVisible();
-            await expect(logContent.getByText('feat: upstream remote commit')).toHaveCount(0);
+            await expect(logContent.getByText('local work', { exact: true })).toBeVisible();
+            await expect(logContent.getByText('upstream remote commit', { exact: true })).toHaveCount(0);
 
             await recordGifFlow(
                 page,
                 async (capture) => {
                     await capture();
                     await syncBtn.click();
-                    await expect(logContent.getByText('feat: upstream remote commit')).toBeVisible({
+                    await expect(logContent.getByText('upstream remote commit', { exact: true })).toBeVisible({
                         timeout: 10000,
                     });
                     await capture();
