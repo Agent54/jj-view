@@ -33,7 +33,10 @@ test.describe('Standalone Web Quick Input & Command Palette', () => {
         for (const name of ['feature-existing', 'feature']) {
             await targetRow.click({ button: 'right' });
             await page.getByTestId('menu-item-jj-view.setBookmark').click();
-            await expect(input).toHaveAttribute('placeholder', 'Select a bookmark to move, or type a new name to create');
+            await expect(input).toHaveAttribute(
+                'placeholder',
+                'Select a bookmark to move, or type a new name to create',
+            );
             await input.fill(` ${name} `);
             const create = page.getByTestId(`quick-pick-item-custom:${name}`);
             await expect(create).toContainText('Use typed value');

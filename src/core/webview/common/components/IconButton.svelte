@@ -4,6 +4,7 @@
 -->
 <script lang="ts">
 import Tooltip from './Tooltip.svelte';
+
 interface Props {
     onclick?: (e: MouseEvent) => void;
     onClick?: (e: MouseEvent) => void;

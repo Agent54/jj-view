@@ -93,7 +93,10 @@ test('source control and commit details use shared tooltips instead of browser t
     await checkTooltip(details.getByRole('button', { name: 'Copy Commit ID', exact: true }), 'Copy Commit ID');
     await checkTooltip(details.getByRole('link', { name: 'Configure width rulers' }), 'Configure width rulers');
     await checkTooltip(details.locator('.ruler-indicator'), 'Configured rulers for title / body width');
-    await checkTooltip(details.getByRole('button', { name: 'Format Body' }), 'No body to format. The first line is the commit title.');
+    await checkTooltip(
+        details.getByRole('button', { name: 'Format Body' }),
+        'No body to format. The first line is the commit title.',
+    );
     await checkTooltip(details.getByRole('button', { name: 'Saved', exact: true }), /^\s*Save Changes \(/);
     await checkTooltip(details.getByRole('button', { name: 'Multi-file Diff' }), 'Open diffs for all changed files');
     await checkTooltip(details.locator('.file-path-container'), 'docs/changed.ts');
@@ -151,7 +154,11 @@ test('tooltips stay immediate between buttons and reset after an idle interval',
     await expect(tooltip).toHaveCount(0);
 });
 
-test('graph dot tooltips use readable theme colors and label empty and immutable commits', async ({ page, server, testRepo }) => {
+test('graph dot tooltips use readable theme colors and label empty and immutable commits', async ({
+    page,
+    server,
+    testRepo,
+}) => {
     testRepo.writeFile('feature.txt', 'feature\n');
     testRepo.describe('Feature commit');
     testRepo.bookmark('feature', '@');
@@ -179,7 +186,7 @@ test('graph dot tooltips use readable theme colors and label empty and immutable
     let darkBackground = '';
     for (const theme of ['pierre-dark-cobalt', 'pierre-light']) {
         await page.mouse.move(900, 100);
-        await page.evaluate(async value => {
+        await page.evaluate(async (value) => {
             await window.__JJ_VIEW_ENV__?.config.update?.('appearance.theme', value);
         }, theme);
         await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
@@ -193,11 +200,18 @@ test('graph dot tooltips use readable theme colors and label empty and immutable
         await expect(tooltip).toHaveCSS('font-size', '14px');
         const badge = tooltip.locator('.tooltip-heading');
         const bookmark = page.locator('.bookmark-wrapper .bookmark-pill', { hasText: 'feature' });
-        for (const property of ['font-size', 'font-weight', 'height', 'padding-left', 'padding-right', 'border-radius']) {
+        for (const property of [
+            'font-size',
+            'font-weight',
+            'height',
+            'padding-left',
+            'padding-right',
+            'border-radius',
+        ]) {
             const value = await bookmark.evaluate((el, name) => getComputedStyle(el).getPropertyValue(name), property);
             await expect(badge).toHaveCSS(property, value);
         }
-        const background = await tooltip.evaluate(el => getComputedStyle(el).backgroundColor);
+        const background = await tooltip.evaluate((el) => getComputedStyle(el).backgroundColor);
         const border = await tooltip.evaluate((el) => getComputedStyle(el).borderTopColor);
         if (theme === 'pierre-dark-cobalt') {
             await expect(badge).toHaveCSS('background-color', 'rgb(35, 134, 54)');

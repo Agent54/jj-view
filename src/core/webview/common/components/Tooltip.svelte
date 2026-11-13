@@ -18,7 +18,17 @@ interface Props {
     ignoreSelector?: string;
 }
 
-let { anchor, text, heading, accentColor, badges, content, disabled = false, multiline = false, ignoreSelector }: Props = $props();
+let {
+    anchor,
+    text,
+    heading,
+    accentColor,
+    badges,
+    content,
+    disabled = false,
+    multiline = false,
+    ignoreSelector,
+}: Props = $props();
 const tooltipId = $props.id();
 let tooltipElement: HTMLDivElement | undefined = $state();
 // Live text updates must not detach hover listeners or cancel the pending timer.
@@ -73,8 +83,11 @@ $effect(() => {
     }
 
     function onPointerOver(event: PointerEvent): void {
-        if (event.pointerType === 'touch' || event.buttons ||
-            (ignored && event.target instanceof Element && event.target.closest(ignored))) {
+        if (
+            event.pointerType === 'touch' ||
+            event.buttons ||
+            (ignored && event.target instanceof Element && event.target.closest(ignored))
+        ) {
             hovering = false;
             hide();
             return;
